@@ -1,1349 +1,2047 @@
-let morte = {
-  sucessos: [false, false, false],
-  falhas: [false, false, false]
-};
-
-
-let editandoItem = -1;
-let editandoArma = -1;
-let editandoPoder = -1;
-let vidaAtual = 50;
-let vidaTemp = 0;
-let inventario = [];
-let armas = [];
-let poderes = [];
-let profs = {};
-let saves = {};
-let imagemBase64 = "";
-let exaustao = 0;
-
-let personagens = JSON.parse(localStorage.getItem("personagens")) || [];
-let personagemAtual = null;
-
-/* ================= DADOS FIXOS ================= */
-
-const pericias = [
-  { nome: "Acrobacia", attr: "destreza" },
-  { nome: "Arcanismo", attr: "inteligencia" },
-  { nome: "Atletismo", attr: "forca" },
-  { nome: "Atuação", attr: "carisma" },
-  { nome: "Enganação", attr: "carisma" },
-  { nome: "Furtividade", attr: "destreza" },
-  { nome: "História", attr: "inteligencia" },
-  { nome: "Intimidação", attr: "carisma" },
-  { nome: "Intuição", attr: "sabedoria" },
-  { nome: "Investigação", attr: "inteligencia" },
-  { nome: "Lidar com Animais", attr: "sabedoria" },
-  { nome: "Medicina", attr: "sabedoria" },
-  { nome: "Natureza", attr: "inteligencia" },
-  { nome: "Percepção", attr: "sabedoria" },
-  { nome: "Persuasão", attr: "carisma" },
-  { nome: "Prestidigitação", attr: "destreza" },
-  { nome: "Religião", attr: "inteligencia" },
-  { nome: "Sobrevivência", attr: "sabedoria" }
-];
-
-const efeitosExaustao = [
-  "Sem exaustão",
-  "Desvantagem em testes de habilidade",
-  "Metade da velocidade",
-  "Desvantagem em ataques e testes de resistência",
-  "Metade do HP máximo",
-  "Velocidade = 0",
-  "Morte"
-];
-
-/* ================= FUNÇÕES BASE ================= */
-
-function mod(v) {
-  return Math.floor((v - 10) / 2);
+* {
+  box-sizing: border-box;
+  font-family: Arial;
 }
 
-function get(id) {
-  const el = document.getElementById(id);
-  if (!el) return 0;
-  return parseInt(el.value) || 0;
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
-function salvarPersonagens() {
-  localStorage.setItem("personagens", JSON.stringify(personagens));
+body {
+  margin: 0;
+  background: #1f1a17;
+  color: #f1e6cf;
+  padding-bottom: 70px;
 }
 
-function normalizarTipo(tipo) {
-  return (tipo || "")
-    .toLowerCase()
-    .trim()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+h1 {
+  font-family: 'Cinzel', serif;
+  text-align: center;
 }
 
-function getIconeTipo(tipo) {
-  const t = normalizarTipo(tipo);
+/* ================= HEADER ================= */
+.header-rpg {
+  position: sticky;
+  top: 20;
+  background: #1f1a17;
+  padding: 50px 0 20px 0; /* aumentei aqui */
+  z-index: 1000;
 
-  if (t.includes("fogo")) return "🔥";
-  if (t.includes("gelo")) return "❄️";
-  if (t.includes("raio")) return "⚡";
-  if (t.includes("trovej")) return "🌩️";
-  if (t.includes("necrot")) return "💀";
-  if (t.includes("radiante")) return "✨";
-  if (t.includes("veneno")) return "☠️";
-  if (t.includes("psiqu")) return "🧠";
-  if (t.includes("corte")) return "🗡️";
-  if (t.includes("perfur")) return "📌";
-  if (t.includes("concuss")) return "💥";
-  if (t.includes("fisico")) return "🗡️";
-
-  return "🔮";
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-function getClasseTipo(tipo) {
-  const t = normalizarTipo(tipo);
+/* ================= TÍTULO ================= */
+.titulo-rpg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 
-  if (t.includes("fogo")) return "tipo-fogo";
-  if (t.includes("gelo")) return "tipo-gelo";
-  if (t.includes("raio")) return "tipo-raio";
-  if (t.includes("trovej")) return "tipo-trovejante";
-  if (t.includes("necrot")) return "tipo-necrotico";
-  if (t.includes("radiante")) return "tipo-radiante";
-  if (t.includes("veneno")) return "tipo-veneno";
-  if (t.includes("psiqu")) return "tipo-psiquico";
-  if (t.includes("corte")) return "tipo-corte";
-  if (t.includes("perfur")) return "tipo-perfurante";
-  if (t.includes("concuss")) return "tipo-concussao";
+  margin: 0;
 
-  return "tipo-padrao";
+  font-family: 'Cinzel', serif;
+  font-size: 42px;
+  line-height: 0.9;
+  text-align: center;
+
+  background: linear-gradient(to bottom, #ffffff, #d1d5db);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+
+  text-shadow:
+    2px 2px 0 #8b0000,
+    4px 4px 0 #5a0000,
+    6px 6px 8px rgba(0, 0, 0, 0.8);
 }
 
-/* ================= POPUP ================= */
-
-function abrirPopup(titulo, conteudo, usarHTML = false, onEditar = null) {
-  const popup = document.getElementById("popup");
-  const tituloEl = document.getElementById("popup-titulo");
-  const textoEl = document.getElementById("popup-texto");
-  const btnEditar = document.getElementById("popup-editar");
-
-  if (!popup || !tituloEl || !textoEl) return;
-
-  tituloEl.textContent = titulo || "";
-
-  if (usarHTML) {
-    textoEl.innerHTML = conteudo || "";
-  } else {
-    textoEl.textContent = conteudo || "";
-  }
-
-  if (btnEditar) {
-    if (onEditar) {
-      btnEditar.style.display = "inline-flex";
-      btnEditar.onclick = onEditar;
-    } else {
-      btnEditar.style.display = "none";
-      btnEditar.onclick = null;
-    }
-  }
-
-  popup.style.display = "flex";
+.titulo-rpg span {
+  display: block;
 }
 
-function editarItem(index) {
-  const item = inventario[index];
-  if (!item) return;
+.titulo-rpg .and {
+  font-size: 34px;
+  margin: -8px 0;
+  color: #b9853e;
+  -webkit-text-fill-color: #b9853e;
 
-  const html = `
-    <div class="popup-form">
-      <label class="popup-label">Nome</label>
-      <input id="editItemNome" value="${item.nome || ""}">
-
-      <label class="popup-label">Descrição</label>
-      <textarea id="editItemDesc">${item.desc || ""}</textarea>
-
-      <button class="popup-salvar-btn" onclick="salvarEdicaoItem(${index})">
-        Salvar
-      </button>
-    </div>
-  `;
-
-  abrirPopup("Editar item", html, true, null);
+  text-shadow:
+    2px 2px 0 #000,
+    0 0 12px rgba(185, 133, 62, 0.9),
+    0 0 20px rgba(185, 133, 62, 0.5);
 }
 
-function salvarEdicaoItem(index) {
-  const nome = document.getElementById("editItemNome").value.trim();
-  const desc = document.getElementById("editItemDesc").value.trim();
+.subtitulo-rpg {
+  margin: 4px 0 0 0;
 
-  if (!nome) return;
-
-  inventario[index] = {
-    nome,
-    desc
-  };
-
-  renderInv();
-  salvarTudo();
-  fecharPopup();
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-size: 14px;
+  letter-spacing: 1px;
+  color: #d8c3a1;
 }
 
-function editarArma(index) {
-  const arma = armas[index];
-  if (!arma) return;
-
-  const html = `
-    <div class="popup-form">
-      <label class="popup-label">Nome</label>
-      <input id="editArmaNome" value="${arma.nome || ""}">
-
-      <label class="popup-label">Dano</label>
-      <input id="editArmaDano" value="${arma.dano || ""}">
-
-      <label class="popup-label">Descrição</label>
-      <textarea id="editArmaDesc">${arma.desc || ""}</textarea>
-
-      <button class="popup-salvar-btn" onclick="salvarEdicaoArma(${index})">
-        Salvar
-      </button>
-    </div>
-  `;
-
-  abrirPopup("Editar arma", html, true, null);
+/* ================= CONTAINER ================= */
+.container {
+  max-width: 500px;
+  margin: auto;
+  padding: 10px;
 }
 
-function editarPoder(index) {
-  const poder = poderes[index];
-  if (!poder) return;
-
-  const html = `
-    <div class="popup-form">
-      <label class="popup-label">Nome</label>
-      <input id="editPoderNome" value="${poder.nome || ""}">
-
-      <label class="popup-label">Tipo</label>
-      <input id="editPoderTipo" value="${poder.tipo || ""}">
-
-      <label class="popup-label">Dano</label>
-      <input id="editPoderDano" value="${poder.dano || ""}">
-
-      <label class="popup-label">Círculo</label>
-      <input id="editPoderCirculo" value="${poder.circulo || ""}">
-
-      <label class="popup-label">Conjuração</label>
-      <input id="editPoderTempo" value="${poder.tempo || ""}">
-
-      <label class="popup-label">Alcance</label>
-      <input id="editPoderAlcance" value="${poder.alcance || ""}">
-
-      <label class="popup-label">Duração</label>
-      <input id="editPoderDuracao" value="${poder.duracao || ""}">
-
-      <label class="popup-label">Descrição</label>
-      <textarea id="editPoderDesc">${poder.desc || ""}</textarea>
-
-      <button class="popup-salvar-btn" onclick="salvarEdicaoPoder(${index})">
-        Salvar
-      </button>
-    </div>
-  `;
-
-  abrirPopup("Editar poder", html, true, null);
+/* ================= INPUTS ================= */
+input,
+textarea {
+  width: 100%;
+  padding: 8px;
+  margin: 5px 0;
+  border-radius: 8px;
+  border: none;
+  background: #3c342d;
+  color: #f1e6cf;
 }
 
-function salvarEdicaoPoder(index) {
-  const nome = document.getElementById("editPoderNome").value.trim();
-  const tipo = document.getElementById("editPoderTipo").value.trim();
-  const dano = document.getElementById("editPoderDano").value.trim();
-  const circulo = document.getElementById("editPoderCirculo").value.trim();
-  const tempo = document.getElementById("editPoderTempo").value.trim();
-  const alcance = document.getElementById("editPoderAlcance").value.trim();
-  const duracao = document.getElementById("editPoderDuracao").value.trim();
-  const desc = document.getElementById("editPoderDesc").value.trim();
-
-  if (!nome) return;
-
-  poderes[index] = {
-    nome,
-    tipo,
-    dano,
-    circulo,
-    tempo,
-    alcance,
-    duracao,
-    desc
-  };
-
-  renderPoderes();
-  salvarTudo();
-  fecharPopup();
-}
-
-function atualizarTextoBotaoEdicao() {
-  const btnItem = document.querySelector("#inventario .inv-add-btn");
-  const btnArma = document.querySelector("#combate .arma-add .inv-add-btn, #combate .arma-add button");
-  const btnPoder = document.querySelector("#poderes .inv-add-btn");
-
-  if (btnItem) btnItem.textContent = editandoItem >= 0 ? "Salvar edição" : "+";
-  if (btnArma) btnArma.textContent = editandoArma >= 0 ? "Salvar edição" : "+";
-  if (btnPoder) btnPoder.textContent = editandoPoder >= 0 ? "Salvar edição" : "+";
-}
-
-function fecharPopup() {
-  const popup = document.getElementById("popup");
-  if (popup) popup.style.display = "none";
-}
-
-function salvarEdicaoArma(index) {
-  const nome = document.getElementById("editArmaNome").value.trim();
-  const dano = document.getElementById("editArmaDano").value.trim();
-  const desc = document.getElementById("editArmaDesc").value.trim();
-
-  if (!nome) return;
-
-  armas[index] = {
-    nome,
-    dano,
-    desc
-  };
-
-  renderArmas();
-  salvarTudo();
-  fecharPopup();
-}
-
-/* ================= ABAS ================= */
-
-function trocarAba(id, btn = null) {
-  const abas = document.querySelectorAll(".aba");
-  const novaAba = document.getElementById(id);
-  const abaAtual = document.querySelector(".aba.active");
-
-  if (!novaAba) return;
-  if (abaAtual === novaAba) {
-    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-
-    if (btn) {
-      btn.classList.add("active");
-    } else {
-      const botao = document.querySelector(`.tab-btn[onclick*="${id}"]`);
-      if (botao) botao.classList.add("active");
-    }
-    return;
-  }
-
-  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-
-  if (btn) {
-    btn.classList.add("active");
-  } else {
-    const botao = document.querySelector(`.tab-btn[onclick*="${id}"]`);
-    if (botao) botao.classList.add("active");
-  }
-
-  if (abaAtual) {
-    abaAtual.classList.remove("show");
-    abaAtual.classList.add("hiding");
-
-    setTimeout(() => {
-      abaAtual.classList.remove("active", "hiding");
-      abaAtual.style.display = "none";
-    }, 250);
-  }
-
-  abas.forEach(aba => {
-    if (aba !== novaAba) {
-      aba.classList.remove("show", "hiding");
-    }
-  });
-
-  novaAba.style.display = "block";
-  novaAba.classList.add("active");
-
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      novaAba.classList.add("show");
-    });
-  });
-}
-
-function entrarFicha() {
-  const telaInicial = document.getElementById("tela-inicial");
-  const ficha = document.getElementById("ficha");
-
-  if (telaInicial) telaInicial.style.display = "none";
-  if (ficha) ficha.style.display = "block";
-
-  trocarAba("personagem");
-}
-
-function voltarInicio() {
-  const telaInicial = document.getElementById("tela-inicial");
-  const ficha = document.getElementById("ficha");
-
-  if (telaInicial) telaInicial.style.display = "block";
-  if (ficha) ficha.style.display = "none";
+textarea {
+  resize: vertical;
+  min-height: 80px;
 }
 
 /* ================= PERSONAGENS ================= */
-
-function renderPersonagens() {
-  const div = document.getElementById("listaPersonagens");
-  if (!div) return;
-
-  div.innerHTML = "";
-
-  personagens.forEach((p, i) => {
-    const card = document.createElement("div");
-    card.className = "card";
-    card.style.backgroundImage = `url('${p.imagem || ""}')`;
-
-    card.innerHTML = `
-      <div class="card-info">
-        <span class="card-nome">${p.nome || "Sem nome"}</span>
-        <span class="card-classe">${p.classe || "Sem classe"}</span>
-      </div>
-      <button type="button" onclick="deletarPersonagem(${i}); event.stopPropagation()">X</button>
-    `;
-
-    card.onclick = () => carregarPersonagem(i);
-    div.appendChild(card);
-  });
-
-  const add = document.createElement("div");
-  add.className = "card add";
-  add.innerText = "+";
-  add.onclick = criarPersonagem;
-  div.appendChild(add);
+.grid-personagens {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
 
-function criarPersonagem() {
-  const novo = {
-    nome: "",
-    classe: "",
-    raca: "",
-    idade: "",
-    altura: "",
-    imagem: "",
+.card {
+  height: 115px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
 
-    vidaMax: 50,
-    vidaAtual: 50,
-    vidaTemp: 0,
-    ca: "",
-    deslocamento: 9,
+  display: flex;
+  align-items: flex-end;
 
-    forca: 10,
-    destreza: 10,
-    constituicao: 10,
-    inteligencia: 10,
-    sabedoria: 10,
-    carisma: 10,
-    bonusProf: 2,
-
-    inventario: [],
-    armas: [],
-    poderes: [],
-    profs: {},
-    saves: {},
-    exaustao: 0,
-    inspiracao: 0,
-    dtBase: 8,
-    dtAtributo: 0,
-    dtProf: 2,
-
-    morte: {
-      sucessos: [false, false, false],
-      falhas: [false, false, false]
-    }
-  };
-
-  personagens.push(novo);
-  salvarPersonagens();
-  renderPersonagens();
+  background-size: cover;
+  background-position: center;
+  border: 1px solid rgba(241, 230, 207, 0.08);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
 }
 
-function deletarPersonagem(index) {
-  if (!confirm("Tem certeza que quer excluir?")) return;
-
-  personagens.splice(index, 1);
-  salvarPersonagens();
-  renderPersonagens();
-
-  if (personagemAtual === index) {
-    personagemAtual = null;
-    voltarInicio();
-  }
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 10, 6, 0.45);
 }
 
-function carregarPersonagem(index) {
-  personagemAtual = index;
-  const p = personagens[index];
-  if (!p) return;
+.card button {
+  position: absolute;
+  top: 5px;
+  right: 5px;
 
-  document.getElementById("classe").value = p.classe || "";
-  document.getElementById("nome").value = p.nome || "";
-  document.getElementById("raca").value = p.raca || "";
-  document.getElementById("idade").value = p.idade || "";
-  document.getElementById("altura").value = p.altura || "";
-  document.getElementById("vidaMax").value = p.vidaMax ?? 50;
-  document.getElementById("ca").value = p.ca ?? "";
-  document.getElementById("deslocamento").value = p.deslocamento ?? 9;
+  width: 22px;
+  height: 22px;
 
-  document.getElementById("forca").value = p.forca ?? 10;
-  document.getElementById("destreza").value = p.destreza ?? 10;
-  document.getElementById("constituicao").value = p.constituicao ?? 10;
-  document.getElementById("inteligencia").value = p.inteligencia ?? 10;
-  document.getElementById("sabedoria").value = p.sabedoria ?? 10;
-  document.getElementById("carisma").value = p.carisma ?? 10;
-  document.getElementById("bonusProf").value = p.bonusProf ?? 2;
-
-  const inspiracao = document.getElementById("inspiracao");
-  if (inspiracao) inspiracao.value = p.inspiracao ?? 0;
-
-  const dtBase = document.getElementById("dtBase");
-  const dtAtributo = document.getElementById("dtAtributo");
-  const dtProf = document.getElementById("dtProf");
-
-  if (dtBase) dtBase.value = p.dtBase ?? 8;
-  if (dtAtributo) dtAtributo.value = p.dtAtributo ?? 0;
-  if (dtProf) dtProf.value = p.dtProf ?? 2;
-
-  document.getElementById("preview").src = p.imagem || "";
-  imagemBase64 = p.imagem || "";
-
-  const nomeArquivo = document.getElementById("nome-arquivo");
-  if (nomeArquivo) {
-    nomeArquivo.innerText = p.imagem ? "Imagem carregada" : "Nenhum arquivo escolhido";
-  }
-
-  vidaAtual = p.vidaAtual ?? 50;
-  vidaTemp = p.vidaTemp ?? 0;
-  inventario = p.inventario || [];
-  armas = p.armas || [];
-  poderes = p.poderes || [];
-  profs = p.profs || {};
-  saves = p.saves || {};
-  exaustao = p.exaustao ?? 0;
-  morte = p.morte || {
-    sucessos: [false, false, false],
-    falhas: [false, false, false]
-  };
-
-  renderInv();
-  renderArmas();
-  renderPoderes();
-  atualizarTudo();
-  atualizarSaves();
-  atualizarBadgesSaves();
-  atualizarHP();
-  atualizarTemp();
-  setExaustao(exaustao);
-  atualizarMorte();
-  atualizarDT();
-  entrarFicha();
+  border: none;
+  border-radius: 50%;
+  background: rgba(20, 14, 10, 0.75);
+  color: #f8f1df;
+  cursor: pointer;
+  font-size: 12px;
 }
 
-/* ================= SALVAR ================= */
-
-function salvarTudo() {
-  if (personagemAtual === null) return;
-
-  const p = personagens[personagemAtual];
-  if (!p) return;
-
-  p.nome = document.getElementById("nome").value;
-  p.classe = document.getElementById("classe").value;
-  p.raca = document.getElementById("raca").value;
-  p.idade = document.getElementById("idade").value;
-  p.altura = document.getElementById("altura").value;
-  p.imagem = imagemBase64;
-
-  p.vidaMax = get("vidaMax");
-  p.vidaAtual = vidaAtual;
-  p.vidaTemp = vidaTemp;
-  p.ca = document.getElementById("ca").value;
-  p.deslocamento = document.getElementById("deslocamento").value;
-
-  p.forca = get("forca");
-  p.destreza = get("destreza");
-  p.constituicao = get("constituicao");
-  p.inteligencia = get("inteligencia");
-  p.sabedoria = get("sabedoria");
-  p.carisma = get("carisma");
-  p.bonusProf = get("bonusProf");
-
-  p.inventario = inventario;
-  p.armas = armas;
-  p.poderes = poderes;
-  p.profs = profs;
-  p.saves = saves;
-  p.exaustao = exaustao;
-  p.morte = morte;
-
-  const inspiracao = document.getElementById("inspiracao");
-  const dtBase = document.getElementById("dtBase");
-  const dtAtributo = document.getElementById("dtAtributo");
-  const dtProf = document.getElementById("dtProf");
-
-  p.inspiracao = inspiracao ? inspiracao.value : 0;
-  p.dtBase = dtBase ? dtBase.value : 8;
-  p.dtAtributo = dtAtributo ? dtAtributo.value : 0;
-  p.dtProf = dtProf ? dtProf.value : 2;
-
-  salvarPersonagens();
-  renderPersonagens();
+.card button:hover {
+  background: rgb(0, 0, 0);
 }
 
-/* ================= IMAGEM ================= */
-
-function previewImagem() {
-  const input = document.getElementById("imagem");
-  const preview = document.getElementById("preview");
-  const nomeArquivo = document.getElementById("nome-arquivo");
-
-  if (!input || !preview || !input.files || !input.files[0]) return;
-
-  const file = input.files[0];
-  if (nomeArquivo) nomeArquivo.innerText = file.name;
-
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    imagemBase64 = e.target.result;
-    preview.src = imagemBase64;
-    salvarTudo();
-    renderPersonagens();
-  };
-  reader.readAsDataURL(file);
+.add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;
+  font-weight: bold;
+  color: rgba(241, 230, 207, 0.75);
 }
 
-/* ================= INVENTÁRIO ================= */
+.overlay {
+  position: relative;
+  z-index: 1;
 
-function addItem() {
-  const nome = document.getElementById("item").value.trim();
-  const desc = document.getElementById("itemDesc").value.trim();
-
-  if (!nome) return;
-
-  const novoItem = {
-    nome,
-    desc
-  };
-
-  if (editandoItem >= 0) {
-    inventario[editandoItem] = novoItem;
-    editandoItem = -1;
-  } else {
-    inventario.push(novoItem);
-  }
-
-  renderInv();
-  salvarTudo();
-
-  document.getElementById("item").value = "";
-  document.getElementById("itemDesc").value = "";
+  width: 100%;
+  padding: 10px;
+  color: white;
+  font-weight: bold;
 }
 
-function renderInv() {
-  const ul = document.getElementById("lista");
-  if (!ul) return;
+.img {
+  width: 100%;
+  height: 100px;
+  border-radius: 8px;
 
-  ul.innerHTML = "";
-
-  inventario.forEach((item, index) => {
-    const li = document.createElement("li");
-    li.className = "item-card";
-
-    li.innerHTML = `
-      <div class="item-info" onclick="verItem(${index})">
-        <strong class="item-nome">${item.nome || "Sem nome"}</strong>
-      </div>
-
-      <div class="item-acoes">
-        <button type="button" class="btn-editar" onclick="editarItem(${index})">✏️</button>
-        <button type="button" class="item-remover" onclick="removerItem(${index})">X</button>
-      </div>
-    `;
-
-    ul.appendChild(li);
-  });
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
-function verItem(index) {
-  const item = inventario[index];
-  if (!item) return;
-
-  const html = `
-    <div class="popup-bloco">
-      <div>
-        <span class="popup-label">Descrição</span>
-        <div class="popup-descricao">
-          ${item.desc || "Sem descrição"}
-        </div>
-      </div>
-    </div>
-  `;
-
-  abrirPopup(item.nome || "Sem nome", html, true, () => editarItem(index));
+/* ================= ABAS ================= */
+.tabs {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  background: #25201b;
+  z-index: 9999;
 }
 
-function removerItem(index) {
-  const item = inventario[index];
-  if (!item) return;
-
-  const confirmar = confirm(`Remover "${item.nome}"?`);
-  if (!confirmar) return;
-
-  inventario.splice(index, 1);
-  renderInv();
-  salvarTudo();
+.tabs button,
+.tab-btn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: none;
+  color: #f1e6cf;
+  font-size: 18px;
+  transition: 0.2s;
 }
 
-/* ================= ARMAS ================= */
-
-function addArma() {
-  const nome = document.getElementById("armaNome").value.trim();
-  const dano = document.getElementById("armaDano").value.trim();
-  const descEl = document.getElementById("armaDesc");
-  const desc = descEl ? descEl.value.trim() : "";
-
-  if (!nome) return;
-
-  const novaArma = {
-    nome,
-    dano,
-    desc
-  };
-
-  if (editandoArma >= 0) {
-    armas[editandoArma] = novaArma;
-    editandoArma = -1;
-  } else {
-    armas.push(novaArma);
-  }
-
-  renderArmas();
-  salvarTudo();
-
-  document.getElementById("armaNome").value = "";
-  document.getElementById("armaDano").value = "";
-  if (descEl) descEl.value = "";
+.tab-btn:hover {
+  background: #4a4036;
 }
 
-function renderArmas() {
-  const ul = document.getElementById("listaArmas");
-  if (!ul) return;
-
-  ul.innerHTML = "";
-
-  armas.forEach((arma, index) => {
-    const li = document.createElement("li");
-    li.className = "arma-card";
-
-    li.innerHTML = `
-      <div class="arma-info" onclick="verArma(${index})">
-        <strong class="arma-nome">${arma.nome || "Sem nome"}</strong>
-        <p class="arma-dano">${arma.dano || "Sem dano"}</p>
-      </div>
-
-      <div class="item-acoes">
-        <button type="button" class="btn-editar" onclick="editarArma(${index})">✏️</button>
-        <button type="button" class="arma-remover" onclick="removerArma(${index})">X</button>
-      </div>
-    `;
-
-    ul.appendChild(li);
-  });
+.tab-btn.active {
+  background: #c8a96b;
+  color: #1f1a17;
+  transform: scale(0.95);
+  border-top: 2px solid #f1e6cf;
 }
 
-function verArma(index) {
-  const arma = armas[index];
-  if (!arma) return;
-
-  const html = `
-    <div class="popup-bloco">
-      <div>
-        <span class="popup-label">Dano</span>
-        <div class="popup-tags">
-  <span class="tag-dano">${arma.dano || "—"}</span>
-</div>
-        </div>
-      </div>
-
-      <div style="margin-top: 12px;">
-        <span class="popup-label">Descrição</span>
-        <div class="popup-descricao">
-          ${arma.desc || "Sem descrição"}
-        </div>
-      </div>
-    </div>
-  `;
-
-  abrirPopup(arma.nome || "Sem nome", html, true, () => editarArma(index));
+/* ================= BOTÃO VOLTAR ================= */
+.voltar {
+  background: #6f5a45;
+  border: none;
+  padding: 8px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  color: #f8f1df;
 }
 
-function removerArma(index) {
-  const arma = armas[index];
-  if (!arma) return;
-
-  const confirmar = confirm(`Remover "${arma.nome}"?`);
-  if (!confirmar) return;
-
-  armas.splice(index, 1);
-  renderArmas();
-  salvarTudo();
+/* ================= LAYOUT ATRIBUTOS + PERÍCIAS ================= */
+.main {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
 }
 
-/* ================= PODERES ================= */
+/* ================= ATRIBUTOS ================= */
+.atributos {
+  width: 90px;
+  flex-shrink: 0;
 
-function addPoder() {
-  const nome = document.getElementById("poderNome").value.trim();
-  const tipo = document.getElementById("poderTipo").value.trim();
-  const dano = document.getElementById("poderDano").value.trim();
-  const circulo = document.getElementById("poderCirculo").value.trim();
-  const tempo = document.getElementById("poderTempo").value.trim();
-  const alcance = document.getElementById("poderAlcance").value.trim();
-  const duracao = document.getElementById("poderDuracao").value.trim();
-  const desc = document.getElementById("poderDesc").value.trim();
-
-  if (!nome) return;
-
-  const novoPoder = {
-    nome,
-    tipo,
-    dano,
-    circulo,
-    tempo,
-    alcance,
-    duracao,
-    desc
-  };
-
-  if (editandoPoder >= 0) {
-    poderes[editandoPoder] = novoPoder;
-    editandoPoder = -1;
-  } else {
-    poderes.push(novoPoder);
-  }
-
-  renderPoderes();
-  salvarTudo();
-
-  document.getElementById("poderNome").value = "";
-  document.getElementById("poderTipo").value = "";
-  document.getElementById("poderDano").value = "";
-  document.getElementById("poderCirculo").value = "";
-  document.getElementById("poderTempo").value = "";
-  document.getElementById("poderAlcance").value = "";
-  document.getElementById("poderDuracao").value = "";
-  document.getElementById("poderDesc").value = "";
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-function renderPoderes() {
-  const ul = document.getElementById("listaPoderes");
-  if (!ul) return;
+.attr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 
-  ul.innerHTML = "";
-
-  poderes.forEach((poder, index) => {
-    const icone = getIconeTipo(poder.tipo);
-
-    const li = document.createElement("li");
-    li.className = "poder-card";
-
-    li.innerHTML = `
-      <div class="poder-info" onclick="verPoder(${index})">
-        <strong class="poder-nome">${icone} ${poder.nome || "Sem nome"}</strong>
-        ${poder.dano ? `<div class="popup-tags" style="margin-top:6px;"><span class="tag-dano">${poder.dano}</span></div>` : ""}
-      </div>
-
-      <div class="item-acoes">
-        <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarPoder(${index})">✏️</button>
-        <button type="button" class="poder-remover" onclick="event.stopPropagation(); removerPoder(${index})">X</button>
-      </div>
-    `;
-
-    ul.appendChild(li);
-  });
+  background: linear-gradient(180deg, #8a7357 0%, #6d5a45 100%);
+  padding: 8px 8px;
+  border-radius: 14px;
+  width: 82px;
+  min-height: 82px;
+  border: 1px solid rgba(241, 230, 207, 0.08);
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-function verPoder(index) {
-  const poder = poderes[index];
-  if (!poder) return;
-
-  const tipoTexto = poder.tipo || "Sem tipo";
-  const icone = getIconeTipo(tipoTexto);
-
-  const tags = [
-    poder.dano ? `<span class="tag-dano">${poder.dano}</span>` : "",
-    poder.circulo ? `<span class="popup-tag">Círculo: ${poder.circulo}</span>` : "",
-    poder.tempo ? `<span class="popup-tag">Conjuração: ${poder.tempo}</span>` : "",
-    poder.alcance ? `<span class="popup-tag">Alcance: ${poder.alcance}</span>` : "",
-    poder.duracao ? `<span class="popup-tag">Duração: ${poder.duracao}</span>` : ""
-  ].join("");
-
-  const html = `
-    <div class="popup-bloco">
-      ${tags ? `<div class="popup-tags">${tags}</div>` : ""}
-
-      <div style="margin-top: 12px;">
-        <span class="popup-label">Descrição</span>
-        <div class="popup-descricao">
-          ${poder.desc || "Sem descrição"}
-        </div>
-      </div>
-    </div>
-  `;
-
-  abrirPopup(`${icone} ${poder.nome}`, html, true, null);
+.attr span {
+  font-size: 13px;
+  font-weight: bold;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+  color: #f8f1df;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
-function removerPoder(index) {
-  const poder = poderes[index];
-  if (!poder) return;
-
-  const confirmar = confirm(`Remover "${poder.nome}"?`);
-  if (!confirmar) return;
-
-  poderes.splice(index, 1);
-  renderPoderes();
-  salvarTudo();
+.attr input {
+  width: 54px;
+  height: 30px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: bold;
+  margin: 0 0 8px 0;
+  padding: 0;
+  border-radius: 8px;
+  background: #3c342d;
+  color: #f8f1df;
+  border: 1px solid rgba(241, 230, 207, 0.05);
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.35);
 }
 
-function ativarDragVida() {
-  const barra = document.getElementById("hpBar");
-  if (!barra) return;
-
-  let arrastando = false;
-
-  function atualizarPorPosicao(clientX) {
-    const rect = barra.getBoundingClientRect();
-    const max = get("vidaMax");
-
-    let pos = clientX - rect.left;
-    pos = Math.max(0, Math.min(pos, rect.width));
-
-    const porcentagem = pos / rect.width;
-    vidaAtual = Math.round(porcentagem * max);
-
-    atualizarHP();
-    salvarTudo();
-  }
-
-  // CLICK normal (desktop e toque rápido)
-  barra.addEventListener("click", (e) => {
-    if (e.target.tagName === "BUTTON") return;
-    atualizarPorPosicao(e.clientX);
-  });
-
-  // TOUCH (celular)
-  barra.addEventListener("touchstart", (e) => {
-    if (e.target.tagName === "BUTTON") return;
-
-    arrastando = true;
-    atualizarPorPosicao(e.touches[0].clientX);
-  }, { passive: true });
-
-  barra.addEventListener("touchmove", (e) => {
-    if (!arrastando) return;
-
-    atualizarPorPosicao(e.touches[0].clientX);
-  }, { passive: true });
-
-  barra.addEventListener("touchend", () => {
-    arrastando = false;
-  });
-
-  // MOUSE DRAG (PC também fica bom)
-  barra.addEventListener("mousedown", (e) => {
-    if (e.target.tagName === "BUTTON") return;
-
-    arrastando = true;
-    atualizarPorPosicao(e.clientX);
-  });
-
-  document.addEventListener("mousemove", (e) => {
-    if (!arrastando) return;
-
-    atualizarPorPosicao(e.clientX);
-  });
-
-  document.addEventListener("mouseup", () => {
-    arrastando = false;
-  });
-}
-/* ================= DT ================= */
-
-function atualizarDT() {
-  const base = parseInt(document.getElementById("dtBase")?.value) || 0;
-  const atributo = parseInt(document.getElementById("dtAtributo")?.value) || 0;
-  const prof = parseInt(document.getElementById("dtProf")?.value) || 0;
-
-  const total = base + atributo + prof;
-  const dtTotal = document.getElementById("dtTotal");
-
-  if (dtTotal) dtTotal.textContent = total;
+.attr > div:not(.save-check):not(.save-badge) {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1;
+  margin-top: 0;
+  color: #f8f1df;
+  background: rgba(31, 26, 23, 0.35);
+  padding: 2px 10px;
+  border-radius: 999px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
-/* ================= VIDA ================= */
-
-function atualizarHP() {
-  const max = get("vidaMax");
-  const porcentagem = max > 0 ? (vidaAtual / max) * 100 : 0;
-
-  const fill = document.getElementById("hp-fill");
-  const texto = document.getElementById("vida-texto");
-
-  if (fill) fill.style.width = `${porcentagem}%`;
-  if (texto) texto.innerText = `${vidaAtual}/${max}`;
-
-  atualizarTotal();
-}
-
-function atualizarTemp() {
-  const max = get("vidaMax");
-  const porcentagem = max > 0 ? (vidaTemp / max) * 100 : 0;
-
-  const fill = document.getElementById("temp-fill");
-  const texto = document.getElementById("temp-texto");
-
-  if (fill) fill.style.width = `${porcentagem}%`;
-  if (texto) texto.innerText = vidaTemp;
-
-  atualizarTotal();
-}
-
-function atualizarTotal() {
-  const max = get("vidaMax");
-  const total = vidaAtual + vidaTemp;
-  const totalBox = document.querySelector(".hp-total");
-  const totalEl = document.getElementById("vida-total");
-
-  if (!totalBox || !totalEl) return;
-
-  if (vidaTemp > 0) {
-    totalBox.style.display = "block";
-    totalEl.innerText = `${total}/${max}`;
-  } else {
-    totalBox.style.display = "none";
-  }
-}
-
-function alterarVida(v) {
-  const max = get("vidaMax");
-  vidaAtual += v;
-
-  if (vidaAtual > max) vidaAtual = max;
-  if (vidaAtual < 0) vidaAtual = 0;
-
-  atualizarHP();
-  salvarTudo();
-}
-
-function alterarTemp(v) {
-  vidaTemp += v;
-  if (vidaTemp < 0) vidaTemp = 0;
-
-  atualizarTemp();
-  salvarTudo();
-}
-
-/* ================= EXAUSTÃO ================= */
-
-function setExaustao(nivel) {
-  exaustao = nivel;
-
-  const checks = document.querySelectorAll(".exaustao-check");
-  checks.forEach((el, i) => {
-    el.classList.toggle("ativo", i === nivel);
-  });
-
-  const desc = document.getElementById("exaustao-desc");
-  if (desc) desc.innerText = efeitosExaustao[nivel] || "Sem exaustão";
-
-  salvarTudo();
-}
-
-/* ================= MORTE ================= */
-
-function toggleMorte(tipo, index) {
-  morte[tipo][index] = !morte[tipo][index];
-  atualizarMorte();
-  salvarTudo();
-}
-
-function atualizarMorte() {
-  const checksSucesso = document.querySelectorAll(".morte-linha:nth-of-type(1) .morte-check");
-  const checksFalha = document.querySelectorAll(".morte-linha:nth-of-type(2) .morte-check");
-
-  checksSucesso.forEach((check, i) => {
-    check.classList.toggle("ativo", !!morte.sucessos[i]);
-  });
-
-  checksFalha.forEach((check, i) => {
-    check.classList.toggle("ativo", !!morte.falhas[i]);
-  });
-}
-
-/* ================= SAVES ================= */
-
-function toggleSave(attr) {
-  saves[attr] = !saves[attr];
-  atualizarSaves();
-  atualizarBadgesSaves();
-  salvarTudo();
-}
-
-function atualizarSaves() {
-  ["forca", "destreza", "constituicao", "inteligencia", "sabedoria", "carisma"].forEach(attr => {
-    const check = document.querySelector(`.save-check[onclick="toggleSave('${attr}')"]`);
-    if (check) check.classList.toggle("ativo", !!saves[attr]);
-  });
-}
-
-function atualizarBadgesSaves() {
-  const bonus = get("bonusProf");
-  const attrs = ["forca", "destreza", "constituicao", "inteligencia", "sabedoria", "carisma"];
-
-  attrs.forEach(attr => {
-    const badge = document.getElementById(`save_${attr}`);
-    if (!badge) return;
-
-    const valor = mod(get(attr)) + (saves[attr] ? bonus : 0);
-
-    if (saves[attr]) {
-      badge.style.display = "flex";
-      badge.textContent = valor >= 0 ? `+${valor}` : `${valor}`;
-    } else {
-      badge.style.display = "none";
-      badge.textContent = "";
-    }
-  });
+.attr:hover {
+  transform: translateY(-1px);
+  transition: 0.2s ease;
 }
 
 /* ================= PERÍCIAS ================= */
-
-function atualizarTudo() {
-  const bonus = get("bonusProf");
-
-  const mods = {
-    forca: mod(get("forca")),
-    destreza: mod(get("destreza")),
-    constituicao: mod(get("constituicao")),
-    inteligencia: mod(get("inteligencia")),
-    sabedoria: mod(get("sabedoria")),
-    carisma: mod(get("carisma"))
-  };
-
-  document.getElementById("mod_forca").innerText = mods.forca >= 0 ? `+${mods.forca}` : mods.forca;
-  document.getElementById("mod_destreza").innerText = mods.destreza >= 0 ? `+${mods.destreza}` : mods.destreza;
-  document.getElementById("mod_constituicao").innerText = mods.constituicao >= 0 ? `+${mods.constituicao}` : mods.constituicao;
-  document.getElementById("mod_inteligencia").innerText = mods.inteligencia >= 0 ? `+${mods.inteligencia}` : mods.inteligencia;
-  document.getElementById("mod_sabedoria").innerText = mods.sabedoria >= 0 ? `+${mods.sabedoria}` : mods.sabedoria;
-  document.getElementById("mod_carisma").innerText = mods.carisma >= 0 ? `+${mods.carisma}` : mods.carisma;
-
-  const lista = document.getElementById("pericias");
-  if (lista) {
-    lista.innerHTML = "";
-
-    pericias.forEach(pericia => {
-      let bonusFinal = 0;
-
-      if (profs[pericia.nome] === 1) {
-          bonusFinal = bonus;
-      } else if (profs[pericia.nome] === 2) {
-          bonusFinal = bonus * 2;
-      }
-
-const valor = mods[pericia.attr] + bonusFinal;
-
-      const div = document.createElement("div");
-      div.className = "pericia";
-      div.innerHTML = `
-        <label>
-          <div class="check 
-  ${profs[pericia.nome] === 1 ? "ativo" : ""} 
-  ${profs[pericia.nome] === 2 ? "expertise" : ""}" onclick="toggleProf('${pericia.nome}', event)"></div>
-          ${pericia.nome}
-        </label>
-        <span>${valor >= 0 ? `+${valor}` : valor}</span>
-      `;
-      lista.appendChild(div);
-    });
-  }
-
-  atualizarBadgesSaves();
+.pericias {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #342c25 0%, #2b241f 100%);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(200, 169, 107, 0.08);
 }
 
-function toggleProf(nome, event) {
-  if (event) event.stopPropagation();
-
-  // 0 = nada | 1 = prof | 2 = expertise
-  if (!profs[nome]) {
-    profs[nome] = 1;
-  } else if (profs[nome] === 1) {
-    profs[nome] = 2;
-  } else {
-    profs[nome] = 0;
-  }
-
-  atualizarTudo();
-  salvarTudo();
+.header-pericias {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(200, 169, 107, 0.18);
 }
 
-function limparFocoBotoesVida() {
-  const botoes = document.querySelectorAll(".hp-overlay button");
-
-  botoes.forEach(botao => {
-    botao.addEventListener("click", () => {
-      botao.blur();
-    });
-
-    botao.addEventListener("touchend", () => {
-      botao.blur();
-    }, { passive: true });
-
-    botao.addEventListener("mouseup", () => {
-      botao.blur();
-    });
-  });
+.header-pericias span {
+  font-family: 'Cinzel', serif;
+  font-size: 20px;
+  font-weight: bold;
+  color: #f3d9a2;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
-
-
-function ativarDragTemp() {
-  const barra = document.getElementById("tempBar");
-  if (!barra) return;
-
-  let arrastando = false;
-
-  function atualizarPorPosicao(clientX) {
-    const rect = barra.getBoundingClientRect();
-    const max = get("vidaMax");
-
-    if (max <= 0) return;
-
-    let pos = clientX - rect.left;
-    pos = Math.max(0, Math.min(pos, rect.width));
-
-    const porcentagem = pos / rect.width;
-    vidaTemp = Math.round(porcentagem * max);
-
-    atualizarTemp();
-    salvarTudo();
-  }
-
-  barra.addEventListener("click", (e) => {
-    if (e.target.tagName === "BUTTON") return;
-    atualizarPorPosicao(e.clientX);
-  });
-
-  barra.addEventListener("touchstart", (e) => {
-    if (e.target.tagName === "BUTTON") return;
-
-    arrastando = true;
-    atualizarPorPosicao(e.touches[0].clientX);
-  }, { passive: true });
-
-  barra.addEventListener("touchmove", (e) => {
-    if (!arrastando) return;
-    atualizarPorPosicao(e.touches[0].clientX);
-  }, { passive: true });
-
-  barra.addEventListener("touchend", () => {
-    arrastando = false;
-  });
-
-  barra.addEventListener("mousedown", (e) => {
-    if (e.target.tagName === "BUTTON") return;
-
-    arrastando = true;
-    atualizarPorPosicao(e.clientX);
-  });
-
-  document.addEventListener("mousemove", (e) => {
-    if (!arrastando) return;
-    atualizarPorPosicao(e.clientX);
-  });
-
-  document.addEventListener("mouseup", () => {
-    arrastando = false;
-  });
+.prof-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(200, 169, 107, 0.12);
 }
 
-/* ================= INIT ================= */
-
-function init() {
-  atualizarTudo();
-  renderPersonagens();
-  atualizarHP();
-  atualizarTemp();
-  atualizarMorte();
-  atualizarDT();
-  atualizarSaves();
-  atualizarBadgesSaves();
-  ativarDragVida();
-  ativarDragTemp();
-  limparFocoBotoesVida();
-
-  const nome = document.getElementById("nome");
-  const raca = document.getElementById("raca");
-  const classe = document.getElementById("classe");
-  const ca = document.getElementById("ca");
-  const deslocamento = document.getElementById("deslocamento");
-  const idade = document.getElementById("idade");
-  const altura = document.getElementById("altura");
-  const vidaMax = document.getElementById("vidaMax");
-
-  [nome, raca, classe, ca, deslocamento, idade, altura].forEach(el => {
-    if (el) el.addEventListener("input", salvarTudo);
-  });
-
-  if (vidaMax) {
-    vidaMax.addEventListener("input", () => {
-      const max = get("vidaMax");
-      if (vidaAtual > max) vidaAtual = max;
-      atualizarHP();
-      atualizarTemp();
-      salvarTudo();
-    });
-  }
-
-  const camposAutoSave = [
-    "classe",
-    "forca",
-    "destreza",
-    "constituicao",
-    "inteligencia",
-    "sabedoria",
-    "carisma",
-    "bonusProf",
-    "ca",
-    "deslocamento",
-    "idade",
-    "altura",
-    "inspiracao",
-    "dtBase",
-    "dtAtributo",
-    "dtProf"
-  ];
-
-  camposAutoSave.forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-
-    el.addEventListener("input", () => {
-      atualizarTudo();
-      atualizarDT();
-      salvarTudo();
-    });
-  });
-
-  const popup = document.getElementById("popup");
-  if (popup) {
-    popup.addEventListener("click", (e) => {
-      if (e.target.id === "popup") fecharPopup();
-    });
-  }
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") fecharPopup();
-  });
-
-  trocarAba("personagem");
+.prof-box label {
+  font-size: 12px;
+  font-weight: bold;
+  color: #d8c3a1;
+  opacity: 0.9;
 }
 
-document.addEventListener("DOMContentLoaded", init);
+.prof-box input {
+  width: 42px;
+  height: 26px;
+  margin: 0;
+  text-align: center;
+  font-size: 14px;
+  font-weight: bold;
+  border-radius: 6px;
+  background: #3c342d;
+  color: #f8f1df;
+}
+
+#pericias {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pericia {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 6px;
+  border-radius: 10px;
+  transition: 0.2s ease;
+}
+
+.pericia:hover {
+  background: rgba(200, 169, 107, 0.06);
+}
+
+.pericia label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  color: #f5ead6;
+}
+
+.pericia span {
+  width: 58px;
+  text-align: right;
+  font-weight: 800;
+  font-size: 24px;
+  color: #f8f1df;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.check {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #c8a96b;
+  border-radius: 5px;
+  font-size: 11px;
+  cursor: pointer;
+  color: #f8f1df;
+  transition: 0.2s ease;
+}
+
+.check:hover {
+  background: rgba(200, 169, 107, 0.12);
+  transform: scale(1.05);
+}
+
+.check.ativo {
+  background: #c8a96b;
+  border-color: #c8a96b;
+  color: #1f1a17;
+}
+
+.check.ativo::after {
+  content: "✓";
+  font-size: 11px;
+  font-weight: bold;
+}
+
+/* ================= COMBATE ================= */
+.hp-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.linha-status {
+  display: flex;
+  gap: 8px;
+}
+
+.linha-status input {
+  flex: 1;
+  text-align: center;
+}
+
+.hp-bar {
+  position: relative;
+  overflow: hidden;
+
+  height: 35px;
+  border-radius: 10px;
+  background: #2f2822;
+}
+
+#hp-fill {
+  width: 100%;
+  height: 100%;
+  background: #b91c1c;
+}
+
+.hp-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 10px;
+}
+
+.hp-overlay button {
+  background: rgba(20, 14, 10, 0.6);
+  border: none;
+  color: #f8f1df;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.hp-overlay span {
+  font-weight: bold;
+  color: #f8f1df;
+}
+
+/* ================= CAMPOS ================= */
+.campo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.campo label {
+  font-size: 10px;
+  opacity: 0.75;
+  margin-bottom: 2px;
+  text-align: center;
+  color: #d8c3a1;
+}
+
+.campo input {
+  text-align: center;
+}
+
+/* ================= POPUP ================= */
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.popup-content {
+  position: relative;
+
+  width: 250px;
+  padding: 20px;
+  border-radius: 10px;
+
+  background: #2f2822;
+  color: #f8f1df;
+  text-align: center;
+}
+
+.fechar {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  cursor: pointer;
+  color: #f8f1df;
+}
+
+/* ================= INVENTÁRIO ================= */
+.inv-add {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+#lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.item-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+
+  margin-bottom: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #2f2822;
+}
+
+.item-info {
+  flex: 1;
+  cursor: pointer;
+}
+
+.item-nome {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 4px;
+  color: #f8f1df;
+}
+
+.item-desc {
+  margin: 0;
+  font-size: 13px;
+  color: #d8c3a1;
+  line-height: 1.4;
+}
+
+.item-remover {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+
+  background: #7f1d1d;
+  color: #f8f1df;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.item-remover:hover {
+  background: #991b1b;
+}
+
+.inv-add {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.inv-add-btn {
+  align-self: center;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 10px;
+  background: #c8a96b;
+  color: #1f1a17;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.inv-add-btn:hover {
+  background: #d8bb7d;
+  transform: scale(1.05);
+}
+
+.item-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #2f2822;
+  overflow: hidden;
+}
+
+.item-info {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.item-nome,
+.item-desc,
+#popup-titulo,
+#popup-texto {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.item-desc {
+  margin: 0;
+  font-size: 13px;
+  color: #d8c3a1;
+  line-height: 1.4;
+  white-space: normal;
+}
+
+.item-remover {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  background: #7f1d1d;
+  color: #f8f1df;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+}
+
+.popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 99999;
+}
+
+.popup-content {
+  position: relative;
+  width: min(360px, 100%);
+  max-width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 20px;
+  padding-top: 44px;
+  border-radius: 12px;
+  background: #2f2822;
+  color: #f8f1df;
+  text-align: left;
+}
+
+.fechar {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  color: #f8f1df;
+}
+
+/* ================= ARMAS ================= */
+.arma-add {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.linha-add {
+  display: flex;
+  gap: 8px;
+}
+
+.linha-add input {
+  flex: 1;
+}
+
+.linha-add button {
+  width: 40px;
+  border: none;
+  border-radius: 8px;
+  background: #c8a96b;
+  color: #1f1a17;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+#listaArmas {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.arma-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+
+  margin-bottom: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #2f2822;
+  overflow: hidden; /* importante */
+}
+
+.arma-info {
+  flex: 1;
+  min-width: 0; /* ESSENCIAL no flex */
+}
+
+.arma-nome {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 4px;
+  color: #f8f1df;
+
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.arma-dano {
+  margin: 0;
+  font-size: 13px;
+  color: #d8c3a1;
+  line-height: 1.4;
+  white-space: normal;
+
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.arma-remover {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+
+  background: #7f1d1d;
+  color: #f8f1df;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+}
+
+.arma-remover:hover {
+  background: #991b1b;
+}
+
+/* ================= TELA INICIAL ================= */
+#tela-inicial h2 {
+  text-align: center;
+  margin: 12px 0 20px 0;
+  font-size: 22px;
+  color: #f8f1df;
+}
+
+.card-info {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+
+  width: 100%;
+  text-align: center;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+.card-nome {
+  position: static !important;
+  left: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+
+  display: inline-block;
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 1.2;
+  color: #f8f1df;
+
+  padding: 3px 8px;
+  border-radius: 6px;
+
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.8) !important;
+  filter: none !important;
+  -webkit-text-stroke: 0 !important;
+  background: none;
+}
+
+.card-classe {
+  position: static !important;
+  left: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+
+  display: block;
+  font-size: 11px;
+  line-height: 1.1;
+  color: #d8c3a1;
+
+  text-shadow: none !important;
+  filter: none !important;
+  -webkit-text-stroke: 0 !important;
+}
+
+#preview {
+  width: 100%;
+  max-width: 250px; /* limite opcional */
+  height: auto; /* 👈 ESSENCIAL (mantém proporção) */
+  object-fit: cover;
+  border-radius: 10px;
+  display: block;
+  margin: 10px auto;
+}
+
+.upload-imagem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 10px 0;
+}
+
+.upload-imagem input[type="file"] {
+  display: none;
+}
+
+.botao-upload {
+  background: #c8a96b;
+  color: #1f1a17;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.2s;
+  display: inline-block;
+}
+
+.botao-upload:hover {
+  background: #d8bb7d;
+  transform: scale(1.03);
+}
+
+#nome-arquivo {
+  font-size: 14px;
+  color: #d8c3a1;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.exaustao-inline {
+  margin-top: 18px;
+  padding: 10px 0;
+}
+
+.exaustao-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #f8f1df;
+}
+
+.exaustao-checks {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.exaustao-check {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: #3c342d;
+  color: #f1e6cf;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+  transition: 0.2s;
+}
+
+.exaustao-check:hover {
+  background: #5a4b3d;
+}
+
+.exaustao-check.ativo {
+  background: #b91c1c;
+  color: #fff;
+  box-shadow: 0 0 8px rgba(185, 28, 28, 0.45);
+}
+
+.exaustao-box {
+  margin-top: 18px;
+}
+
+.exaustao-box h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.exaustao-label {
+  font-size: 13px;
+}
+
+#exaustao-desc {
+  font-size: 12px;
+  opacity: 0.85;
+  margin-top: 8px;
+}
+
+.save-check {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #c8a96b;
+  border-radius: 5px;
+  margin: 2px 0 4px 0;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 9px;
+  line-height: 1;
+  color: #1f1a17;
+  background: transparent;
+}
+
+.save-check.ativo {
+  background: #c8a96b;
+  color: #1f1a17;
+}
+
+.hp-bar.temp {
+  background: #2f2822; /* igual a barra normal */
+  margin-top: 8px;
+}
+
+#temp-fill {
+  width: 0%;
+  height: 100%;
+  background: #2563eb;
+  transition: width 0.05s linear;
+}
+
+.hp-total {
+  margin-top: 6px;
+  text-align: center;
+  font-weight: bold;
+  color: #93c5fd;
+}
+
+.morte-box {
+  margin-top: 18px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #2f2822;
+  text-align: center;
+}
+
+.morte-box h3 {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  color: #f8f1df;
+}
+
+.morte-linha {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.morte-linha span {
+  font-size: 14px;
+  font-weight: bold;
+  color: #d8c3a1;
+}
+
+.morte-checks {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.morte-check {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #c8a96b;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: 0.2s;
+  background: transparent;
+}
+
+.morte-check.ativo {
+  background: #c8a96b;
+}
+
+.morte-check.falha.ativo {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+.exaustao-box {
+  text-align: center;
+}
+
+.exaustao-niveis {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#exaustao-desc {
+  text-align: center;
+  font-size: 13px;
+  margin-top: 6px;
+  opacity: 0.8;
+}
+
+.exaustao-inline {
+  display: flex;
+  justify-content: center;
+}
+
+.exaustao-box {
+  text-align: center;
+}
+
+.attr {
+  position: relative;
+}
+
+.save-badge {
+  position: absolute;
+
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+
+  width: 22px;
+  height: 22px;
+
+  border-radius: 50%;
+  display: none;
+
+  align-items: center;
+  justify-content: center;
+
+  background: #c8a96b;
+  color: #1f1a17;
+
+  font-size: 11px;
+  font-weight: bold;
+
+  z-index: 5;
+}
+
+.attr {
+  position: relative;
+  padding-bottom: 28px; /* espaço pro badge */
+}
+
+.poder-add {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.poder-linha {
+  display: flex;
+  gap: 8px;
+}
+
+.poder-linha input {
+  flex: 1;
+}
+
+#listaPoderes {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.poder-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+
+  margin-bottom: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #2f2822;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
+}
+
+.poder-info {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.poder-topo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.poder-icone {
+  font-size: 18px;
+}
+
+.poder-nome {
+  font-size: 18px;
+  font-weight: bold;
+  color: #f8f1df;
+}
+
+.poder-tipo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.poder-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.poder-tag {
+  background: #3c342d;
+  color: #f1e6cf;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.poder-desc {
+  margin: 0;
+  font-size: 13px;
+  color: #d8c3a1;
+  line-height: 1.4;
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.poder-remover {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 10px;
+  background: #991b1b;
+  color: #fff;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.poder-remover:hover {
+  background: #b91c1c;
+}
+
+/* cores dos tipos */
+.tipo-fogo {
+  background: rgba(220, 38, 38, 0.18);
+  color: #fca5a5;
+  border: 1px solid rgba(220, 38, 38, 0.35);
+}
+
+.tipo-gelo {
+  background: rgba(59, 130, 246, 0.18);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+
+.tipo-raio {
+  background: rgba(250, 204, 21, 0.18);
+  color: #fde047;
+  border: 1px solid rgba(250, 204, 21, 0.35);
+}
+
+.tipo-necrotico {
+  background: rgba(107, 33, 168, 0.22);
+  color: #d8b4fe;
+  border: 1px solid rgba(107, 33, 168, 0.4);
+}
+
+.tipo-radiante {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fde68a;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.tipo-veneno {
+  background: rgba(34, 197, 94, 0.18);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+.tipo-psiquico {
+  background: rgba(236, 72, 153, 0.18);
+  color: #f9a8d4;
+  border: 1px solid rgba(236, 72, 153, 0.35);
+}
+
+.tipo-trovejante {
+  background: rgba(56, 189, 248, 0.18);
+  color: #7dd3fc;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+.tipo-corte,
+.tipo-perfurante,
+.tipo-concussao {
+  background: rgba(148, 163, 184, 0.18);
+  color: #cbd5e1;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.tipo-padrao {
+  background: rgba(200, 169, 107, 0.18);
+  color: #e7c98a;
+  border: 1px solid rgba(200, 169, 107, 0.35);
+}
+
+.titulo-secao {
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-size: 22px;
+  letter-spacing: 1px;
+  color: #e7c98a;
+  margin: 15px 0;
+
+  position: relative;
+}
+
+.titulo-secao::before,
+.titulo-secao::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 30%;
+  height: 1px;
+  background: rgba(200, 169, 107, 0.4);
+}
+
+.titulo-secao::before {
+  left: 0;
+}
+
+.titulo-secao::after {
+  right: 0;
+}
+
+.titulo-secao {
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-size: 20px;
+  letter-spacing: 2px;
+  color: #e7c98a;
+
+  margin: 12px 0;
+
+  position: relative;
+}
+
+.titulo-secao::before,
+.titulo-secao::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 35%;
+  height: 1px;
+  background: rgba(200, 169, 107, 0.3);
+}
+
+.titulo-secao::before {
+  left: 0;
+}
+
+.titulo-secao::after {
+  right: 0;
+}
+
+.titulo-secao {
+  margin: 18px 0 14px 0;
+}
+
+.header-pericias-esquerda {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.inspiracao-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inspiracao-box label {
+  font-size: 12px;
+  font-weight: bold;
+  color: #d8c3a1;
+}
+
+.inspiracao-box input {
+  width: 42px;
+  height: 42px;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 999px;
+  border: 2px solid #c8a96b;
+  background: #3c342d;
+  color: #f8f1df;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.25);
+}
+
+.dt-box {
+  margin-bottom: 16px;
+  padding: 12px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #342c25 0%, #2b241f 100%);
+  border: 1px solid rgba(200, 169, 107, 0.10);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+}
+
+.subtitulo-secao {
+  margin: 0 0 10px 0;
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
+  color: #f3d9a2;
+}
+
+.dt-linha {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.dt-linha .campo {
+  flex: 1;
+}
+
+.dt-resultado-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(200, 169, 107, 0.12);
+}
+
+.dt-resultado-box span {
+  font-size: 14px;
+  font-weight: bold;
+  color: #d8c3a1;
+}
+
+#dtTotal {
+  min-width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #c8a96b;
+  color: #1f1a17;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.header-pericias-topo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.inspiracao-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inspiracao-box label {
+  font-size: 12px;
+  font-weight: bold;
+  color: #d8c3a1;
+}
+
+.inspiracao-box input {
+  width: 38px;
+  height: 38px;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 50%;
+  border: 2px solid #c8a96b;
+  background: #3c342d;
+  color: #f8f1df;
+}
+
+.dt-box {
+  margin-bottom: 16px;
+  padding: 12px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #342c25 0%, #2b241f 100%);
+  border: 1px solid rgba(200, 169, 107, 0.10);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
+}
+
+.subtitulo-secao {
+  margin: 0 0 10px 0;
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
+  color: #f3d9a2;
+}
+
+.dt-linha {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.dt-linha .campo {
+  flex: 1;
+}
+
+.dt-resultado-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(200, 169, 107, 0.12);
+}
+
+.dt-resultado-box span {
+  font-size: 14px;
+  font-weight: bold;
+  color: #d8c3a1;
+}
+
+#dtTotal {
+  min-width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #c8a96b;
+  color: #1f1a17;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.inspiracao-box input {
+  width: 38px;
+  height: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+  padding: 0;
+  margin: 0;
+
+  font-size: 16px;
+  font-weight: bold;
+
+  border-radius: 50%;
+  border: 2px solid #c8a96b;
+  background: #3c342d;
+  color: #f8f1df;
+
+  line-height: 1;
+}
+
+.inspiracao-box input::-webkit-inner-spin-button,
+.inspiracao-box input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.inspiracao-box input {
+  appearance: textfield;
+}
+
+.header-pericias-topo {
+  display: flex;
+  align-items: center;
+  gap: 25px; /* AUMENTA ISSO (antes era ~12px) */
+}
+
+.inspiracao-box label {
+  font-family: 'Cinzel', serif; /* mesma do Perícias */
+  font-size: 14px;
+  color: #f3d9a2;
+}
+
+.inspiracao-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 99999;
+  backdrop-filter: blur(4px);
+}
+
+.popup-content {
+  position: relative;
+  width: min(420px, 100%);
+  max-width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+
+  padding: 24px 20px 20px;
+  border-radius: 18px;
+
+  background: #2f2822;
+  border: 2px solid rgba(200, 169, 107, 0.18);
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+
+  color: #f8f1df;
+  text-align: left;
+}
+
+.fechar {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  color: #f8f1df;
+  transition: 0.2s;
+}
+
+.fechar:hover {
+  color: #e7c98a;
+  transform: scale(1.08);
+}
+
+#popup-titulo {
+  margin: 0 36px 18px 0;
+  font-family: 'Cinzel', serif;
+  font-size: 28px;
+  line-height: 1.1;
+  color: #f3d9a2;
+}
+
+#popup-texto {
+  margin: 0;
+}
+
+/* bloco geral do conteúdo */
+.popup-bloco {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* rótulo tipo DESCRIÇÃO */
+.popup-label {
+  display: block;
+  margin-bottom: 6px;
+
+  font-family: 'Cinzel', serif;
+  font-size: 16px; /* menor */
+  letter-spacing: 0.5px;
+
+  color: #c8a96b; /* mais suave */
+}
+
+/* caixa interna mais clara */
+.popup-descricao {
+  min-height: 180px;
+
+  padding: 6px 12px 12px 12px; /* topo bem menor */
+
+  border-radius: 14px;
+  background: #4a4036;
+  border: 2px solid rgba(255, 255, 255, 0.04);
+
+  color: #f8f1df;
+  font-size: 16px;
+
+  line-height: 1.4; /* diminui altura das linhas */
+  
+  white-space: pre-line;
+  overflow-wrap: break-word;
+}
+/* opcional para infos extras */
+.popup-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.popup-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(200, 169, 107, 0.10);
+  border: 1px solid rgba(200, 169, 107, 0.20);
+  color: #f3d9a2;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.popup-descricao * {
+  margin: 0;
+  padding: 0;
+  padding-top: 4px;
+}
+
+.check {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.pericia label {
+  pointer-events: none;
+}
+
+.header-pericias {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(200, 169, 107, 0.18);
+  flex-wrap: wrap;
+}
+
+.header-pericias-topo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.inspiracao-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.inspiracao-box label {
+  font-family: 'Cinzel', serif;
+  font-size: 14px;
+  color: #f3d9a2;
+  white-space: nowrap;
+}
+
+.inspiracao-box input {
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  line-height: 40px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 50%;
+  border: 2px solid #c8a96b;
+  background: #3c342d;
+  color: #f8f1df;
+}
+
+.prof-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(200, 169, 107, 0.12);
+  flex-shrink: 0;
+}
+
+.check.ativo {
+  background: #c8a96b;
+  border-color: #c8a96b;
+  color: #1f1a17;
+}
+
+.check.ativo::after {
+  content: "✓";
+  font-size: 11px;
+  font-weight: bold;
+}
+
+/* ⭐ EXPERTISE */
+.check.expertise {
+  background: linear-gradient(145deg, #c8a96b, #f3d9a2);
+  border-color: #f3d9a2;
+  color: #1f1a17;
+  box-shadow: 0 0 8px rgba(200, 169, 107, 0.6);
+}
+
+.check.expertise::after {
+  content: "★";
+  font-size: 12px;
+}
+
+.hp-bar {
+  cursor: pointer;
+  touch-action: none; /* ESSENCIAL pro drag funcionar bem */
+}
+
+.hp-bar,
+.hp-bar.temp {
+  cursor: pointer;
+  touch-action: none;
+}
+
+.hp-overlay button,
+.linha-add button,
+.inv-add-btn,
+.arma-remover,
+.item-remover,
+.poder-remover,
+.card button,
+.fechar {
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+
+.hp-overlay button:focus,
+.hp-overlay button:active,
+.linha-add button:focus,
+.linha-add button:active,
+.inv-add-btn:focus,
+.inv-add-btn:active,
+.arma-remover:focus,
+.arma-remover:active,
+.item-remover:focus,
+.item-remover:active,
+.poder-remover:focus,
+.poder-remover:active,
+.card button:focus,
+.card button:active,
+.fechar:focus,
+.fechar:active {
+  outline: none;
+  box-shadow: none;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hp-overlay,
+.hp-overlay * {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hp-overlay button {
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+  box-shadow: none;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.hp-overlay button:focus,
+.hp-overlay button:active,
+.hp-overlay button:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.arma-desc {
+  margin: 6px 0 0 0;
+  font-size: 12px;
+  color: #bfae96;
+  line-height: 1.4;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.popup-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.tag-dano {
+  background: rgba(200, 169, 107, 0.15);
+  border: 1px solid rgba(200, 169, 107, 0.4);
+  color: #f3d9a2;
+
+  padding: 4px 10px;
+  border-radius: 999px;
+
+  font-size: 13px;
+  font-weight: bold;
+
+  box-shadow: 0 0 6px rgba(200, 169, 107, 0.2);
+}
+
+.popup-acoes {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.popup-editar {
+  background: rgba(200, 169, 107, 0.16);
+  border: 1px solid rgba(200, 169, 107, 0.35);
+  color: #f3d9a2;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: 0.2s;
+}
+
+.popup-editar:hover {
+  transform: scale(1.06);
+  background: rgba(200, 169, 107, 0.25);
+}
+
+.fechar {
+  position: static;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  color: #f8f1df;
+  transition: 0.2s;
+}
+
+.popup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.popup-form input,
+.popup-form textarea {
+  width: 100%;
+  background: #5a4b3f;
+  color: #f8f1df;
+  border: none;
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.popup-form textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.popup-salvar-btn {
+  margin-top: 10px;
+  background: #c8a96b;
+  color: #1f1a17;
+  border: none;
+  border-radius: 10px;
+  padding: 10px;
+  font-weight: bold;
+  cursor: pointer;
+} 
+.item-acoes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-editar {
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(200, 169, 107, 0.35);
+  border-radius: 8px;
+  background: rgba(200, 169, 107, 0.15);
+  color: #f3d9a2;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.btn-editar:hover {
+  transform: scale(1.05);
+  background: rgba(200, 169, 107, 0.25);
+}
+
+/* ================= ANIMAÇÃO DAS ABAS ================= */
+.aba {
+  display: none;
+  opacity: 0;
+  transform: translateY(14px) scale(0.98);
+  filter: blur(4px);
+  transition:
+    opacity 0.35s ease,
+    transform 0.35s ease,
+    filter 0.35s ease;
+  will-change: opacity, transform, filter;
+}
+
+.aba.active {
+  display: block;
+}
+
+.aba.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0);
+}
+
+.aba.hiding {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.98);
+  filter: blur(3px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aba {
+    transition: none;
+    transform: none;
+    filter: none;
+  }
+}
