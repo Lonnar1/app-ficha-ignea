@@ -309,13 +309,24 @@ function salvarEdicaoArma(index) {
 /* ================= ABAS ================= */
 
 function trocarAba(id, btn = null) {
-  document.querySelectorAll(".aba").forEach(aba => {
-    aba.style.display = aba.id === id ? "block" : "none";
-  });
+  const abas = document.querySelectorAll(".aba");
+  const novaAba = document.getElementById(id);
+  const abaAtual = document.querySelector(".aba.active");
 
-  document.querySelectorAll(".tab-btn").forEach(b => {
-    b.classList.remove("active");
-  });
+  if (!novaAba) return;
+  if (abaAtual === novaAba) {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+
+    if (btn) {
+      btn.classList.add("active");
+    } else {
+      const botao = document.querySelector(`.tab-btn[onclick*="${id}"]`);
+      if (botao) botao.classList.add("active");
+    }
+    return;
+  }
+
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
 
   if (btn) {
     btn.classList.add("active");
@@ -323,6 +334,31 @@ function trocarAba(id, btn = null) {
     const botao = document.querySelector(`.tab-btn[onclick*="${id}"]`);
     if (botao) botao.classList.add("active");
   }
+
+  if (abaAtual) {
+    abaAtual.classList.remove("show");
+    abaAtual.classList.add("hiding");
+
+    setTimeout(() => {
+      abaAtual.classList.remove("active", "hiding");
+      abaAtual.style.display = "none";
+    }, 250);
+  }
+
+  abas.forEach(aba => {
+    if (aba !== novaAba) {
+      aba.classList.remove("show", "hiding");
+    }
+  });
+
+  novaAba.style.display = "block";
+  novaAba.classList.add("active");
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      novaAba.classList.add("show");
+    });
+  });
 }
 
 function entrarFicha() {
