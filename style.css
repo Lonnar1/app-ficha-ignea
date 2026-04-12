@@ -1918,3 +1918,93 @@ button {
 
   box-shadow: 0 0 6px rgba(200, 169, 107, 0.2);
 }
+
+.popup-acoes {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.popup-editar {
+  background: rgba(200, 169, 107, 0.16);
+  border: 1px solid rgba(200, 169, 107, 0.35);
+  color: #f3d9a2;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: 0.2s;
+}
+
+.popup-editar:hover {
+  transform: scale(1.06);
+  background: rgba(200, 169, 107, 0.25);
+}
+
+.fechar {
+  position: static;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  color: #f8f1df;
+  transition: 0.2s;
+}
+
+.popup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.popup-form input,
+.popup-form textarea {
+  width: 100%;
+  background: #5a4b3f;
+  color: #f8f1df;
+  border: none;
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.popup-form textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.popup-salvar-btn {
+  margin-top: 10px;
+  background: #c8a96b;
+  color: #1f1a17;
+  border: none;
+  border-radius: 10px;
+  padding: 10px;
+  font-weight: bold;
+  cursor: pointer;
+} 
+.item-acoes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-editar {
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(200, 169, 107, 0.35);
+  border-radius: 8px;
+  background: rgba(200, 169, 107, 0.15);
+  color: #f3d9a2;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.btn-editar:hover {
+  transform: scale(1.05);
+  background: rgba(200, 169, 107, 0.25);
+}
