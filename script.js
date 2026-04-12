@@ -91,6 +91,7 @@ function getIconeTipo(tipo) {
   if (t.includes("corte")) return "🗡️";
   if (t.includes("perfur")) return "📌";
   if (t.includes("concuss")) return "💥";
+  if (t.includes("fisico")) return "🗡️";
 
   return "🔮";
 }
@@ -217,10 +218,13 @@ function editarPoder(index) {
       <label class="popup-label">Tipo</label>
       <input id="editPoderTipo" value="${poder.tipo || ""}">
 
+      <label class="popup-label">Dano</label>
+      <input id="editPoderDano" value="${poder.dano || ""}">
+
       <label class="popup-label">Círculo</label>
       <input id="editPoderCirculo" value="${poder.circulo || ""}">
 
-      <label class="popup-label">Tempo</label>
+      <label class="popup-label">Conjuração</label>
       <input id="editPoderTempo" value="${poder.tempo || ""}">
 
       <label class="popup-label">Alcance</label>
@@ -244,6 +248,7 @@ function editarPoder(index) {
 function salvarEdicaoPoder(index) {
   const nome = document.getElementById("editPoderNome").value.trim();
   const tipo = document.getElementById("editPoderTipo").value.trim();
+  const dano = document.getElementById("editPoderDano").value.trim();
   const circulo = document.getElementById("editPoderCirculo").value.trim();
   const tempo = document.getElementById("editPoderTempo").value.trim();
   const alcance = document.getElementById("editPoderAlcance").value.trim();
@@ -255,6 +260,7 @@ function salvarEdicaoPoder(index) {
   poderes[index] = {
     nome,
     tipo,
+    dano,
     circulo,
     tempo,
     alcance,
@@ -750,6 +756,7 @@ function removerArma(index) {
 function addPoder() {
   const nome = document.getElementById("poderNome").value.trim();
   const tipo = document.getElementById("poderTipo").value.trim();
+  const dano = document.getElementById("poderDano").value.trim();
   const circulo = document.getElementById("poderCirculo").value.trim();
   const tempo = document.getElementById("poderTempo").value.trim();
   const alcance = document.getElementById("poderAlcance").value.trim();
@@ -761,6 +768,7 @@ function addPoder() {
   const novoPoder = {
     nome,
     tipo,
+    dano,
     circulo,
     tempo,
     alcance,
@@ -780,6 +788,7 @@ function addPoder() {
 
   document.getElementById("poderNome").value = "";
   document.getElementById("poderTipo").value = "";
+  document.getElementById("poderDano").value = "";
   document.getElementById("poderCirculo").value = "";
   document.getElementById("poderTempo").value = "";
   document.getElementById("poderAlcance").value = "";
@@ -795,7 +804,6 @@ function renderPoderes() {
 
   poderes.forEach((poder, index) => {
     const icone = getIconeTipo(poder.tipo);
-    const classeTipo = getClasseTipo(poder.tipo);
 
     const li = document.createElement("li");
     li.className = "poder-card";
@@ -803,11 +811,12 @@ function renderPoderes() {
     li.innerHTML = `
       <div class="poder-info" onclick="verPoder(${index})">
         <strong class="poder-nome">${icone} ${poder.nome || "Sem nome"}</strong>
+        ${poder.dano ? `<div class="popup-tags" style="margin-top:6px;"><span class="tag-dano">${poder.dano}</span></div>` : ""}
       </div>
 
       <div class="item-acoes">
-        <button type="button" class="btn-editar" onclick="editarPoder(${index})">✏️</button>
-        <button type="button" class="poder-remover" onclick="removerPoder(${index})">X</button>
+        <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarPoder(${index})">✏️</button>
+        <button type="button" class="poder-remover" onclick="event.stopPropagation(); removerPoder(${index})">X</button>
       </div>
     `;
 
@@ -823,6 +832,7 @@ function verPoder(index) {
   const icone = getIconeTipo(tipoTexto);
 
   const tags = [
+    poder.dano ? `<span class="tag-dano">${poder.dano}</span>` : "",
     poder.circulo ? `<span class="popup-tag">Círculo: ${poder.circulo}</span>` : "",
     poder.tempo ? `<span class="popup-tag">Conjuração: ${poder.tempo}</span>` : "",
     poder.alcance ? `<span class="popup-tag">Alcance: ${poder.alcance}</span>` : "",
@@ -833,7 +843,7 @@ function verPoder(index) {
     <div class="popup-bloco">
       ${tags ? `<div class="popup-tags">${tags}</div>` : ""}
 
-      <div>
+      <div style="margin-top: 12px;">
         <span class="popup-label">Descrição</span>
         <div class="popup-descricao">
           ${poder.desc || "Sem descrição"}
@@ -842,7 +852,7 @@ function verPoder(index) {
     </div>
   `;
 
-  abrirPopup(`${icone} ${poder.nome}`, html, true, () => editarPoder(index));
+  abrirPopup(`${icone} ${poder.nome}`, html, true, null);
 }
 
 function removerPoder(index) {
