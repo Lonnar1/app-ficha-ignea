@@ -3,6 +3,10 @@ let morte = {
   falhas: [false, false, false]
 };
 
+
+let editandoItem = -1;
+let editandoArma = -1;
+let editandoPoder = -1;
 let vidaAtual = 50;
 let vidaTemp = 0;
 let inventario = [];
@@ -111,10 +115,11 @@ function getClasseTipo(tipo) {
 
 /* ================= POPUP ================= */
 
-function abrirPopup(titulo, conteudo, usarHTML = false) {
+function abrirPopup(titulo, conteudo, usarHTML = false, onEditar = null) {
   const popup = document.getElementById("popup");
   const tituloEl = document.getElementById("popup-titulo");
   const textoEl = document.getElementById("popup-texto");
+  const btnEditar = document.getElementById("popup-editar");
 
   if (!popup || !tituloEl || !textoEl) return;
 
@@ -126,12 +131,173 @@ function abrirPopup(titulo, conteudo, usarHTML = false) {
     textoEl.textContent = conteudo || "";
   }
 
+  if (btnEditar) {
+    if (onEditar) {
+      btnEditar.style.display = "inline-flex";
+      btnEditar.onclick = onEditar;
+    } else {
+      btnEditar.style.display = "none";
+      btnEditar.onclick = null;
+    }
+  }
+
   popup.style.display = "flex";
+}
+
+function editarItem(index) {
+  const item = inventario[index];
+  if (!item) return;
+
+  const html = `
+    <div class="popup-form">
+      <label class="popup-label">Nome</label>
+      <input id="editItemNome" value="${item.nome || ""}">
+
+      <label class="popup-label">Descrição</label>
+      <textarea id="editItemDesc">${item.desc || ""}</textarea>
+
+      <button class="popup-salvar-btn" onclick="salvarEdicaoItem(${index})">
+        Salvar
+      </button>
+    </div>
+  `;
+
+  abrirPopup("Editar item", html, true, null);
+}
+
+function salvarEdicaoItem(index) {
+  const nome = document.getElementById("editItemNome").value.trim();
+  const desc = document.getElementById("editItemDesc").value.trim();
+
+  if (!nome) return;
+
+  inventario[index] = {
+    nome,
+    desc
+  };
+
+  renderInv();
+  salvarTudo();
+  fecharPopup();
+}
+
+function editarArma(index) {
+  const arma = armas[index];
+  if (!arma) return;
+
+  const html = `
+    <div class="popup-form">
+      <label class="popup-label">Nome</label>
+      <input id="editArmaNome" value="${arma.nome || ""}">
+
+      <label class="popup-label">Dano</label>
+      <input id="editArmaDano" value="${arma.dano || ""}">
+
+      <label class="popup-label">Descrição</label>
+      <textarea id="editArmaDesc">${arma.desc || ""}</textarea>
+
+      <button class="popup-salvar-btn" onclick="salvarEdicaoArma(${index})">
+        Salvar
+      </button>
+    </div>
+  `;
+
+  abrirPopup("Editar arma", html, true, null);
+}
+
+function editarPoder(index) {
+  const poder = poderes[index];
+  if (!poder) return;
+
+  const html = `
+    <div class="popup-form">
+      <label class="popup-label">Nome</label>
+      <input id="editPoderNome" value="${poder.nome || ""}">
+
+      <label class="popup-label">Tipo</label>
+      <input id="editPoderTipo" value="${poder.tipo || ""}">
+
+      <label class="popup-label">Círculo</label>
+      <input id="editPoderCirculo" value="${poder.circulo || ""}">
+
+      <label class="popup-label">Tempo</label>
+      <input id="editPoderTempo" value="${poder.tempo || ""}">
+
+      <label class="popup-label">Alcance</label>
+      <input id="editPoderAlcance" value="${poder.alcance || ""}">
+
+      <label class="popup-label">Duração</label>
+      <input id="editPoderDuracao" value="${poder.duracao || ""}">
+
+      <label class="popup-label">Descrição</label>
+      <textarea id="editPoderDesc">${poder.desc || ""}</textarea>
+
+      <button class="popup-salvar-btn" onclick="salvarEdicaoPoder(${index})">
+        Salvar
+      </button>
+    </div>
+  `;
+
+  abrirPopup("Editar poder", html, true, null);
+}
+
+function salvarEdicaoPoder(index) {
+  const nome = document.getElementById("editPoderNome").value.trim();
+  const tipo = document.getElementById("editPoderTipo").value.trim();
+  const circulo = document.getElementById("editPoderCirculo").value.trim();
+  const tempo = document.getElementById("editPoderTempo").value.trim();
+  const alcance = document.getElementById("editPoderAlcance").value.trim();
+  const duracao = document.getElementById("editPoderDuracao").value.trim();
+  const desc = document.getElementById("editPoderDesc").value.trim();
+
+  if (!nome) return;
+
+  poderes[index] = {
+    nome,
+    tipo,
+    circulo,
+    tempo,
+    alcance,
+    duracao,
+    desc
+  };
+
+  renderPoderes();
+  salvarTudo();
+  fecharPopup();
+}
+
+function atualizarTextoBotaoEdicao() {
+  const btnItem = document.querySelector("#inventario .inv-add-btn");
+  const btnArma = document.querySelector("#combate .arma-add .inv-add-btn, #combate .arma-add button");
+  const btnPoder = document.querySelector("#poderes .inv-add-btn");
+
+  if (btnItem) btnItem.textContent = editandoItem >= 0 ? "Salvar edição" : "+";
+  if (btnArma) btnArma.textContent = editandoArma >= 0 ? "Salvar edição" : "+";
+  if (btnPoder) btnPoder.textContent = editandoPoder >= 0 ? "Salvar edição" : "+";
 }
 
 function fecharPopup() {
   const popup = document.getElementById("popup");
   if (popup) popup.style.display = "none";
+}
+
+function salvarEdicaoArma(index) {
+  const nome = document.getElementById("editArmaNome").value.trim();
+  const dano = document.getElementById("editArmaDano").value.trim();
+  const desc = document.getElementById("editArmaDesc").value.trim();
+
+  if (!nome) return;
+
+  armas[index] = {
+    nome,
+    dano,
+    desc
+  };
+
+  renderArmas();
+  salvarTudo();
+  fecharPopup();
 }
 
 /* ================= ABAS ================= */
@@ -410,7 +576,18 @@ function addItem() {
 
   if (!nome) return;
 
-  inventario.push({ nome, desc });
+  const novoItem = {
+    nome,
+    desc
+  };
+
+  if (editandoItem >= 0) {
+    inventario[editandoItem] = novoItem;
+    editandoItem = -1;
+  } else {
+    inventario.push(novoItem);
+  }
+
   renderInv();
   salvarTudo();
 
@@ -431,9 +608,12 @@ function renderInv() {
     li.innerHTML = `
       <div class="item-info" onclick="verItem(${index})">
         <strong class="item-nome">${item.nome || "Sem nome"}</strong>
-        <p class="item-desc">${item.desc || "Sem descrição"}</p>
       </div>
-      <button type="button" class="item-remover" onclick="removerItem(${index})">X</button>
+
+      <div class="item-acoes">
+        <button type="button" class="btn-editar" onclick="editarItem(${index})">✏️</button>
+        <button type="button" class="item-remover" onclick="removerItem(${index})">X</button>
+      </div>
     `;
 
     ul.appendChild(li);
@@ -455,10 +635,16 @@ function verItem(index) {
     </div>
   `;
 
-  abrirPopup(item.nome || "Sem nome", html, true);
+  abrirPopup(item.nome || "Sem nome", html, true, () => editarItem(index));
 }
 
 function removerItem(index) {
+  const item = inventario[index];
+  if (!item) return;
+
+  const confirmar = confirm(`Remover "${item.nome}"?`);
+  if (!confirmar) return;
+
   inventario.splice(index, 1);
   renderInv();
   salvarTudo();
@@ -469,22 +655,30 @@ function removerItem(index) {
 function addArma() {
   const nome = document.getElementById("armaNome").value.trim();
   const dano = document.getElementById("armaDano").value.trim();
-  const desc = document.getElementById("armaDesc").value.trim();
+  const descEl = document.getElementById("armaDesc");
+  const desc = descEl ? descEl.value.trim() : "";
 
   if (!nome) return;
 
-  armas.push({
+  const novaArma = {
     nome,
-    dano: dano || "Sem dano",
-    desc: desc || "Sem descrição"
-  });
+    dano,
+    desc
+  };
+
+  if (editandoArma >= 0) {
+    armas[editandoArma] = novaArma;
+    editandoArma = -1;
+  } else {
+    armas.push(novaArma);
+  }
 
   renderArmas();
   salvarTudo();
 
   document.getElementById("armaNome").value = "";
   document.getElementById("armaDano").value = "";
-  document.getElementById("armaDesc").value = "";
+  if (descEl) descEl.value = "";
 }
 
 function renderArmas() {
@@ -500,10 +694,13 @@ function renderArmas() {
     li.innerHTML = `
       <div class="arma-info" onclick="verArma(${index})">
         <strong class="arma-nome">${arma.nome || "Sem nome"}</strong>
-        <p class="arma-dano">Dano: ${arma.dano || "Sem dano"}</p>
-        <p class="arma-desc">${arma.desc || "Sem descrição"}</p>
+        <p class="arma-dano">${arma.dano || "Sem dano"}</p>
       </div>
-      <button type="button" class="arma-remover" onclick="removerArma(${index})">X</button>
+
+      <div class="item-acoes">
+        <button type="button" class="btn-editar" onclick="editarArma(${index})">✏️</button>
+        <button type="button" class="arma-remover" onclick="removerArma(${index})">X</button>
+      </div>
     `;
 
     ul.appendChild(li);
@@ -533,10 +730,16 @@ function verArma(index) {
     </div>
   `;
 
-  abrirPopup(arma.nome || "Sem nome", html, true);
+  abrirPopup(arma.nome || "Sem nome", html, true, () => editarArma(index));
 }
 
 function removerArma(index) {
+  const arma = armas[index];
+  if (!arma) return;
+
+  const confirmar = confirm(`Remover "${arma.nome}"?`);
+  if (!confirmar) return;
+
   armas.splice(index, 1);
   renderArmas();
   salvarTudo();
@@ -555,7 +758,7 @@ function addPoder() {
 
   if (!nome) return;
 
-  poderes.push({
+  const novoPoder = {
     nome,
     tipo,
     circulo,
@@ -563,7 +766,14 @@ function addPoder() {
     alcance,
     duracao,
     desc
-  });
+  };
+
+  if (editandoPoder >= 0) {
+    poderes[editandoPoder] = novoPoder;
+    editandoPoder = -1;
+  } else {
+    poderes.push(novoPoder);
+  }
 
   renderPoderes();
   salvarTudo();
@@ -584,37 +794,21 @@ function renderPoderes() {
   ul.innerHTML = "";
 
   poderes.forEach((poder, index) => {
+    const icone = getIconeTipo(poder.tipo);
+    const classeTipo = getClasseTipo(poder.tipo);
+
     const li = document.createElement("li");
     li.className = "poder-card";
 
-    const tipoTexto = poder.tipo || "Sem tipo";
-    const icone = getIconeTipo(tipoTexto);
-    const classeTipo = getClasseTipo(tipoTexto);
-
-    const circuloHtml = poder.circulo ? `<span class="poder-tag">Círculo: ${poder.circulo}</span>` : "";
-    const tempoHtml = poder.tempo ? `<span class="poder-tag">Conjuração: ${poder.tempo}</span>` : "";
-    const alcanceHtml = poder.alcance ? `<span class="poder-tag">Alcance: ${poder.alcance}</span>` : "";
-    const duracaoHtml = poder.duracao ? `<span class="poder-tag">Duração: ${poder.duracao}</span>` : "";
-
     li.innerHTML = `
       <div class="poder-info" onclick="verPoder(${index})">
-        <div class="poder-topo">
-          <span class="poder-icone">${icone}</span>
-          <span class="poder-nome">${poder.nome}</span>
-          <span class="poder-tipo ${classeTipo}">${tipoTexto}</span>
-        </div>
-
-        <div class="poder-meta">
-          ${circuloHtml}
-          ${tempoHtml}
-          ${alcanceHtml}
-          ${duracaoHtml}
-        </div>
-
-        <p class="poder-desc">${poder.desc || "Sem descrição"}</p>
+        <strong class="poder-nome">${icone} ${poder.nome || "Sem nome"}</strong>
       </div>
 
-      <button type="button" class="poder-remover" onclick="removerPoder(${index})">X</button>
+      <div class="item-acoes">
+        <button type="button" class="btn-editar" onclick="editarPoder(${index})">✏️</button>
+        <button type="button" class="poder-remover" onclick="removerPoder(${index})">X</button>
+      </div>
     `;
 
     ul.appendChild(li);
@@ -648,10 +842,16 @@ function verPoder(index) {
     </div>
   `;
 
-  abrirPopup(`${icone} ${poder.nome}`, html, true);
+  abrirPopup(`${icone} ${poder.nome}`, html, true, () => editarPoder(index));
 }
 
 function removerPoder(index) {
+  const poder = poderes[index];
+  if (!poder) return;
+
+  const confirmar = confirm(`Remover "${poder.nome}"?`);
+  if (!confirmar) return;
+
   poderes.splice(index, 1);
   renderPoderes();
   salvarTudo();
@@ -955,6 +1155,8 @@ function limparFocoBotoesVida() {
     });
   });
 }
+
+
 
 function ativarDragTemp() {
   const barra = document.getElementById("tempBar");
