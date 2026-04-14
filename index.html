@@ -220,31 +220,29 @@
       <div class="arma-add">
   <input id="armaNome" placeholder="Nome da arma">
   <input id="armaDano" placeholder="Dano (ex: 2d6)">
-
   <textarea id="armaDesc" placeholder="Descrição da arma"></textarea>
 
-  <div class="arma-cargas-config">
-    <div class="toggle-cargas">
-  <span>Usa cargas</span>
+  <div class="toggle-cargas">
+    <span class="toggle-cargas-texto">Usa cargas</span>
 
-  <label class="switch">
-    <input type="checkbox" id="armaTemCargas" onchange="toggleCampoCargas()">
-    <span class="slider"></span>
-  </label>
-</div>
-
-
-    <input
-      id="armaMaxCargas"
-      type="number"
-      min="1"
-      max="20"
-      placeholder="Qtd. de cargas"
-      style="display:none;"
-    >
+    <label class="switch-cargas">
+      <input type="checkbox" id="armaTemCargas" onchange="toggleCampoCargas()">
+      <span class="slider-cargas"></span>
+    </label>
   </div>
 
-  <button class="inv-add-btn" onclick="addArma()">+</button>
+  <input
+    id="armaMaxCargas"
+    type="number"
+    min="1"
+    max="20"
+    placeholder="Qtd. de cargas"
+    style="display:none;"
+  >
+
+  <div class="arma-acoes-final">
+    <button class="inv-add-btn" onclick="addArma()">+</button>
+  </div>
 </div>
 
       <ul id="listaArmas"></ul>
