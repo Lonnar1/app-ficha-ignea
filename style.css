@@ -2544,3 +2544,255 @@ body.low-hp::after {
 .subtitulo-inventario::after {
   right: 0;
 }
+
+.proficiencias-secao {
+  margin-top: 18px;
+  padding: 12px;
+  border-radius: 16px;
+  background: #2f2822;
+}
+
+#proficienciasExtras {
+  min-height: 110px;
+  resize: vertical;
+  line-height: 1.4;
+}
+
+.dominio-box {
+  margin-top: 18px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #2f2822;
+  text-align: center;
+}
+
+.dominio-checks {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.dominio-check {
+  width: 22px;
+  height: 22px;
+  border: 2px solid #c8a96b;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: 0.2s;
+  background: transparent;
+}
+
+.dominio-check.ativo {
+  background: #c8a96b;
+}
+
+.resistencias-box {
+  margin-top: 18px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #2f2822;
+  text-align: center;
+}
+
+.resistencias-box textarea {
+  margin-top: 8px;
+}
+
+.arma-cargas-config {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.arma-cargas-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #f1e6cf;
+  font-weight: bold;
+}
+
+.arma-cargas-toggle input {
+  width: auto;
+  margin: 0;
+}
+
+#armaMaxCargas {
+  width: 100%;
+}
+
+.arma-cargas-box {
+  margin-top: 8px;
+}
+
+.arma-cargas-label {
+  display: block;
+  font-size: 12px;
+  color: #d8c3a1;
+  margin-bottom: 6px;
+  font-weight: bold;
+}
+
+.arma-cargas-checks {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.arma-carga-check {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #c8a96b;
+  background: transparent;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.arma-carga-check.ativo {
+  background: #c8a96b;
+}
+
+.arma-dano-preview {
+  margin: 0 0 4px 0;
+  font-size: 13px;
+  color: #d8c3a1;
+  line-height: 1.4;
+}
+
+.arma-desc-preview {
+  margin: 0;
+  font-size: 13px;
+  color: #d8c3a1;
+  line-height: 1.4;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.toggle-cargas {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  color: #f1e6cf;
+  font-weight: bold;
+}
+
+/* SWITCH BASE */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 22px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* FUNDO */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #3c342d;
+  border-radius: 20px;
+  transition: 0.3s;
+  border: 1px solid #c8a96b;
+}
+
+/* BOLINHA */
+.slider::before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 2px;
+  background-color: #c8a96b;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+/* ATIVO */
+.switch input:checked + .slider {
+  background-color: #c8a96b;
+}
+
+.switch input:checked + .slider::before {
+  transform: translateX(20px);
+  background-color: #2f2822;
+}
+
+.toggle-cargas {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #2f2822;
+  border: 1px solid rgba(200, 169, 107, 0.12);
+}
+
+.toggle-cargas-texto {
+  color: #f1e6cf;
+  font-weight: bold;
+  font-size: 15px;
+}
+
+.switch-cargas {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.switch-cargas input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider-cargas {
+  position: absolute;
+  inset: 0;
+  cursor: pointer;
+  background: #3c342d;
+  border: 1px solid #c8a96b;
+  border-radius: 999px;
+  transition: 0.25s ease;
+}
+
+.slider-cargas::before {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  left: 4px;
+  top: 3px;
+  border-radius: 50%;
+  background: #c8a96b;
+  transition: 0.25s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.switch-cargas input:checked + .slider-cargas {
+  background: #c8a96b;
+}
+
+.switch-cargas input:checked + .slider-cargas::before {
+  transform: translateX(21px);
+  background: #2f2822;
+}
