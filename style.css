@@ -2796,3 +2796,14 @@ body.low-hp::after {
   transform: translateX(21px);
   background: #2f2822;
 }
+
+.arma-acoes-final {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.arma-acoes-final .inv-add-btn {
+  align-self: auto;
+  margin: 0;
+}
