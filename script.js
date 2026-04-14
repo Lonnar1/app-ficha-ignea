@@ -312,8 +312,14 @@ function trocarAba(id, btn = null) {
   const abas = document.querySelectorAll(".aba");
   const novaAba = document.getElementById(id);
   const abaAtual = document.querySelector(".aba.active");
+  const saindoDoCombate = abaAtual && abaAtual.id === "combate" && id !== "combate";
+
+  if (saindoDoCombate) {
+    document.body.classList.remove("low-hp");
+  }
 
   if (!novaAba) return;
+
   if (abaAtual === novaAba) {
     document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
 
@@ -323,6 +329,8 @@ function trocarAba(id, btn = null) {
       const botao = document.querySelector(`.tab-btn[onclick*="${id}"]`);
       if (botao) botao.classList.add("active");
     }
+
+    atualizarEstadoLowHP();
     return;
   }
 
@@ -353,6 +361,8 @@ function trocarAba(id, btn = null) {
 
   novaAba.style.display = "block";
   novaAba.classList.add("active");
+
+  atualizarEstadoLowHP();
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
@@ -410,46 +420,120 @@ function renderPersonagens() {
   add.onclick = criarPersonagem;
   div.appendChild(add);
 }
+function renderAliados() {
+  const ul = document.getElementById("listaAliados");
+  if (!ul || personagemAtual === null) return;
+
+  ul.innerHTML = "";
+
+  const p = personagens[personagemAtual];
+  if (!Array.isArray(p.aliados)) {
+    p.aliados = [];
+  }
+
+  p.aliados.forEach((aliado, index) => {
+    const li = document.createElement("li");
+    li.className = "item-card";
+
+    li.innerHTML = `
+  <div class="item-info">
+    <strong>${aliado.nome}</strong>
+    <div class="item-preview">
+      ${aliado.desc || ""}
+    </div>
+  </div>
+
+  <div class="item-acoes">
+    <button type="button" class="btn-editar" onclick="editarAliado(${index})">✏️</button>
+    <button type="button" class="item-remover" onclick="removerAliado(${index})">X</button>
+  </div>
+`;
+
+    ul.appendChild(li);
+  });
+}
+
+function removerAliado(index) {
+  const p = personagens[personagemAtual];
+  p.aliados.splice(index, 1);
+
+  salvarTudo();
+  renderAliados();
+}
+
+function editarAliado(index) {
+  const p = personagens[personagemAtual];
+  const aliado = p.aliados[index];
+
+  document.getElementById("aliadoNome").value = aliado.nome;
+  document.getElementById("aliadoDesc").value = aliado.desc;
+
+  removerAliado(index);
+}
+
+function adicionarAliado() {
+  const nome = document.getElementById("aliadoNome").value.trim();
+  const desc = document.getElementById("aliadoDesc").value.trim();
+
+  if (!nome) return;
+
+  const p = personagens[personagemAtual];
+
+  p.aliados.push({
+    nome,
+    desc
+  });
+
+  document.getElementById("aliadoNome").value = "";
+  document.getElementById("aliadoDesc").value = "";
+
+  salvarTudo();
+  renderAliados();
+}
 
 function criarPersonagem() {
   const novo = {
-    nome: "",
-    classe: "",
-    raca: "",
-    idade: "",
-    altura: "",
-    imagem: "",
+  nome: "",
+  classe: "",
+  raca: "",
+  idade: "",
+  altura: "",
+  imagem: "",
+  antecedentes: "",
+  idiomas: "",
+  diario: "",
 
-    vidaMax: 50,
-    vidaAtual: 50,
-    vidaTemp: 0,
-    ca: "",
-    deslocamento: 9,
+  vidaMax: 50,
+  vidaAtual: 50,
+  vidaTemp: 0,
+  ca: "",
+  deslocamento: 9,
 
-    forca: 10,
-    destreza: 10,
-    constituicao: 10,
-    inteligencia: 10,
-    sabedoria: 10,
-    carisma: 10,
-    bonusProf: 2,
+  forca: 10,
+  destreza: 10,
+  constituicao: 10,
+  inteligencia: 10,
+  sabedoria: 10,
+  carisma: 10,
+  bonusProf: 2,
 
-    inventario: [],
-    armas: [],
-    poderes: [],
-    profs: {},
-    saves: {},
-    exaustao: 0,
-    inspiracao: 0,
-    dtBase: 8,
-    dtAtributo: 0,
-    dtProf: 2,
+  aliados: [],
+  inventario: [],
+  armas: [],
+  poderes: [],
+  profs: {},
+  saves: {},
+  exaustao: 0,
+  inspiracao: 0,
+  dtBase: 8,
+  dtAtributo: 0,
+  dtProf: 2,
 
-    morte: {
-      sucessos: [false, false, false],
-      falhas: [false, false, false]
-    }
-  };
+  morte: {
+    sucessos: [false, false, false],
+    falhas: [false, false, false]
+  }
+};
 
   personagens.push(novo);
   salvarPersonagens();
@@ -469,6 +553,17 @@ function deletarPersonagem(index) {
   }
 }
 
+function toggleDiario() {
+  const box = document.getElementById("diario-box");
+  if (!box) return;
+
+  if (box.style.display === "none" || box.style.display === "") {
+    box.style.display = "block";
+  } else {
+    box.style.display = "none";
+  }
+}
+
 function carregarPersonagem(index) {
   personagemAtual = index;
   const p = personagens[index];
@@ -482,6 +577,10 @@ function carregarPersonagem(index) {
   document.getElementById("vidaMax").value = p.vidaMax ?? 50;
   document.getElementById("ca").value = p.ca ?? "";
   document.getElementById("deslocamento").value = p.deslocamento ?? 9;
+  document.getElementById("antecedentes").value = p.antecedentes || "";
+  document.getElementById("idiomas").value = p.idiomas || "";
+  document.getElementById("resistencias").value = p.resistencias || "";
+  document.getElementById("diario").value = p.diario || "";
 
   document.getElementById("forca").value = p.forca ?? 10;
   document.getElementById("destreza").value = p.destreza ?? 10;
@@ -535,6 +634,7 @@ function carregarPersonagem(index) {
   atualizarMorte();
   atualizarDT();
   entrarFicha();
+  renderAliados();  
 }
 
 /* ================= SALVAR ================= */
@@ -550,6 +650,10 @@ function salvarTudo() {
   p.raca = document.getElementById("raca").value;
   p.idade = document.getElementById("idade").value;
   p.altura = document.getElementById("altura").value;
+  p.antecedentes = document.getElementById("antecedentes").value;
+  p.idiomas = document.getElementById("idiomas").value;
+  p.resistencias = document.getElementById("resistencias").value,
+  p.diario = document.getElementById("diario").value;
   p.imagem = imagemBase64;
 
   p.vidaMax = get("vidaMax");
@@ -648,15 +752,16 @@ function renderInv() {
     li.className = "item-card";
 
     li.innerHTML = `
-      <div class="item-info" onclick="verItem(${index})">
-        <strong class="item-nome">${item.nome || "Sem nome"}</strong>
-      </div>
+  <div class="item-info" onclick="verItem(${index})">
+    <strong class="item-nome">${item.nome || "Sem nome"}</strong>
+    <p class="item-preview">${item.desc ? item.desc.substring(0, 60) + (item.desc.length > 60 ? "..." : "") : "Sem descrição"}</p>
+  </div>
 
-      <div class="item-acoes">
-        <button type="button" class="btn-editar" onclick="editarItem(${index})">✏️</button>
-        <button type="button" class="item-remover" onclick="removerItem(${index})">X</button>
-      </div>
-    `;
+  <div class="item-acoes">
+    <button type="button" class="btn-editar" onclick="editarItem(${index})">✏️</button>
+    <button type="button" class="item-remover" onclick="removerItem(${index})">X</button>
+  </div>
+`;
 
     ul.appendChild(li);
   });
@@ -734,16 +839,17 @@ function renderArmas() {
     li.className = "arma-card";
 
     li.innerHTML = `
-      <div class="arma-info" onclick="verArma(${index})">
-        <strong class="arma-nome">${arma.nome || "Sem nome"}</strong>
-        <p class="arma-dano">${arma.dano || "Sem dano"}</p>
-      </div>
+  <div class="arma-info" onclick="verArma(${index})">
+    <strong class="arma-nome">${arma.nome || "Sem nome"}</strong>
+    <p class="arma-dano">${arma.dano || "Sem dano"}</p>
+    <p class="arma-preview">${arma.desc ? arma.desc.substring(0, 60) + (arma.desc.length > 60 ? "..." : "") : "Sem descrição"}</p>
+  </div>
 
-      <div class="item-acoes">
-        <button type="button" class="btn-editar" onclick="editarArma(${index})">✏️</button>
-        <button type="button" class="arma-remover" onclick="removerArma(${index})">X</button>
-      </div>
-    `;
+  <div class="item-acoes">
+    <button type="button" class="btn-editar" onclick="editarArma(${index})">✏️</button>
+    <button type="button" class="arma-remover" onclick="removerArma(${index})">X</button>
+  </div>
+`;
 
     ul.appendChild(li);
   });
@@ -832,6 +938,19 @@ function addPoder() {
   document.getElementById("poderDesc").value = "";
 }
 
+function atualizarEstadoLowHP() {
+  const vidaTotal = vidaAtual + vidaTemp;
+  const abaCombate = document.querySelector(".aba.active");
+
+  const combateAtivo = abaCombate && abaCombate.id === "combate";
+
+  if (vidaTotal <= 15 && combateAtivo) {
+    document.body.classList.add("low-hp");
+  } else {
+    document.body.classList.remove("low-hp");
+  }
+}
+
 function renderPoderes() {
   const ul = document.getElementById("listaPoderes");
   if (!ul) return;
@@ -845,17 +964,17 @@ function renderPoderes() {
     li.className = "poder-card";
 
     li.innerHTML = `
-      <div class="poder-info" onclick="verPoder(${index})">
-        <strong class="poder-nome">${icone} ${poder.nome || "Sem nome"}</strong>
-        ${poder.dano ? `<div class="popup-tags" style="margin-top:6px;"><span class="tag-dano">${poder.dano}</span></div>` : ""}
-      </div>
+  <div class="poder-info" onclick="verPoder(${index})">
+    <strong class="poder-nome">${icone} ${poder.nome || "Sem nome"}</strong>
+    ${poder.dano ? `<div class="popup-tags" style="margin-top:6px;"><span class="tag-dano">${poder.dano}</span></div>` : ""}
+    <p class="poder-preview">${poder.desc ? poder.desc.substring(0, 70) + (poder.desc.length > 70 ? "..." : "") : "Sem descrição"}</p>
+  </div>
 
-      <div class="item-acoes">
-        <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarPoder(${index})">✏️</button>
-        <button type="button" class="poder-remover" onclick="event.stopPropagation(); removerPoder(${index})">X</button>
-      </div>
-    `;
-
+  <div class="item-acoes">
+    <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarPoder(${index})">✏️</button>
+    <button type="button" class="poder-remover" onclick="event.stopPropagation(); removerPoder(${index})">X</button>
+  </div>
+`;
     ul.appendChild(li);
   });
 }
@@ -991,6 +1110,16 @@ function atualizarHP() {
   if (texto) texto.innerText = `${vidaAtual}/${max}`;
 
   atualizarTotal();
+  atualizarEstadoLowHP();
+}
+
+function animarAttr(id) {
+  const el = document.getElementById(id).closest(".attr");
+  el.classList.add("up");
+
+  setTimeout(() => {
+    el.classList.remove("up");
+  }, 400);
 }
 
 function atualizarTemp() {
@@ -1003,6 +1132,7 @@ function atualizarTemp() {
   if (fill) fill.style.width = `${porcentagem}%`;
   if (texto) texto.innerText = vidaTemp;
 
+  atualizarEstadoLowHP();
   atualizarTotal();
 }
 
@@ -1318,7 +1448,10 @@ function init() {
     "inspiracao",
     "dtBase",
     "dtAtributo",
-    "dtProf"
+    "dtProf",
+    "antecedentes",
+    "aliados",
+    "idiomas"
   ];
 
   camposAutoSave.forEach(id => {
