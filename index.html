@@ -68,7 +68,10 @@
   <div class="inv-add">
     <input id="aliadoNome" placeholder="Nome do aliado">
     <textarea id="aliadoDesc" placeholder="Descrição do aliado"></textarea>
-    <button class="inv-add-btn" onclick="adicionarAliado()">+</button>
+  </div>
+
+    <div class="add-linha">
+    <button class="inv-add-btn" onclick="addItem()">+</button>
   </div>
 
   <ul id="listaAliados"></ul>
@@ -328,8 +331,11 @@
     <div class="inv-add">
       <input id="item" placeholder="Nome do item">
       <textarea id="itemDesc" placeholder="Descrição"></textarea>
-      <button class="inv-add-btn" onclick="addItem()">+</button>
     </div>
+
+     <div class="add-linha">
+    <button class="inv-add-btn" onclick="addItem()">+</button>
+  </div>
 
     <ul id="lista"></ul>
   </div>
@@ -380,8 +386,11 @@
         </div>
 
         <textarea id="poderDesc" placeholder="Descrição do poder"></textarea>
-        <button class="inv-add-btn" onclick="addPoder()">+</button>
       </div>
+
+      <div class="add-linha">
+    <button class="inv-add-btn" onclick="addPoder()">+</button>
+  </div>
 
       <ul id="listaPoderes"></ul>
 
