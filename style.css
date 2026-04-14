@@ -2038,10 +2038,509 @@ button {
   filter: blur(3px);
 }
 
+
+
+button:active {
+  transform: scale(0.92);
+}
+
+.inv-add-btn:active {
+  transform: scale(0.85) rotate(-2deg);
+} 
+
+.item-card,
+.arma-card,
+.poder-card {
+  transition: 0.25s ease;
+}
+
+.item-card:hover,
+.arma-card:hover,
+.poder-card:hover {
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+}
+
+#ficha {
+  animation: fadeInFicha 0.4s ease;
+}
+
+.tipo-fogo { box-shadow: 0 0 10px rgba(255,80,80,0.4); }
+.tipo-gelo { box-shadow: 0 0 10px rgba(100,180,255,0.4); }
+.tipo-raio { box-shadow: 0 0 10px rgba(255,255,100,0.4); }
+.tipo-necrotico { box-shadow: 0 0 10px rgba(180,100,255,0.4); }
+
+.spawn {
+  animation: spawnItem 0.3s ease;
+}
+
+@keyframes spawnItem {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes fadeInFicha {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.attr.up {
+  animation: glowUp 0.4s ease;
+}
+
+@keyframes glowUp {
+  0% { box-shadow: 0 0 0 rgba(200,169,107,0); }
+  50% { box-shadow: 0 0 12px rgba(200,169,107,0.7); }
+  100% { box-shadow: 0 0 0 rgba(200,169,107,0); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .aba {
     transition: none;
     transform: none;
     filter: none;
   }
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 45px;
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+body::before {
+  left: 0;
+  background: linear-gradient(to right,
+    rgba(185, 28, 28, 0.55),
+    rgba(185, 28, 28, 0)
+  );
+}
+
+body::after {
+  right: 0;
+  background: linear-gradient(to left,
+    rgba(185, 28, 28, 0.55),
+    rgba(185, 28, 28, 0)
+  );
+}
+
+body.low-hp::before,
+body.low-hp::after {
+  animation: pulseSides 1.2s ease-in-out infinite;
+}
+
+@keyframes pulseSides {
+  0%, 100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.75;
+  }
+}
+
+.item-preview,
+.arma-preview,
+.poder-preview {
+  margin: 4px 0 0 0;
+  font-size: 12px;
+  color: #bfa98a;
+  line-height: 1.35;
+  opacity: 0.9;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.item-info,
+.arma-info,
+.poder-info {
+  min-width: 0;
+}
+
+#antecedentes,
+#aliados {
+  min-height: 90px;
+  margin-top: 8px;
+}
+
+.personagem-topo {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.personagem-campos {
+  flex: 1;
+  min-width: 0;
+}
+
+.personagem-imagem-box {
+  width: 140px;
+  flex-shrink: 0;
+}
+
+.personagem-upload {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  margin: 0 0 8px 0;
+}
+
+.personagem-upload .botao-upload {
+  text-align: center;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.personagem-upload #nome-arquivo {
+  max-width: 100%;
+  font-size: 12px;
+  text-align: center;
+}
+
+#preview {
+  width: 100%;
+  max-width: 140px;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+  margin: 0 auto;
+}
+
+#antecedentes,
+#idiomas {
+  min-height: 100px;
+}
+
+#listaAliados {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+
+.personagem-topo {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.personagem-campos {
+  flex: 1;
+  min-width: 0;
+}
+
+.personagem-imagem-box {
+  width: 135px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.personagem-upload {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  margin: 0 0 8px 0;
+}
+
+.personagem-upload .botao-upload {
+  width: 100%;
+  text-align: center;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+
+.personagem-upload #nome-arquivo {
+  max-width: 100%;
+  font-size: 11px;
+  text-align: center;
+}
+
+#preview {
+  width: 100%;
+  max-width: 135px;
+  height: 170px;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+  margin: 0;
+}
+
+/* ================= PERSONAGEM TOPO ================= */
+
+.personagem-topo {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.personagem-campos {
+  flex: 1;
+  min-width: 0;
+}
+
+.personagem-imagem-box {
+  width: 128px;
+  flex-shrink: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#preview {
+  width: 128px;
+  height: 170px;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+  margin: 0 0 8px 0;
+  background: #2f2822;
+  border: 1px solid rgba(200, 169, 107, 0.18);
+}
+
+.personagem-upload {
+  width: 128px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+}
+
+.personagem-upload .botao-upload {
+  width: 100%;
+  text-align: center;
+  padding: 8px 10px;
+  font-size: 12px;
+  border-radius: 10px;
+}
+
+.personagem-upload #nome-arquivo {
+  max-width: 100%;
+  font-size: 11px;
+  text-align: center;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+
+/* ================= PERSONAGEM TOPO LIMPO ================= */
+
+.personagem-topo {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.personagem-campos {
+  flex: 1;
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.personagem-campos input,
+.personagem-campos textarea {
+  width: 100%;
+  margin: 0;
+}
+
+#antecedentes {
+  min-height: 108px;
+  height: 108px;
+  resize: none;
+}
+
+.personagem-imagem-box {
+  width: 130px;
+  flex-shrink: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#preview {
+  width: 130px;
+  height: 170px;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+  margin: 0 0 8px 0;
+  background: #3c342d;
+  border: 1px solid rgba(200, 169, 107, 0.35);
+}
+
+.personagem-upload {
+  width: 130px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+}
+
+.personagem-upload .botao-upload {
+  width: 100%;
+  text-align: center;
+  padding: 8px 10px;
+  font-size: 12px;
+  border-radius: 10px;
+}
+
+.personagem-upload #nome-arquivo {
+  width: 100%;
+  max-width: 100%;
+  font-size: 11px;
+  text-align: center;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+.personagem-upload .botao-upload {
+  width: 100%;
+  text-align: center;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.2;
+  border-radius: 10px;
+}
+
+.personagem-upload #nome-arquivo {
+  width: 100%;
+  max-width: 100%;
+  font-size: 11px;
+  text-align: center;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+.upload-imagem input[type="file"] {
+  display: none;
+}
+
+@media (max-width: 420px) {
+  .personagem-topo {
+    gap: 10px;
+  }
+
+  .personagem-imagem-box,
+  .personagem-upload,
+  .personagem-imagem-box #preview {
+    width: 118px;
+  }
+
+  .personagem-imagem-box #preview {
+    height: 155px;
+  }
+}
+
+#antecedentes {
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
+  resize: none;
+  margin-top: 1px;
+}
+
+#resistencias {
+  min-height: 80px;
+}
+
+.btn-diario {
+  width: 100%;
+  margin: 10px 0 12px 0;
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  background: #c8a96b;
+  color: #2c2520;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-diario:hover {
+  background: #d8bb7d;
+  transform: scale(1.01);
+}
+
+.diario-box {
+  margin-bottom: 16px;
+  padding: 12px;
+  border-radius: 14px;
+  background: #2f2822;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
+}
+
+#diario {
+  width: 100%;
+  min-height: 220px;
+  max-height: 320px;
+  resize: vertical;
+  overflow-y: auto;
+  line-height: 1.5;
+}
+
+.subtitulo-inventario {
+  margin: 16px 0 12px 0;
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-size: 20px;
+  color: #d8c3a1;
+  position: relative;
+}
+
+.subtitulo-inventario::before,
+.subtitulo-inventario::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 32%;
+  height: 1px;
+  background: rgba(200, 169, 107, 0.35);
+}
+
+.subtitulo-inventario::before {
+  left: 0;
+}
+
+.subtitulo-inventario::after {
+  right: 0;
 }
