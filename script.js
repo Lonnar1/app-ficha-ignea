@@ -6,6 +6,7 @@ let dominio = [false, false, false, false, false, false];
 let editandoItem = -1;
 let editandoArma = -1;
 let editandoPoder = -1;
+let editandoAliado = -1;
 let vidaAtual = 50;
 let vidaTemp = 0;
 let inventario = [];
@@ -179,6 +180,54 @@ function salvarEdicaoItem(index) {
   renderInv();
   salvarTudo();
   fecharPopup();
+}
+
+function editarArma(index) {
+  const arma = armas[index];
+  if (!arma) return;
+
+  const html = `
+    <div class="popup-form">
+      <label class="popup-label">Nome</label>
+      <input id="editArmaNome" value="${arma.nome || ""}">
+
+      <label class="popup-label">Dano</label>
+      <input id="editArmaDano" value="${arma.dano || ""}">
+
+      <label class="popup-label">Descrição</label>
+      <textarea id="editArmaDesc">${arma.desc || ""}</textarea>
+
+      <div class="toggle-cargas" style="margin-top:10px;">
+        <span class="toggle-cargas-texto">Usa cargas</span>
+
+        <label class="switch-cargas">
+          <input
+            type="checkbox"
+            id="editArmaTemCargas"
+            ${arma.temCargas ? "checked" : ""}
+            onchange="toggleEditCampoCargas()"
+          >
+          <span class="slider-cargas"></span>
+        </label>
+      </div>
+
+      <input
+        id="editArmaMaxCargas"
+        type="number"
+        min="1"
+        max="20"
+        placeholder="Qtd. de cargas"
+        value="${arma.maxCargas || ""}"
+        style="display:${arma.temCargas ? "block" : "none"};"
+      >
+
+      <button class="popup-salvar-btn" onclick="salvarEdicaoArma(${index})">
+        Salvar
+      </button>
+    </div>
+  `;
+
+  abrirPopup("Editar arma", html, true, null);
 }
 
 function toggleEditCampoCargas() {
@@ -466,7 +515,17 @@ function renderAliados() {
 
 function removerAliado(index) {
   const p = personagens[personagemAtual];
+  if (!p || !Array.isArray(p.aliados)) return;
+
   p.aliados.splice(index, 1);
+
+  if (editandoAliado === index) {
+    editandoAliado = -1;
+    document.getElementById("aliadoNome").value = "";
+    document.getElementById("aliadoDesc").value = "";
+  } else if (editandoAliado > index) {
+    editandoAliado--;
+  }
 
   salvarTudo();
   renderAliados();
@@ -500,15 +559,47 @@ function toggleCampoCargas() {
     input.value = "";
   }
 }
-
 function editarAliado(index) {
   const p = personagens[personagemAtual];
+  if (!p || !Array.isArray(p.aliados)) return;
+
   const aliado = p.aliados[index];
+  if (!aliado) return;
 
-  document.getElementById("aliadoNome").value = aliado.nome;
-  document.getElementById("aliadoDesc").value = aliado.desc;
+  const html = `
+    <div class="popup-form">
+      <label class="popup-label">Nome</label>
+      <input id="editAliadoNome" value="${aliado.nome || ""}">
 
-  removerAliado(index);
+      <label class="popup-label">Descrição</label>
+      <textarea id="editAliadoDesc">${aliado.desc || ""}</textarea>
+
+      <button class="popup-salvar-btn" onclick="salvarEdicaoAliado(${index})">
+        Salvar
+      </button>
+    </div>
+  `;
+
+  abrirPopup("Editar aliado", html, true, null);
+}
+
+function salvarEdicaoAliado(index) {
+  const p = personagens[personagemAtual];
+  if (!p || !Array.isArray(p.aliados)) return;
+
+  const nome = document.getElementById("editAliadoNome").value.trim();
+  const desc = document.getElementById("editAliadoDesc").value.trim();
+
+  if (!nome) return;
+
+  p.aliados[index] = {
+    nome,
+    desc
+  };
+
+  salvarTudo();
+  renderAliados();
+  fecharPopup();
 }
 
 function adicionarAliado() {
@@ -518,6 +609,9 @@ function adicionarAliado() {
   if (!nome) return;
 
   const p = personagens[personagemAtual];
+  if (!Array.isArray(p.aliados)) {
+    p.aliados = [];
+  }
 
   p.aliados.push({
     nome,
@@ -942,8 +1036,8 @@ function renderArmas() {
       </div>
 
       <div class="item-acoes">
-        <button type="button" class="btn-editar" onclick="editarArma(${index})">✏️</button>
-        <button type="button" class="arma-remover" onclick="removerArma(${index})">X</button>
+        <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarArma(${index})">✏️</button>
+        <button type="button" class="arma-remover" onclick="event.stopPropagation(); removerArma(${index})">X</button>
       </div>
     `;
 
