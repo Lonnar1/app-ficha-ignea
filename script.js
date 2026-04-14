@@ -2,8 +2,7 @@ let morte = {
   sucessos: [false, false, false],
   falhas: [false, false, false]
 };
-
-
+let dominio = [false, false, false, false, false, false];
 let editandoItem = -1;
 let editandoArma = -1;
 let editandoPoder = -1;
@@ -182,28 +181,18 @@ function salvarEdicaoItem(index) {
   fecharPopup();
 }
 
-function editarArma(index) {
-  const arma = armas[index];
-  if (!arma) return;
+function toggleEditCampoCargas() {
+  const check = document.getElementById("editArmaTemCargas");
+  const input = document.getElementById("editArmaMaxCargas");
 
-  const html = `
-    <div class="popup-form">
-      <label class="popup-label">Nome</label>
-      <input id="editArmaNome" value="${arma.nome || ""}">
+  if (!check || !input) return;
 
-      <label class="popup-label">Dano</label>
-      <input id="editArmaDano" value="${arma.dano || ""}">
-
-      <label class="popup-label">Descrição</label>
-      <textarea id="editArmaDesc">${arma.desc || ""}</textarea>
-
-      <button class="popup-salvar-btn" onclick="salvarEdicaoArma(${index})">
-        Salvar
-      </button>
-    </div>
-  `;
-
-  abrirPopup("Editar arma", html, true, null);
+  if (check.checked) {
+    input.style.display = "block";
+  } else {
+    input.style.display = "none";
+    input.value = "";
+  }
 }
 
 function editarPoder(index) {
@@ -293,12 +282,34 @@ function salvarEdicaoArma(index) {
   const dano = document.getElementById("editArmaDano").value.trim();
   const desc = document.getElementById("editArmaDesc").value.trim();
 
+  const temCargas = !!document.getElementById("editArmaTemCargas")?.checked;
+  const maxCargas = temCargas ? (parseInt(document.getElementById("editArmaMaxCargas")?.value) || 0) : 0;
+
   if (!nome) return;
+  if (temCargas && maxCargas <= 0) return;
+
+  const armaAnterior = armas[index];
+
+  let cargasGastas = [];
+  if (temCargas) {
+    if (
+      armaAnterior?.temCargas &&
+      armaAnterior.maxCargas === maxCargas &&
+      Array.isArray(armaAnterior.cargasGastas)
+    ) {
+      cargasGastas = armaAnterior.cargasGastas;
+    } else {
+      cargasGastas = Array(maxCargas).fill(false);
+    }
+  }
 
   armas[index] = {
     nome,
     dano,
-    desc
+    desc,
+    temCargas,
+    maxCargas,
+    cargasGastas
   };
 
   renderArmas();
@@ -461,6 +472,35 @@ function removerAliado(index) {
   renderAliados();
 }
 
+function toggleDominio(index) {
+  dominio[index] = !dominio[index];
+  renderDominio();
+  salvarTudo();
+}
+
+function renderDominio() {
+  const checks = document.querySelectorAll(".dominio-check");
+  if (!checks.length) return;
+
+  checks.forEach((check, i) => {
+    check.classList.toggle("ativo", !!dominio[i]);
+  });
+}
+
+function toggleCampoCargas() {
+  const check = document.getElementById("armaTemCargas");
+  const input = document.getElementById("armaMaxCargas");
+
+  if (!check || !input) return;
+
+  if (check.checked) {
+    input.style.display = "block";
+  } else {
+    input.style.display = "none";
+    input.value = "";
+  }
+}
+
 function editarAliado(index) {
   const p = personagens[personagemAtual];
   const aliado = p.aliados[index];
@@ -502,6 +542,7 @@ function criarPersonagem() {
   antecedentes: "",
   idiomas: "",
   diario: "",
+  proficienciasExtras: "",
 
   vidaMax: 50,
   vidaAtual: 50,
@@ -517,6 +558,7 @@ function criarPersonagem() {
   carisma: 10,
   bonusProf: 2,
 
+  
   aliados: [],
   inventario: [],
   armas: [],
@@ -528,7 +570,7 @@ function criarPersonagem() {
   dtBase: 8,
   dtAtributo: 0,
   dtProf: 2,
-
+  dominio: [false, false, false, false, false, false],
   morte: {
     sucessos: [false, false, false],
     falhas: [false, false, false]
@@ -581,6 +623,7 @@ function carregarPersonagem(index) {
   document.getElementById("idiomas").value = p.idiomas || "";
   document.getElementById("resistencias").value = p.resistencias || "";
   document.getElementById("diario").value = p.diario || "";
+  
 
   document.getElementById("forca").value = p.forca ?? 10;
   document.getElementById("destreza").value = p.destreza ?? 10;
@@ -592,6 +635,9 @@ function carregarPersonagem(index) {
 
   const inspiracao = document.getElementById("inspiracao");
   if (inspiracao) inspiracao.value = p.inspiracao ?? 0;
+
+  const profExtras = document.getElementById("proficienciasExtras");
+if (profExtras) profExtras.value = p.proficienciasExtras || "";
 
   const dtBase = document.getElementById("dtBase");
   const dtAtributo = document.getElementById("dtAtributo");
@@ -609,6 +655,7 @@ function carregarPersonagem(index) {
     nomeArquivo.innerText = p.imagem ? "Imagem carregada" : "Nenhum arquivo escolhido";
   }
 
+  dominio = p.dominio || [false, false, false, false, false, false];
   vidaAtual = p.vidaAtual ?? 50;
   vidaTemp = p.vidaTemp ?? 0;
   inventario = p.inventario || [];
@@ -635,6 +682,7 @@ function carregarPersonagem(index) {
   atualizarDT();
   entrarFicha();
   renderAliados();  
+  renderDominio();
 }
 
 /* ================= SALVAR ================= */
@@ -654,6 +702,7 @@ function salvarTudo() {
   p.idiomas = document.getElementById("idiomas").value;
   p.resistencias = document.getElementById("resistencias").value,
   p.diario = document.getElementById("diario").value;
+  p.proficienciasExtras = document.getElementById("proficienciasExtras")?.value || "";
   p.imagem = imagemBase64;
 
   p.vidaMax = get("vidaMax");
@@ -677,6 +726,7 @@ function salvarTudo() {
   p.saves = saves;
   p.exaustao = exaustao;
   p.morte = morte;
+  p.dominio = dominio;
 
   const inspiracao = document.getElementById("inspiracao");
   const dtBase = document.getElementById("dtBase");
@@ -805,15 +855,36 @@ function addArma() {
   const descEl = document.getElementById("armaDesc");
   const desc = descEl ? descEl.value.trim() : "";
 
+  const temCargasEl = document.getElementById("armaTemCargas");
+  const maxCargasEl = document.getElementById("armaMaxCargas");
+
+  const temCargas = !!temCargasEl?.checked;
+  const maxCargas = temCargas ? (parseInt(maxCargasEl?.value) || 0) : 0;
+
   if (!nome) return;
+  if (temCargas && maxCargas <= 0) return;
 
   const novaArma = {
     nome,
     dano,
-    desc
+    desc,
+    temCargas,
+    maxCargas,
+    cargasGastas: temCargas ? Array(maxCargas).fill(false) : []
   };
 
   if (editandoArma >= 0) {
+    const armaAnterior = armas[editandoArma];
+
+    if (
+      armaAnterior?.temCargas &&
+      temCargas &&
+      armaAnterior.maxCargas === maxCargas &&
+      Array.isArray(armaAnterior.cargasGastas)
+    ) {
+      novaArma.cargasGastas = armaAnterior.cargasGastas;
+    }
+
     armas[editandoArma] = novaArma;
     editandoArma = -1;
   } else {
@@ -826,6 +897,12 @@ function addArma() {
   document.getElementById("armaNome").value = "";
   document.getElementById("armaDano").value = "";
   if (descEl) descEl.value = "";
+
+  if (temCargasEl) temCargasEl.checked = false;
+  if (maxCargasEl) {
+    maxCargasEl.value = "";
+    maxCargasEl.style.display = "none";
+  }
 }
 
 function renderArmas() {
@@ -838,21 +915,49 @@ function renderArmas() {
     const li = document.createElement("li");
     li.className = "arma-card";
 
-    li.innerHTML = `
-  <div class="arma-info" onclick="verArma(${index})">
-    <strong class="arma-nome">${arma.nome || "Sem nome"}</strong>
-    <p class="arma-dano">${arma.dano || "Sem dano"}</p>
-    <p class="arma-preview">${arma.desc ? arma.desc.substring(0, 60) + (arma.desc.length > 60 ? "..." : "") : "Sem descrição"}</p>
-  </div>
+    const cargasHTML = arma.temCargas && arma.maxCargas > 0
+      ? `
+        <div class="arma-cargas-box">
+          <span class="arma-cargas-label">Cargas</span>
+          <div class="arma-cargas-checks">
+            ${Array.from({ length: arma.maxCargas }, (_, i) => `
+              <div
+                class="arma-carga-check ${arma.cargasGastas?.[i] ? "ativo" : ""}"
+                onclick="event.stopPropagation(); toggleCargaArma(${index}, ${i})"
+              ></div>
+            `).join("")}
+          </div>
+        </div>
+      `
+      : "";
 
-  <div class="item-acoes">
-    <button type="button" class="btn-editar" onclick="editarArma(${index})">✏️</button>
-    <button type="button" class="arma-remover" onclick="removerArma(${index})">X</button>
-  </div>
-`;
+    li.innerHTML = `
+      <div class="arma-info" onclick="verArma(${index})">
+        <strong class="arma-nome">${arma.nome || "Sem nome"}</strong>
+        <p class="arma-dano-preview">${arma.dano || "Sem dano"}</p>
+        <p class="arma-desc-preview">
+          ${arma.desc ? arma.desc.substring(0, 60) + (arma.desc.length > 60 ? "..." : "") : "Sem descrição"}
+        </p>
+        ${cargasHTML}
+      </div>
+
+      <div class="item-acoes">
+        <button type="button" class="btn-editar" onclick="editarArma(${index})">✏️</button>
+        <button type="button" class="arma-remover" onclick="removerArma(${index})">X</button>
+      </div>
+    `;
 
     ul.appendChild(li);
   });
+}
+
+function toggleCargaArma(indexArma, indexCarga) {
+  const arma = armas[indexArma];
+  if (!arma || !arma.temCargas || !Array.isArray(arma.cargasGastas)) return;
+
+  arma.cargasGastas[indexCarga] = !arma.cargasGastas[indexCarga];
+  renderArmas();
+  salvarTudo();
 }
 
 function verArma(index) {
