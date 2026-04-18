@@ -2807,3 +2807,55 @@ body.low-hp::after {
   align-self: auto;
   margin: 0;
 }
+
+.add-linha {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.add-linha .inv-add-btn {
+  margin: 0;
+  align-self: auto;
+}
+
+.poder-card {
+  position: relative;
+  transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+}
+
+.poder-drag-handle {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+  background: #6f5a45;
+  color: #f8f1df;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.poder-drag-handle:active {
+  cursor: grabbing;
+}
+
+.poder-card.dragging {
+  opacity: 0.45;
+  transform: scale(0.98);
+}
+
+.poder-card.drag-over {
+  outline: 2px dashed #c8a96b;
+  outline-offset: 2px;
+}
+
