@@ -1188,13 +1188,82 @@ function ativarDragPoderes() {
   const lista = document.getElementById("listaPoderes");
   if (!lista) return;
 
+  let itemArrastando = null;
+  let indiceInicial = -1;
+
   const handles = lista.querySelectorAll(".poder-drag-handle");
+  const cards = lista.querySelectorAll(".poder-card");
+
+  cards.forEach(card => {
+    card.draggable = false;
+  });
 
   handles.forEach(handle => {
-    handle.onpointerdown = null;
+    const card = handle.closest(".poder-card");
+    if (!card) return;
 
-    handle.addEventListener("pointerdown", iniciarDragPoder);
+    handle.setAttribute("draggable", "true");
+
+    handle.addEventListener("dragstart", (e) => {
+      itemArrastando = card;
+      indiceInicial = Number(card.dataset.index);
+      card.classList.add("dragging");
+
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", card.dataset.index);
+    });
+
+    handle.addEventListener("dragend", () => {
+      if (itemArrastando) {
+        itemArrastando.classList.remove("dragging");
+      }
+
+      lista.querySelectorAll(".poder-card").forEach(c => {
+        c.classList.remove("drag-over");
+      });
+
+      itemArrastando = null;
+      indiceInicial = -1;
+    });
   });
+
+  cards.forEach(card => {
+    card.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      if (!itemArrastando || itemArrastando === card) return;
+
+      lista.querySelectorAll(".poder-card").forEach(c => {
+        c.classList.remove("drag-over");
+      });
+
+      card.classList.add("drag-over");
+    });
+
+    card.addEventListener("dragleave", () => {
+      card.classList.remove("drag-over");
+    });
+
+    card.addEventListener("drop", (e) => {
+      e.preventDefault();
+
+      if (!itemArrastando || itemArrastando === card) return;
+
+      const indiceDestino = Number(card.dataset.index);
+
+      moverPoderPorDrag(indiceInicial, indiceDestino);
+    });
+  });
+}
+
+function moverPoderPorDrag(origem, destino) {
+  if (origem === destino || origem < 0 || destino < 0) return;
+  if (origem >= poderes.length || destino >= poderes.length) return;
+
+  const [itemMovido] = poderes.splice(origem, 1);
+  poderes.splice(destino, 0, itemMovido);
+
+  renderPoderes();
+  salvarTudo();
 }
 
 function iniciarDragPoder(e) {
