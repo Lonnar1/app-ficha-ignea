@@ -2,7 +2,7 @@
   "name": "RPG Sheet",
   "short_name": "RPG",
   "start_url": "./index.html",
-  "display": "standalone",
+  "display": "fullscreen"
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
   "icons": [
