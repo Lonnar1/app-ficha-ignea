@@ -2859,3 +2859,27 @@ body.low-hp::after {
   outline-offset: 2px;
 }
 
+.item-acoes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-mover {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 10px;
+  background: #6f5a45;
+  color: #f8f1df;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.btn-mover:hover {
+  background: #8a7357;
+  transform: scale(1.05);
+}
