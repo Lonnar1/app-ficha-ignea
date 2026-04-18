@@ -1669,7 +1669,11 @@ function animarTrocaPoder(origem, destino) {
   }, 220);
 }
 
+
+
 /* ================= INIT ================= */
+
+
 
 function init() {
   atualizarTudo();
@@ -1756,3 +1760,8 @@ function init() {
 
 document.addEventListener("DOMContentLoaded", init);
 
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js")
+    .then(() => console.log("SW registrado"))
+    .catch(err => console.log("Erro SW:", err));
+}
