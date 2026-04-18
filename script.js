@@ -1161,21 +1161,118 @@ function renderPoderes() {
 
     const li = document.createElement("li");
     li.className = "poder-card";
+    li.dataset.index = index;
 
     li.innerHTML = `
-  <div class="poder-info" onclick="verPoder(${index})">
-    <strong class="poder-nome">${icone} ${poder.nome || "Sem nome"}</strong>
-    ${poder.dano ? `<div class="popup-tags" style="margin-top:6px;"><span class="tag-dano">${poder.dano}</span></div>` : ""}
-    <p class="poder-preview">${poder.desc ? poder.desc.substring(0, 70) + (poder.desc.length > 70 ? "..." : "") : "Sem descrição"}</p>
-  </div>
+      <div class="poder-drag-handle" title="Segure para mover">⋮⋮</div>
 
-  <div class="item-acoes">
-    <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarPoder(${index})">✏️</button>
-    <button type="button" class="poder-remover" onclick="event.stopPropagation(); removerPoder(${index})">X</button>
-  </div>
-`;
+      <div class="poder-info" onclick="verPoder(${index})">
+        <strong class="poder-nome">${icone} ${poder.nome || "Sem nome"}</strong>
+        ${poder.dano ? `<div class="popup-tags" style="margin-top:6px;"><span class="tag-dano">${poder.dano}</span></div>` : ""}
+        <p class="poder-preview">${poder.desc ? poder.desc.substring(0, 70) + (poder.desc.length > 70 ? "..." : "") : "Sem descrição"}</p>
+      </div>
+
+      <div class="item-acoes">
+        <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarPoder(${index})">✏️</button>
+        <button type="button" class="poder-remover" onclick="event.stopPropagation(); removerPoder(${index})">X</button>
+      </div>
+    `;
+
     ul.appendChild(li);
   });
+
+  ativarDragPoderes();
+}
+
+function ativarDragPoderes() {
+  const lista = document.getElementById("listaPoderes");
+  if (!lista) return;
+
+  const handles = lista.querySelectorAll(".poder-drag-handle");
+
+  handles.forEach(handle => {
+    handle.onpointerdown = null;
+
+    handle.addEventListener("pointerdown", iniciarDragPoder);
+  });
+}
+
+function iniciarDragPoder(e) {
+  const handle = e.currentTarget;
+  const card = handle.closest(".poder-card");
+  const lista = document.getElementById("listaPoderes");
+
+  if (!card || !lista) return;
+
+  e.preventDefault();
+
+  const cards = [...lista.querySelectorAll(".poder-card")];
+  const origem = Number(card.dataset.index);
+
+  let destino = origem;
+  let currentY = e.clientY;
+
+  card.classList.add("dragging");
+
+  function atualizarDestino(y) {
+    currentY = y;
+
+    const outrosCards = [...lista.querySelectorAll(".poder-card")].filter(c => c !== card);
+
+    destino = origem;
+
+    outrosCards.forEach((outroCard, i) => {
+      outroCard.classList.remove("drag-over");
+    });
+
+    for (let i = 0; i < outrosCards.length; i++) {
+      const outro = outrosCards[i];
+      const rect = outro.getBoundingClientRect();
+      const meio = rect.top + rect.height / 2;
+
+      if (y > meio) {
+        destino = Number(outro.dataset.index);
+      }
+    }
+
+    const alvo = [...lista.querySelectorAll(".poder-card")].find(c => Number(c.dataset.index) === destino && c !== card);
+    if (alvo) {
+      alvo.classList.add("drag-over");
+    }
+  }
+
+  function aoMover(ev) {
+    atualizarDestino(ev.clientY);
+  }
+
+  function aoSoltar() {
+    card.classList.remove("dragging");
+
+    lista.querySelectorAll(".poder-card").forEach(c => {
+      c.classList.remove("drag-over");
+    });
+
+    window.removeEventListener("pointermove", aoMover);
+    window.removeEventListener("pointerup", aoSoltar);
+
+    if (destino !== origem) {
+      moverPoderPorDrag(origem, destino);
+    }
+  }
+
+  window.addEventListener("pointermove", aoMover);
+  window.addEventListener("pointerup", aoSoltar);
+}
+
+function moverPoderPorDrag(origem, destino) {
+  if (origem === destino || origem < 0 || destino < 0) return;
+  if (origem >= poderes.length || destino >= poderes.length) return;
+
+  const [itemMovido] = poderes.splice(origem, 1);
+  poderes.splice(destino, 0, itemMovido);
+
+  renderPoderes();
+  salvarTudo();
 }
 
 function verPoder(index) {
@@ -1593,6 +1690,24 @@ function ativarDragTemp() {
   });
 }
 
+function moverPoderCima(index) {
+  if (index <= 0) return;
+
+  [poderes[index - 1], poderes[index]] = [poderes[index], poderes[index - 1]];
+
+  renderPoderes();
+  salvarTudo();
+}
+
+function moverPoderBaixo(index) {
+  if (index >= poderes.length - 1) return;
+
+  [poderes[index], poderes[index + 1]] = [poderes[index + 1], poderes[index]];
+
+  renderPoderes();
+  salvarTudo();
+}
+
 /* ================= INIT ================= */
 
 function init() {
@@ -1679,3 +1794,4 @@ function init() {
 }
 
 document.addEventListener("DOMContentLoaded", init);
+
