@@ -1,8 +1,8 @@
 {
-  "name": "RPG Sheet",
+  "name": "FICHA DE RPG BY LELECO",
   "short_name": "RPG",
   "start_url": "./index.html",
-  "display": "fullscreen"
+  "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
   "icons": [
