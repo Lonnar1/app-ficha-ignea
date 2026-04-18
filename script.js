@@ -1161,11 +1161,8 @@ function renderPoderes() {
 
     const li = document.createElement("li");
     li.className = "poder-card";
-    li.dataset.index = index;
 
     li.innerHTML = `
-      <div class="poder-drag-handle" title="Segure para mover">⋮⋮</div>
-
       <div class="poder-info" onclick="verPoder(${index})">
         <strong class="poder-nome">${icone} ${poder.nome || "Sem nome"}</strong>
         ${poder.dano ? `<div class="popup-tags" style="margin-top:6px;"><span class="tag-dano">${poder.dano}</span></div>` : ""}
@@ -1173,6 +1170,8 @@ function renderPoderes() {
       </div>
 
       <div class="item-acoes">
+        <button type="button" class="btn-mover" onclick="event.stopPropagation(); moverPoderCima(${index})">↑</button>
+        <button type="button" class="btn-mover" onclick="event.stopPropagation(); moverPoderBaixo(${index})">↓</button>
         <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarPoder(${index})">✏️</button>
         <button type="button" class="poder-remover" onclick="event.stopPropagation(); removerPoder(${index})">X</button>
       </div>
@@ -1180,8 +1179,6 @@ function renderPoderes() {
 
     ul.appendChild(li);
   });
-
-  ativarDragPoderes();
 }
 
 function ativarDragPoderes() {
