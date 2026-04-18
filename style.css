@@ -35,54 +35,94 @@ h1 {
 }
 
 /* ================= TÍTULO ================= */
-.titulo-rpg {
+.header-rpg {
+  position: relative;
+  background: #1f1a17;
+  padding: 30px 0 10px;
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
+  align-items: center;
+}
 
+.titulo-rpg {
+  position: relative;
+  display: inline-block;  
   margin: 0;
-
-  font-family: 'Cinzel', serif;
-  font-size: 42px;
-  line-height: 0.9;
+  padding-top: 90px; /* cria espaço pra espada ficar em cima */
   text-align: center;
-
-  background: linear-gradient(to bottom, #ffffff, #d1d5db);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-
-  text-shadow:
-    2px 2px 0 #8b0000,
-    4px 4px 0 #5a0000,
-    6px 6px 8px rgba(0, 0, 0, 0.8);
+  
 }
 
 .titulo-rpg span {
-  display: block;
-}
+  position: relative;
+  z-index: 10;
+  display: inline-block;
 
-.titulo-rpg .and {
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
   font-size: 34px;
-  margin: -8px 0;
-  color: #b9853e;
-  -webkit-text-fill-color: #b9853e;
+  letter-spacing: 2px;
+  color: #f8f1df;
 
   text-shadow:
-    2px 2px 0 #000,
-    0 0 12px rgba(185, 133, 62, 0.9),
-    0 0 20px rgba(185, 133, 62, 0.5);
+    0 0 12px rgba(255, 140, 0, 0.35),
+    2px 2px 6px rgba(0, 0, 0, 0.8);
 }
 
-.subtitulo-rpg {
-  margin: 4px 0 0 0;
+.espada-titulo {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.5;
+  filter: blur(10px);
 
+  width: 500px;
+
+  top: 10;
+  left: 50%;
+
+  transform: translateX(-5%) rotate(90deg);
+
+  transform-origin: top center; /* 🔥 ISSO RESOLVE */
+}
+
+/* texto na frente */
+.header-rpg {
+  position: relative;
   text-align: center;
-  font-family: 'Cinzel', serif;
-  font-size: 14px;
-  letter-spacing: 1px;
-  color: #d8c3a1;
+  padding-top: 40px; /* pode ajustar leve se quiser */
+}
+
+/* TEXTO */
+.titulo-rpg span {
+  background: linear-gradient(to right, #ffcc70, #ff7a00, #ff3c00);
+  -webkit-background-clip: text;
+  color: transparent;
+
+  text-shadow:
+    0 0 10px rgba(255, 100, 0, 0.6),
+    0 0 25px rgba(255, 60, 0, 0.4),
+    2px 2px 8px rgba(0,0,0,0.9);
+}
+
+.espada-titulo {
+  filter: drop-shadow(0 0 8px orange);
+}
+
+@keyframes brilhoFogo {
+  0% {
+    filter: drop-shadow(0 0 5px rgba(255, 120, 0, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 15px rgba(255, 80, 0, 0.8));
+  }
+  100% {
+    filter: drop-shadow(0 0 5px rgba(255, 120, 0, 0.4));
+  }
+}
+
+.espada-titulo {
+  animation: brilhoFogo 2s infinite ease-in-out;
 }
 
 /* ================= CONTAINER ================= */
