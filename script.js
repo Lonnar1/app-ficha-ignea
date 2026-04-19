@@ -109,6 +109,11 @@ function getIconeTipo(tipo) {
   if (t.includes("perfur")) return "📌";
   if (t.includes("concuss")) return "💥";
   if (t.includes("fisico")) return "🗡️";
+  if (t.includes("magico")) return "☄️";
+  if (t.includes("trevas")) return "🌑";
+  if (t.includes("luz")) return "🌕";
+  if (t.includes("espirit")) return "🌓";
+  if (t.includes("vento")) return "🍃";
 
   return "🔮";
 }
@@ -1280,7 +1285,12 @@ function renderInv() {
   </div>
 
   <div class="item-acoes">
-    <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarItem(${index})">🖊️</button>
+    <div class="acoes-topo">
+      <button type="button" class="btn-mover" onclick="event.stopPropagation(); moverItem(${index}, -1)">↑</button>
+      <button type="button" class="btn-mover" onclick="event.stopPropagation(); moverItem(${index}, 1)">↓</button>
+      <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarItem(${index})">🖊️</button>
+    </div>
+
     <button type="button" class="item-remover" onclick="event.stopPropagation(); removerItem(${index})">X</button>
   </div>
 `;
