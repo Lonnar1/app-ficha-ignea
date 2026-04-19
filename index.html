@@ -525,9 +525,22 @@
         <input id="poderDano" placeholder="Dano (ex: 2d6, 1d8+3)">
 
         <div class="poder-linha">
-          <input id="poderCirculo" placeholder="Círculo">
-          <input id="poderTempo" placeholder="Conjuração">
-        </div>
+  <select id="poderCirculo" class="input-personagem">
+    <option value="">Sem círculo (Poder)</option>
+    <option value="0">Círculo 0 (Truque)</option>
+    <option value="1">Círculo 1</option>
+    <option value="2">Círculo 2</option>
+    <option value="3">Círculo 3</option>
+    <option value="4">Círculo 4</option>
+    <option value="5">Círculo 5</option>
+    <option value="6">Círculo 6</option>
+    <option value="7">Círculo 7</option>
+    <option value="8">Círculo 8</option>
+    <option value="9">Círculo 9</option>
+  </select>
+
+  <input id="poderTempo" placeholder="Conjuração">
+</div>
 
         <div class="poder-linha">
           <input id="poderAlcance" placeholder="Alcance">
@@ -542,11 +555,152 @@
       </div>
     </div>
 
-    <ul id="listaPoderes" class="lista-sempre-visivel"></ul>
+    <div class="subtabs-poderes">
+  <button class="subtab-poder active" onclick="trocarSubAbaPoderes('poderes-comuns', this)">Poderes</button>
+  <button class="subtab-poder" onclick="trocarSubAbaPoderes('magias', this)">Magias</button>
+</div>
+
+<div id="subaba-poderes-comuns" class="subaba-poderes active">
+  <ul id="listaPoderesComuns" class="lista-sempre-visivel"></ul>
+</div>
+
+<div id="subaba-magias" class="subaba-poderes" style="display:none;">
+
+  <div class="subtabs-circulos">
+    <button class="subtab-circulo active" onclick="trocarSubAbaCirculo(0, this)">0</button>
+    <button class="subtab-circulo" onclick="trocarSubAbaCirculo(1, this)">1</button>
+    <button class="subtab-circulo" onclick="trocarSubAbaCirculo(2, this)">2</button>
+    <button class="subtab-circulo" onclick="trocarSubAbaCirculo(3, this)">3</button>
+    <button class="subtab-circulo" onclick="trocarSubAbaCirculo(4, this)">4</button>
+    <button class="subtab-circulo" onclick="trocarSubAbaCirculo(5, this)">5</button>
+    <button class="subtab-circulo" onclick="trocarSubAbaCirculo(6, this)">6</button>
+    <button class="subtab-circulo" onclick="trocarSubAbaCirculo(7, this)">7</button>
+    <button class="subtab-circulo" onclick="trocarSubAbaCirculo(8, this)">8</button>
+    <button class="subtab-circulo" onclick="trocarSubAbaCirculo(9, this)">9</button>
+  </div>
+
+  <!-- ================= CÍRCULOS ================= -->
+
+  <div id="circulo-0" class="circulo-box active">
+    <div class="gasto-circulo-box">
+      <div class="topo-slots-circulo">
+        <span>Círculo 0</span>
+        <button class="btn-editar-slots" onclick="editarQuantidadeSlotsCirculo(0)">✏️</button>
+      </div>
+      <div id="slotsCirculo0" class="slots-circulo"></div>
+    </div>
+    <ul id="listaMagiasCirculo0" class="lista-sempre-visivel"></ul>
+  </div>
+
+  <!-- 1 -->
+  <div id="circulo-1" class="circulo-box" style="display:none;">
+    <div class="gasto-circulo-box">
+      <div class="topo-slots-circulo">
+        <span>Círculo 1</span>
+        <button class="btn-editar-slots" onclick="editarQuantidadeSlotsCirculo(1)">✏️</button>
+      </div>
+      <div id="slotsCirculo1" class="slots-circulo"></div>
+    </div>
+    <ul id="listaMagiasCirculo1" class="lista-sempre-visivel"></ul>
+  </div>
+
+  <!-- 2 -->
+  <div id="circulo-2" class="circulo-box" style="display:none;">
+    <div class="gasto-circulo-box">
+      <div class="topo-slots-circulo">
+        <span>Círculo 2</span>
+        <button class="btn-editar-slots" onclick="editarQuantidadeSlotsCirculo(2)">✏️</button>
+      </div>
+      <div id="slotsCirculo2" class="slots-circulo"></div>
+    </div>
+    <ul id="listaMagiasCirculo2" class="lista-sempre-visivel"></ul>
+  </div>
+
+  <!-- 3 -->
+ <div id="circulo-3" class="circulo-box" style="display:none;">
+    <div class="gasto-circulo-box">
+      <div class="topo-slots-circulo">
+        <span>Círculo 3</span>
+        <button class="btn-editar-slots" onclick="editarQuantidadeSlotsCirculo(3)">✏️</button>
+      </div>
+      <div id="slotsCirculo3" class="slots-circulo"></div>
+    </div>
+    <ul id="listaMagiasCirculo3" class="lista-sempre-visivel"></ul>
+  </div>
+
+  <!-- 4 -->
+  <div id="circulo-4" class="circulo-box" style="display:none;">
+    <div class="gasto-circulo-box">
+      <div class="topo-slots-circulo">
+        <span>Círculo 4</span>
+        <button class="btn-editar-slots" onclick="editarQuantidadeSlotsCirculo(4)">✏️</button>
+      </div>
+      <div id="slotsCirculo4" class="slots-circulo"></div>
+    </div>
+    <ul id="listaMagiasCirculo4" class="lista-sempre-visivel"></ul>
+  </div>
+
+  <!-- 5 -->
+  <div id="circulo-5" class="circulo-box" style="display:none;">
+    <div class="gasto-circulo-box">
+      <div class="topo-slots-circulo">
+        <span>Círculo 5</span>
+        <button class="btn-editar-slots" onclick="editarQuantidadeSlotsCirculo(5)">✏️</button>
+      </div>
+      <div id="slotsCirculo5" class="slots-circulo"></div>
+    </div>
+    <ul id="listaMagiasCirculo5" class="lista-sempre-visivel"></ul>
+  </div>
+
+  <!-- 6 -->
+  <div id="circulo-6" class="circulo-box" style="display:none;">
+    <div class="gasto-circulo-box">
+      <div class="topo-slots-circulo">
+        <span>Círculo 6</span>
+        <button class="btn-editar-slots" onclick="editarQuantidadeSlotsCirculo(6)">✏️</button>
+      </div>
+      <div id="slotsCirculo6" class="slots-circulo"></div>
+    </div>
+    <ul id="listaMagiasCirculo6" class="lista-sempre-visivel"></ul>
+  </div>
+
+  <!-- 7 -->
+  <div id="circulo-7" class="circulo-box" style="display:none;">
+    <div class="gasto-circulo-box">
+      <div class="topo-slots-circulo">
+        <span>Círculo 7</span>
+        <button class="btn-editar-slots" onclick="editarQuantidadeSlotsCirculo(7)">✏️</button>
+      </div>
+      <div id="slotsCirculo7" class="slots-circulo"></div>
+    </div>
+    <ul id="listaMagiasCirculo7" class="lista-sempre-visivel"></ul>
+  </div>
+
+  <!-- 8 -->
+  <div id="circulo-8" class="circulo-box" style="display:none;">
+    <div class="gasto-circulo-box">
+      <div class="topo-slots-circulo">
+        <span>Círculo 8</span>
+        <button class="btn-editar-slots" onclick="editarQuantidadeSlotsCirculo(8)">✏️</button>
+      </div>
+      <div id="slotsCirculo8" class="slots-circulo"></div>
+    </div>
+    <ul id="listaMagiasCirculo8" class="lista-sempre-visivel"></ul>
+  </div>
+
+  <!-- 9 -->
+  <div id="circulo-9" class="circulo-box" style="display:none;">
+    <div class="gasto-circulo-box">
+      <div class="topo-slots-circulo">
+        <span>Círculo 9</span>
+        <button class="btn-editar-slots" onclick="editarQuantidadeSlotsCirculo(9)">✏️</button>
+      </div>
+      <div id="slotsCirculo9" class="slots-circulo"></div>
+    </div>
+    <ul id="listaMagiasCirculo9" class="lista-sempre-visivel"></ul>
   </div>
 
 </div>
-
 </div>
 
   <div id="popup" class="popup" style="display:none;">
