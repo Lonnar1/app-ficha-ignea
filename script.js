@@ -192,8 +192,8 @@ function editarItem(index) {
 }
 
 function salvarEdicaoItem(index) {
-  const nome = document.getElementById("editItemNome")?.value.trim();
-  const desc = document.getElementById("editItemDesc")?.value.trim();
+  const nome = document.getElementById("editItemNome").value.trim();
+  const desc = document.getElementById("editItemDesc").value.trim();
   const qtd = parseInt(document.getElementById("editItemQtd")?.value) || 1;
 
   if (!nome) return;
@@ -208,6 +208,36 @@ function salvarEdicaoItem(index) {
   salvarTudo();
   fecharPopup();
 }
+
+function moverItem(index, direcao) {
+  const lista = document.querySelectorAll(".item-card");
+
+  if (!lista[index]) return;
+
+  lista[index].classList.add("animando");
+
+  const novoIndex = index + direcao;
+
+  if (novoIndex < 0 || novoIndex >= inventario.length) {
+    lista[index].classList.remove("animando");
+    return;
+  }
+
+  setTimeout(() => {
+    [inventario[index], inventario[novoIndex]] = [inventario[novoIndex], inventario[index]];
+    renderInv();
+    salvarTudo();
+  }, 150);
+}
+
+function moverItemCima(index) {
+  moverItem(index, -1);
+}
+
+function moverItemBaixo(index) {
+  moverItem(index, 1);
+}
+
 
 function editarArma(index) {
   const arma = armas[index];
@@ -1272,28 +1302,24 @@ function renderInv() {
     li.className = "item-card";
 
     li.innerHTML = `
-  <div class="item-info" onclick="verItem(${index})">
-    <strong class="item-nome">
-      ${item.nome || "Sem nome"}
-    </strong>
+      <div class="item-info" onclick="verItem(${index})">
+        <strong class="item-nome">${item.nome || "Sem nome"}</strong>
+        <span class="item-qtd">x${item.qtd || 1}</span>
+        <p class="item-preview">
+          ${item.desc ? item.desc.substring(0, 60) + (item.desc.length > 60 ? "..." : "") : "Sem descrição"}
+        </p>
+      </div>
 
-    ${item.qtd > 1 ? `<span class="item-qtd">${item.qtd}</span>` : ""}
+      <div class="item-acoes">
+        <div class="acoes-topo">
+          <button type="button" class="btn-mover" onclick="event.stopPropagation(); moverItemCima(${index})">↑</button>
+          <button type="button" class="btn-mover" onclick="event.stopPropagation(); moverItemBaixo(${index})">↓</button>
+          <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarItem(${index})">✏️</button>
+        </div>
 
-    <p class="item-preview">
-      ${item.desc ? item.desc.substring(0, 60) + (item.desc.length > 60 ? "..." : "") : "Sem descrição"}
-    </p>
-  </div>
-
-  <div class="item-acoes">
-    <div class="acoes-topo">
-      <button type="button" class="btn-mover" onclick="event.stopPropagation(); moverItem(${index}, -1)">↑</button>
-      <button type="button" class="btn-mover" onclick="event.stopPropagation(); moverItem(${index}, 1)">↓</button>
-      <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarItem(${index})">🖊️</button>
-    </div>
-
-    <button type="button" class="item-remover" onclick="event.stopPropagation(); removerItem(${index})">X</button>
-  </div>
-`;
+        <button type="button" class="item-remover" onclick="event.stopPropagation(); removerItem(${index})">X</button>
+      </div>
+    `;
 
     ul.appendChild(li);
   });
