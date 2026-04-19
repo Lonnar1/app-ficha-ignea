@@ -3,8 +3,8 @@
   "short_name": "Ficha Ígnea",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#2596be",
-  "theme_color": "#0f172a",
+  "background_color": "#121016",
+  "theme_color": "#1a1410",
   "icons": [
     {
       "src": "icon-511.png",
