@@ -174,6 +174,9 @@ function editarItem(index) {
       <label class="popup-label">Descrição</label>
       <textarea id="editItemDesc">${item.desc || ""}</textarea>
 
+      <label class="popup-label">Quantidade</label>
+      <input id="editItemQtd" type="number" min="1" value="${item.qtd || 1}">
+
       <button class="popup-salvar-btn" onclick="salvarEdicaoItem(${index})">
         Salvar
       </button>
@@ -184,14 +187,16 @@ function editarItem(index) {
 }
 
 function salvarEdicaoItem(index) {
-  const nome = document.getElementById("editItemNome").value.trim();
-  const desc = document.getElementById("editItemDesc").value.trim();
+  const nome = document.getElementById("editItemNome")?.value.trim();
+  const desc = document.getElementById("editItemDesc")?.value.trim();
+  const qtd = parseInt(document.getElementById("editItemQtd")?.value) || 1;
 
   if (!nome) return;
 
   inventario[index] = {
     nome,
-    desc
+    desc,
+    qtd
   };
 
   renderInv();
@@ -1224,14 +1229,16 @@ function previewImagem() {
 /* ================= INVENTÁRIO ================= */
 
 function addItem() {
-  const nome = document.getElementById("item").value.trim();
-  const desc = document.getElementById("itemDesc").value.trim();
+  const nome = document.getElementById("itemNome")?.value.trim();
+  const desc = document.getElementById("itemDesc")?.value.trim();
+  const qtd = parseInt(document.getElementById("itemQtd")?.value) || 1;
 
   if (!nome) return;
 
   const novoItem = {
     nome,
-    desc
+    desc,
+    qtd
   };
 
   if (editandoItem >= 0) {
@@ -1244,8 +1251,9 @@ function addItem() {
   renderInv();
   salvarTudo();
 
-  document.getElementById("item").value = "";
+  document.getElementById("itemNome").value = "";
   document.getElementById("itemDesc").value = "";
+  document.getElementById("itemQtd").value = "";
 }
 
 function renderInv() {
@@ -1259,21 +1267,23 @@ function renderInv() {
     li.className = "item-card";
 
     li.innerHTML = `
-      <div class="item-info" onclick="verItem(${index})">
-        <strong class="item-nome">${item.nome || "Sem nome"}</strong>
-        <p class="item-preview">${item.desc ? item.desc.substring(0, 60) + (item.desc.length > 60 ? "..." : "") : "Sem descrição"}</p>
-      </div>
+  <div class="item-info" onclick="verItem(${index})">
+    <strong class="item-nome">
+      ${item.nome || "Sem nome"}
+    </strong>
 
-      <div class="item-acoes">
-        <div class="acoes-topo">
-          <button type="button" class="btn-mover" onclick="event.stopPropagation(); moverItemCima(${index})">↑</button>
-          <button type="button" class="btn-mover" onclick="event.stopPropagation(); moverItemBaixo(${index})">↓</button>
-          <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarItem(${index})">✏️</button>
-        </div>
+    ${item.qtd > 1 ? `<span class="item-qtd">${item.qtd}</span>` : ""}
 
-        <button type="button" class="item-remover" onclick="event.stopPropagation(); removerItem(${index})">X</button>
-      </div>
-    `;
+    <p class="item-preview">
+      ${item.desc ? item.desc.substring(0, 60) + (item.desc.length > 60 ? "..." : "") : "Sem descrição"}
+    </p>
+  </div>
+
+  <div class="item-acoes">
+    <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarItem(${index})">🖊️</button>
+    <button type="button" class="item-remover" onclick="event.stopPropagation(); removerItem(${index})">X</button>
+  </div>
+`;
 
     ul.appendChild(li);
   });
@@ -1317,17 +1327,19 @@ function verItem(index) {
   const html = `
     <div class="popup-bloco">
       <div>
+        <span class="popup-label">Quantidade</span>
+        <div class="popup-descricao">${item.qtd || 1}</div>
+      </div>
+
+      <div style="margin-top: 12px;">
         <span class="popup-label">Descrição</span>
-        <div class="popup-descricao">
-          ${item.desc || "Sem descrição"}
-        </div>
+        <div class="popup-descricao">${item.desc || "Sem descrição"}</div>
       </div>
     </div>
   `;
 
   abrirPopup(item.nome || "Sem nome", html, true, () => editarItem(index));
 }
-
 function removerItem(index) {
   const item = inventario[index];
   if (!item) return;
