@@ -44,41 +44,60 @@
   <button class="voltar" onclick="voltarInicio()">← Voltar</button>
 
   <div class="personagem-topo">
-  <div class="personagem-campos">
-    <input class="input-personagem" id="classe" placeholder="Classe">
-    <input id="nome" placeholder="Nome">
-    <input id="raca" placeholder="Raça">
-    <input id="idade" placeholder="Idade">
-    <input id="altura" placeholder="Altura">
-    <input id="antecedentes" placeholder="Antecedentes">
-  </div>
+    <div class="personagem-campos">
+      <input class="input-personagem" id="classe" placeholder="Classe">
+      <input id="nome" placeholder="Nome">
+      <input id="raca" placeholder="Raça">
+      <input id="idade" placeholder="Idade">
+      <input id="altura" placeholder="Altura">
+      <input id="antecedentes" placeholder="Antecedentes">
+    </div>
 
-  <div class="personagem-imagem-box">
-    <img id="preview" src="" alt="Preview do personagem">
+    <div class="personagem-imagem-box">
+      <img id="preview" src="" alt="Preview do personagem">
 
-    <div class="upload-imagem personagem-upload">
-      <label for="imagem" class="botao-upload">Escolher imagem</label>
-      <span id="nome-arquivo">Nenhum arquivo escolhido</span>
-      <input type="file" id="imagem" accept="image/*" onchange="previewImagem()">
+      <div class="upload-imagem personagem-upload">
+        <label for="imagem" class="botao-upload">Escolher imagem</label>
+        <span id="nome-arquivo">Nenhum arquivo escolhido</span>
+        <input type="file" id="imagem" accept="image/*" onchange="previewImagem()">
+      </div>
     </div>
   </div>
-</div>
 
-  <h2 class="titulo-secao">Idiomas</h2>
-  <textarea id="idiomas" placeholder="Idiomas"></textarea>
+  <!-- 🔥 IDIOMAS -->
+  <div class="secao-toggle">
+    <h2 class="titulo-secao titulo-toggle" onclick="toggleSecao('boxIdiomas', this)">
+      <span>Idiomas</span>
+      <span class="setinha">▼</span>
+    </h2>
 
-  <h2 class="titulo-secao">Aliados</h2>
-
-  <div class="inv-add">
-    <input id="aliadoNome" placeholder="Nome do aliado">
-    <textarea id="aliadoDesc" placeholder="Descrição do aliado"></textarea>
+    <div id="boxIdiomas" class="conteudo-toggle aberto">
+      <textarea id="idiomas" placeholder="Idiomas"></textarea>
+    </div>
   </div>
 
-    <div class="add-linha">
-  <button class="inv-add-btn" onclick="adicionarAliado()">+</button>
-</div>
+  <!-- 🔥 ALIADOS -->
+  <div class="secao-toggle">
+    <h2 class="titulo-secao titulo-toggle" onclick="toggleSecao('boxAliadosForm', this)">
+      <span>Aliados</span>
+      <span class="setinha">▼</span>
+    </h2>
 
-  <ul id="listaAliados"></ul>
+    <div id="boxAliadosForm" class="conteudo-toggle aberto">
+      <div class="inv-add">
+        <input id="aliadoNome" placeholder="Nome do aliado">
+        <textarea id="aliadoDesc" placeholder="Descrição do aliado"></textarea>
+      </div>
+
+      <div class="add-linha">
+        <button class="inv-add-btn" onclick="adicionarAliado()">+</button>
+      </div>
+    </div>
+
+    <!-- 👇 LISTA SEMPRE VISÍVEL -->
+    <ul id="listaAliados" class="lista-sempre-visivel"></ul>
+  </div>
+
 </div>
 
 <!-- ================= ATRIBUTOS ================= -->
@@ -222,100 +241,138 @@
         </div>
       </div>
 
-      <h2 class="titulo-secao">Armas</h2>
+<div class="secao-toggle">
+  <h2 class="titulo-secao titulo-toggle" onclick="toggleSecao('boxArmasForm', this)">
+    <span>Armas</span>
+    <span class="setinha">▼</span>
+  </h2>
 
-      <div class="arma-add">
-  <input id="armaNome" placeholder="Nome da arma">
-  <input id="armaDano" placeholder="Dano (ex: 2d6)">
-  <textarea id="armaDesc" placeholder="Descrição da arma"></textarea>
+  <div id="boxArmasForm" class="conteudo-toggle aberto">
+    <div class="arma-add">
+      <input id="armaNome" placeholder="Nome da arma">
+      <input id="armaDano" placeholder="Dano (ex: 2d6)">
+      <textarea id="armaDesc" placeholder="Descrição da arma"></textarea>
 
-  <div class="toggle-cargas">
-    <span class="toggle-cargas-texto">Usa cargas</span>
+      <div class="toggle-cargas">
+        <span class="toggle-cargas-texto">Usa cargas</span>
 
-    <label class="switch-cargas">
-      <input type="checkbox" id="armaTemCargas" onchange="toggleCampoCargas()">
-      <span class="slider-cargas"></span>
-    </label>
-  </div>
-
-  <input
-    id="armaMaxCargas"
-    type="number"
-    min="1"
-    max="20"
-    placeholder="Qtd. de cargas"
-    style="display:none;"
-  >
-
-  <div class="arma-acoes-final">
-    <button class="inv-add-btn" onclick="addArma()">+</button>
-  </div>
-</div>
-
-      <ul id="listaArmas"></ul>
-
-
-      <div class="dominio-box">
-  <h2 class="titulo-secao">Pontos de Domínio</h2>
-
-  <div class="dominio-checks">
-    <div class="dominio-check" onclick="toggleDominio(0)"></div>
-    <div class="dominio-check" onclick="toggleDominio(1)"></div>
-    <div class="dominio-check" onclick="toggleDominio(2)"></div>
-    <div class="dominio-check" onclick="toggleDominio(3)"></div>
-    <div class="dominio-check" onclick="toggleDominio(4)"></div>
-    <div class="dominio-check" onclick="toggleDominio(5)"></div>
-  </div>
-</div>
-
-
-      <div class="exaustao-box">
-        <h2 class="titulo-secao">Exaustão</h2>
-
-        <div class="exaustao-inline">
-          <div class="exaustao-checks" ondblclick="mostrarExaustao()">
-            <span class="exaustao-check" onclick="setExaustao(0)">0</span>
-            <span class="exaustao-check" onclick="setExaustao(1)">1</span>
-            <span class="exaustao-check" onclick="setExaustao(2)">2</span>
-            <span class="exaustao-check" onclick="setExaustao(3)">3</span>
-            <span class="exaustao-check" onclick="setExaustao(4)">4</span>
-            <span class="exaustao-check" onclick="setExaustao(5)">5</span>
-            <span class="exaustao-check" onclick="setExaustao(6)">6</span>
-          </div>
-        </div>
-
-        <p id="exaustao-desc">Sem exaustão</p>
+        <label class="switch-cargas">
+          <input type="checkbox" id="armaTemCargas" onchange="toggleCampoCargas()">
+          <span class="slider-cargas"></span>
+        </label>
       </div>
 
-      <div class="morte-box">
-  <h2 class="titulo-secao">Pontos de Morte</h2>
+      <input
+        id="armaMaxCargas"
+        type="number"
+        min="1"
+        max="20"
+        placeholder="Qtd. de cargas"
+        style="display:none;"
+      >
 
-  <div class="morte-linha">
-    <span>Sucessos</span>
-    <div class="morte-checks">
-      <div class="morte-check" onclick="toggleMorte('sucessos', 0)"></div>
-      <div class="morte-check" onclick="toggleMorte('sucessos', 1)"></div>
-      <div class="morte-check" onclick="toggleMorte('sucessos', 2)"></div>
+      <div class="arma-acoes-final">
+        <button class="inv-add-btn" onclick="addArma()">+</button>
+      </div>
     </div>
   </div>
 
-  <div class="morte-linha">
-    <span>Falhas</span>
-    <div class="morte-checks">
-      <div class="morte-check falha" onclick="toggleMorte('falhas', 0)"></div>
-      <div class="morte-check falha" onclick="toggleMorte('falhas', 1)"></div>
-      <div class="morte-check falha" onclick="toggleMorte('falhas', 2)"></div>
+  <ul id="listaArmas" class="lista-sempre-visivel"></ul>
+</div>
+
+<div class="secao-toggle">
+  <h2 class="titulo-secao titulo-toggle" onclick="toggleSecao('boxArmadurasForm', this)">
+    <span>Armaduras</span>
+    <span class="setinha">▼</span>
+  </h2>
+
+  <div id="boxArmadurasForm" class="conteudo-toggle aberto">
+    <div class="armadura-add">
+      <input id="armaduraNome" placeholder="Nome da armadura">
+      <input id="armaduraCA" placeholder="CA (ex: 16)">
+      <textarea id="armaduraDesc" placeholder="Descrição da armadura"></textarea>
+
+      <div class="add-linha">
+        <button class="inv-add-btn" onclick="addArmadura()">+</button>
+      </div>
+    </div>
+  </div>
+
+  <ul id="listaArmaduras" class="lista-sempre-visivel"></ul>
+</div>
+
+
+      <div class="secao-toggle">
+  <h2 class="titulo-secao titulo-toggle" onclick="toggleSecao('boxExaustao', this)">
+    <span>Exaustão</span>
+    <span class="setinha">▼</span>
+  </h2>
+
+  <div id="boxExaustao" class="conteudo-toggle aberto">
+    <div class="exaustao-box">
+
+      <div class="exaustao-inline">
+        <div class="exaustao-checks">
+          <div class="exaustao-check" onclick="setExaustao(0)">0</div>
+          <div class="exaustao-check" onclick="setExaustao(1)">1</div>
+          <div class="exaustao-check" onclick="setExaustao(2)">2</div>
+          <div class="exaustao-check" onclick="setExaustao(3)">3</div>
+          <div class="exaustao-check" onclick="setExaustao(4)">4</div>
+          <div class="exaustao-check" onclick="setExaustao(5)">5</div>
+          <div class="exaustao-check" onclick="setExaustao(6)">6</div>
+        </div>
+      </div>
+
+      <p id="exaustao-desc">Sem exaustão</p>
+
     </div>
   </div>
 </div>
 
-<div class="resistencias-box">
-  <h2 class="titulo-secao">Resistências</h2>
-  <textarea
-    id="resistencias"
-    oninput="salvarTudo()"
-    placeholder="Ex: resistência a fogo, veneno, dano mágico, ou qualquer observação que quiser..."
-  ></textarea>
+  <div class="secao-toggle">
+  <h2 class="titulo-secao titulo-toggle" onclick="toggleSecao('boxMorte', this)">
+    <span>Pontos de Morte</span>
+    <span class="setinha">▼</span>
+  </h2>
+
+  <div id="boxMorte" class="conteudo-toggle aberto">
+    <div class="morte-box">
+      <div class="morte-linha">
+        <span>Sucessos</span>
+        <div class="morte-checks">
+          <div class="morte-check" onclick="toggleMorte('sucessos', 0)"></div>
+          <div class="morte-check" onclick="toggleMorte('sucessos', 1)"></div>
+          <div class="morte-check" onclick="toggleMorte('sucessos', 2)"></div>
+        </div>
+      </div>
+
+      <div class="morte-linha">
+        <span>Falhas</span>
+        <div class="morte-checks">
+          <div class="morte-check falha" onclick="toggleMorte('falhas', 0)"></div>
+          <div class="morte-check falha" onclick="toggleMorte('falhas', 1)"></div>
+          <div class="morte-check falha" onclick="toggleMorte('falhas', 2)"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="secao-toggle">
+  <h2 class="titulo-secao titulo-toggle" onclick="toggleSecao('boxResistencias', this)">
+    <span>Resistências</span>
+    <span class="setinha">▼</span>
+  </h2>
+
+  <div id="boxResistencias" class="conteudo-toggle aberto">
+    <div class="resistencias-box">
+      <textarea
+        id="resistencias"
+        oninput="salvarTudo()"
+        placeholder="Ex: resistência a fogo, veneno, dano mágico, ou qualquer observação que quiser..."
+      ></textarea>
+    </div>
+  </div>
 </div>
 
     </div>
@@ -330,26 +387,34 @@
       <textarea id="diario" oninput="salvarTudo()" placeholder="Escreva aqui seu diário, anotações, pistas, missões, nomes, eventos..."></textarea>
     </div>
 
-    <h3 class="subtitulo-inventario">Itens</h3>
+    <div class="secao-toggle">
+  <h3 class="subtitulo-inventario titulo-toggle" onclick="toggleSecao('boxItensForm', this)">
+    <span>Itens</span>
+    <span class="setinha">▼</span>
+  </h3>
 
+  <div id="boxItensForm" class="conteudo-toggle aberto">
     <div class="inv-add">
       <input id="item" placeholder="Nome do item">
       <textarea id="itemDesc" placeholder="Descrição"></textarea>
     </div>
 
-     <div class="add-linha">
-    <button class="inv-add-btn" onclick="addItem()">+</button>
+    <div class="add-linha">
+      <button class="inv-add-btn" onclick="addItem()">+</button>
+    </div>
   </div>
 
-    <ul id="lista"></ul>
+  <!-- 👇 LISTA SEMPRE VISÍVEL -->
+  <ul id="lista" class="lista-sempre-visivel"></ul>
+</div>
   </div>
 
     <!-- ================= PODERES ================= -->
-    <div class="aba" id="poderes" style="display:none;"> 
+    <div class="aba" id="poderes" style="display:none;">  
 
-      <h2 class="titulo-secao">Poderes e Magias</h2>
+  <h2 class="titulo-secao">Poderes e Magias</h2>
 
-      <div class="dt-box">
+  <div class="dt-box">
         <h3 class="subtitulo-secao">DT</h3>
 
         <div class="dt-linha">
@@ -375,10 +440,20 @@
         </div>
       </div>
 
+  </div>
+
+  <div class="secao-toggle">
+    <h2 class="titulo-secao titulo-toggle" onclick="toggleSecao('boxPoderForm', this)">
+      <span>Adicionar Poder</span>
+      <span class="setinha">▼</span>
+    </h2>
+
+    <div id="boxPoderForm" class="conteudo-toggle aberto">
       <div class="poder-add">
         <input id="poderNome" placeholder="Nome do poder">
         <input id="poderTipo" placeholder="Tipo de dano (ex: fogo, gelo, raio, necrótico)">
         <input id="poderDano" placeholder="Dano (ex: 2d6, 1d8+3)">
+
         <div class="poder-linha">
           <input id="poderCirculo" placeholder="Círculo">
           <input id="poderTempo" placeholder="Conjuração">
@@ -393,14 +468,14 @@
       </div>
 
       <div class="add-linha">
-    <button class="inv-add-btn" onclick="addPoder()">+</button>
-  </div>
-
-      <ul id="listaPoderes"></ul>
-
+        <button class="inv-add-btn" onclick="addPoder()">+</button>
+      </div>
     </div>
 
+    <ul id="listaPoderes" class="lista-sempre-visivel"></ul>
   </div>
+
+</div>
 
   <div id="popup" class="popup" style="display:none;">
   <div class="popup-content">
