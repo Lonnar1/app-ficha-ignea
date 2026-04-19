@@ -85,13 +85,14 @@
 
     <div id="boxAliadosForm" class="conteudo-toggle aberto">
       <div class="inv-add">
-        <input id="aliadoNome" placeholder="Nome do aliado">
-        <textarea id="aliadoDesc" placeholder="Descrição do aliado"></textarea>
-      </div>
+  <input id="itemNome" placeholder="Nome do item">
+  <textarea id="itemDesc" placeholder="Descrição"></textarea>
+  <input id="itemQtd" type="number" min="1" placeholder="Quantidade">
+</div>
 
-      <div class="add-linha">
-        <button class="inv-add-btn" onclick="adicionarAliado()">+</button>
-      </div>
+<div class="add-linha">
+  <button class="inv-add-btn" onclick="addItem()">+</button>
+</div>
     </div>
 
     <!-- 👇 LISTA SEMPRE VISÍVEL -->
@@ -434,6 +435,8 @@
     <div class="inv-add">
       <input id="item" placeholder="Nome do item">
       <textarea id="itemDesc" placeholder="Descrição"></textarea>
+        <input id="itemQtd" type="number" min="1" placeholder="Quantidade">
+
     </div>
 
     <div class="add-linha">
@@ -498,6 +501,7 @@
       <option value="radiante">✨ Radiante</option>
       <option value="veneno">☠️ Veneno</option>
       <option value="agua">💧 Agua</option>
+      <option value="Magico"> ☄️ Magico</option>
       <option value="psiquico">🧠 Psíquico</option>
       <option value="corte">🔪 Corte</option>
       <option value="perfurante">📌 Perfurante</option>
