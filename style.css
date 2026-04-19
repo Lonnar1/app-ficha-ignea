@@ -178,23 +178,42 @@ textarea {
   background: rgba(15, 10, 6, 0.45);
 }
 
-.card button {
+.card-acoes {
   position: absolute;
   top: 5px;
   right: 5px;
-
-  width: 22px;
-  height: 22px;
-
-  border: none;
-  border-radius: 50%;
-  background: rgba(20, 14, 10, 0.75);
-  color: #f8f1df;
-  cursor: pointer;
-  font-size: 12px;
+  display: flex;
+  gap: 5px;
+  z-index: 3;
 }
 
-.card button:hover {
+.card-acoes button {
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-duplicar {
+  background: rgba(200, 169, 107, 0.9);
+  color: #1f1a17;
+}
+
+.btn-duplicar:hover {
+  background: #d8bb7d;
+}
+
+.btn-deletar {
+  background: rgba(20, 14, 10, 0.75);
+  color: #f8f1df;
+}
+
+.btn-deletar:hover {
   background: rgb(0, 0, 0);
 }
 
@@ -2028,9 +2047,13 @@ button {
 } 
 .item-acoes {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
+  flex-direction: column;
+  align-items: flex-end; /* 👈 ISSO joga tudo pra direita */
+  gap: 6px;
+}
+
+.poder-remover {
+  align-self: flex-end; /* 👈 força o X pra direita */
 }
 
 .btn-editar {
@@ -2951,3 +2974,228 @@ body.low-hp::after {
   background: #8a7357;
   transform: scale(1.05);
 }
+
+.card-acoes {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: flex;
+  gap: 5px;
+}
+
+.btn-duplicar {
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(200, 169, 107, 0.8);
+  color: #1f1a17;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn-duplicar:hover {
+  background: #c8a96b;
+}
+
+.btn-deletar {
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(20, 14, 10, 0.75);
+  color: #f8f1df;
+  cursor: pointer;
+}
+
+.secao-toggle {
+  margin-bottom: 18px;
+}
+
+.titulo-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* 🔥 centraliza tudo */
+
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+
+  font-family: 'Cinzel', serif; /* 🔥 fonte medieval */
+  font-size: 20px;
+  letter-spacing: 1px;
+  color: #f3d9a2;
+
+  position: relative;
+}
+
+.titulo-toggle .setinha {
+  font-size: 16px;
+  transition: transform 0.25s ease;
+  color: #c8a96b;
+}
+
+.titulo-toggle.fechado .setinha {
+  transform: rotate(-90deg);
+}
+
+.conteudo-toggle {
+  overflow: hidden;
+  max-height: 500px;
+  opacity: 1;
+  transition: max-height 0.3s ease, opacity 0.25s ease, margin-top 0.25s ease;
+  margin-top: 8px;
+}
+
+.conteudo-toggle.fechado {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+}
+
+.armadura-add {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+#listaArmaduras {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.armadura-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #2f2822;
+  overflow: hidden;
+}
+
+.armadura-info {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.armadura-nome,
+.armadura-ca-preview,
+.armadura-desc-preview {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.armadura-nome {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 4px;
+  color: #f8f1df;
+}
+
+.armadura-ca-preview {
+  margin: 0 0 4px 0;
+  font-size: 13px;
+  color: #d8c3a1;
+  line-height: 1.4;
+}
+
+.armadura-desc-preview {
+  margin: 0;
+  font-size: 13px;
+  color: #d8c3a1;
+  line-height: 1.4;
+  white-space: normal;
+}
+
+.lista-sempre-visivel {
+  margin-top: 12px;
+}
+
+.titulo-toggle span {
+  font-family: 'Cinzel', serif !important;
+}
+
+.titulo-linha {
+  width: 100%;
+  text-align: center;
+  font-family: 'Cinzel', serif !important;
+  font-size: 18px;
+  color: #d4b06a;
+  letter-spacing: 2px;
+  margin: 18px 0;
+  position: relative;
+}
+
+/* LINHA COMPLETA ATRÁS */
+.titulo-linha::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #c8a96b, transparent);
+  z-index: 0;
+}
+
+/* TEXTO */
+.titulo-linha span {
+  position: relative;
+  z-index: 1;
+}
+
+.item-acoes {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.acoes-topo {
+  display: flex;
+  gap: 6px;
+}
+
+.acoes-topo .btn-mover,
+.acoes-topo .btn-editar {
+  width: 32px;
+  height: 32px;
+}
+
+.poder-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.poder-nome {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.poder-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.poder-preview {
+  margin: 0;
+  font-size: 13px;
+  color: #d8c3a1;
+  line-height: 1.4;
+}
+
+.poder-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
