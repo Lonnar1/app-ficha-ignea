@@ -3588,3 +3588,33 @@ body::after {
   -webkit-appearance: none;
   -moz-appearance: none;
 }
+
+.item-info {
+  position: relative;
+}
+
+.item-qtd {
+  position: absolute;
+  top: 0;
+  right: 0;
+
+  min-width: 28px;
+  height: 28px;
+  padding: 0 9px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #5a4633;
+  color: #f8f1df;
+  font-size: 13px;
+  font-weight: 700;
+
+  border-radius: 999px;
+  border: 2px solid #8c6b45;
+
+  box-shadow:
+    0 0 0 2px rgba(27, 20, 17, 0.6),
+    0 4px 10px rgba(0, 0, 0, 0.3);
+}
