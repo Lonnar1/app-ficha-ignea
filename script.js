@@ -1096,20 +1096,56 @@ function renderInv() {
     li.className = "item-card";
 
     li.innerHTML = `
-  <div class="item-info" onclick="verItem(${index})">
-    <strong class="item-nome">${item.nome || "Sem nome"}</strong>
-    <p class="item-preview">${item.desc ? item.desc.substring(0, 60) + (item.desc.length > 60 ? "..." : "") : "Sem descrição"}</p>
-  </div>
+      <div class="item-info" onclick="verItem(${index})">
+        <strong class="item-nome">${item.nome || "Sem nome"}</strong>
+        <p class="item-preview">${item.desc ? item.desc.substring(0, 60) + (item.desc.length > 60 ? "..." : "") : "Sem descrição"}</p>
+      </div>
 
-  <div class="item-acoes">
-    <button type="button" class="btn-editar" onclick="editarItem(${index})">✏️</button>
-    <button type="button" class="item-remover" onclick="removerItem(${index})">X</button>
-  </div>
-`;
+      <div class="item-acoes">
+        <div class="acoes-topo">
+          <button type="button" class="btn-mover" onclick="event.stopPropagation(); moverItemCima(${index})">↑</button>
+          <button type="button" class="btn-mover" onclick="event.stopPropagation(); moverItemBaixo(${index})">↓</button>
+          <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarItem(${index})">✏️</button>
+        </div>
+
+        <button type="button" class="item-remover" onclick="event.stopPropagation(); removerItem(${index})">X</button>
+      </div>
+    `;
 
     ul.appendChild(li);
   });
 }
+
+function moverItemCima(index) {
+  if (index <= 0) return;
+
+  const lista = document.getElementById("lista");
+  const item = lista.children[index];
+
+  item.classList.add("item-animar-cima");
+
+  setTimeout(() => {
+    [inventario[index - 1], inventario[index]] = [inventario[index], inventario[index - 1]];
+    renderInv();
+    salvarTudo();
+  }, 200);
+}
+
+function moverItemBaixo(index) {
+  if (index >= inventario.length - 1) return;
+
+  const lista = document.getElementById("lista");
+  const item = lista.children[index];
+
+  item.classList.add("item-animar-baixo");
+
+  setTimeout(() => {
+    [inventario[index + 1], inventario[index]] = [inventario[index], inventario[index + 1]];
+    renderInv();
+    salvarTudo();
+  }, 200);
+}
+
 
 function verItem(index) {
   const item = inventario[index];
@@ -1366,7 +1402,14 @@ function renderPoderes() {
   <div class="poder-info" onclick="verPoder(${index})">
     <strong class="poder-nome">${icone} ${poder.nome || "Sem nome"}</strong>
     ${poder.dano ? `<div class="poder-tags" style="margin-top:6px;"><span class="tag-dano">${poder.dano}</span></div>` : ""}
-    <p class="poder-preview">${poder.desc ? poder.desc.substring(0, 70) + (poder.desc.length > 70 ? "..." : "") : "Sem descrição"}</p>
+    <p class="poder-preview">
+  ${
+    poder.desc
+      ? poder.desc.split("\n")[0].substring(0, 60) +
+        (poder.desc.split("\n")[0].length > 60 ? "..." : "")
+      : "Sem descrição"
+  }
+</p>
   </div>
 
   <div class="item-acoes">
