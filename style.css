@@ -3574,3 +3574,17 @@ body::after {
   position: absolute;
   inset: 2px; /* aumenta a área de clique */
 }
+
+.popup-form select {
+  width: 100%;
+  background: #5a4b3f;
+  color: #f8f1df;
+  border: none;
+  border-radius: 12px;
+  padding: 10px;
+  margin: 0;
+  font-size: 14px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
