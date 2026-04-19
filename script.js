@@ -2,6 +2,23 @@ let morte = {
   sucessos: [false, false, false],
   falhas: [false, false, false]
 };
+
+let gastosCirculos = {
+  0: [],
+  1: [],
+  2: [],
+  3: [],
+  4: [],
+  5: [],
+  6: [],
+  7: [],
+  8: [],
+  9: []
+};
+
+for (let i = 0; i <= 9; i++) {
+  renderSlotsCirculo(i);
+}
 let dominio = [false, false, false, false, false, false];
 let editandoItem = -1;
 let editandoArma = -1;
@@ -18,7 +35,6 @@ let imagemBase64 = "";
 let exaustao = 0;
 let armaduras = [];
 let editandoArmadura = -1;
-
 let personagens = JSON.parse(localStorage.getItem("personagens")) || [];
 let personagemAtual = null;
 
@@ -56,6 +72,8 @@ const efeitosExaustao = [
 ];
 
 /* ================= FUNÇÕES BASE ================= */
+
+
 
 function mod(v) {
   return Math.floor((v - 10) / 2);
@@ -136,6 +154,88 @@ function getClasseTipo(tipo) {
   return "tipo-padrao";
 }
 
+function trocarSubAbaPoderes(tipo, btn) {
+  const subabas = document.querySelectorAll(".subaba-poderes");
+  subabas.forEach(el => {
+    el.style.display = "none";
+    el.classList.remove("active");
+  });
+
+  document.querySelectorAll(".subtab-poder").forEach(b => b.classList.remove("active"));
+
+  if (tipo === "poderes-comuns") {
+    const alvo = document.getElementById("subaba-poderes-comuns");
+    if (alvo) {
+      alvo.style.display = "block";
+      alvo.classList.add("active");
+    }
+  }
+
+  if (tipo === "magias") {
+    const alvo = document.getElementById("subaba-magias");
+    if (alvo) {
+      alvo.style.display = "block";
+      alvo.classList.add("active");
+    }
+  }
+
+  if (btn) btn.classList.add("active");
+}
+
+
+function atualizarGastoCirculo(circulo, valor) {
+  let total = parseInt(valor) || 0;
+  if (total < 0) total = 0;
+
+  const atual = Array.isArray(gastosCirculos[circulo]) ? gastosCirculos[circulo] : [];
+  const novoArray = [];
+
+  for (let i = 0; i < total; i++) {
+    novoArray.push(atual[i] || false);
+  }
+
+  gastosCirculos[circulo] = novoArray;
+  renderSlotsCirculo(circulo);
+  salvarTudo();
+}
+
+function salvarGastosCirculos() {
+  for (let i = 0; i <= 9; i++) {
+    if (!Array.isArray(gastosCirculos[i])) {
+      gastosCirculos[i] = [];
+    }
+  }
+
+  salvarTudo();
+}
+
+function trocarSubAbaCirculo(circulo, btn) {
+  const caixas = document.querySelectorAll(".circulo-box");
+  caixas.forEach(el => {
+    el.style.display = "none";
+    el.classList.remove("active");
+  });
+
+  document.querySelectorAll(".subtab-circulo").forEach(b => b.classList.remove("active"));
+
+  const alvo = document.getElementById(`circulo-${circulo}`);
+  if (alvo) {
+    alvo.style.display = "block";
+    alvo.classList.add("active");
+  }
+
+  if (btn) btn.classList.add("active");
+}
+
+function salvarGastosCirculos() {
+  for (let i = 0; i <= 9; i++) {
+    const input = document.getElementById(`gastoCirculo${i}`);
+    gastosCirculos[i] = input ? (parseInt(input.value) || 0) : 0;
+  }
+
+  salvarTudo();
+}
+
 /* ================= POPUP ================= */
 
 function abrirPopup(titulo, conteudo, usarHTML = false, onEditar = null) {
@@ -165,6 +265,50 @@ function abrirPopup(titulo, conteudo, usarHTML = false, onEditar = null) {
   }
 
   popup.style.display = "flex";
+}
+
+function editarQuantidadeSlotsCirculo(circulo) {
+  if (!gastosCirculos[circulo]) gastosCirculos[circulo] = [];
+
+  const atual = gastosCirculos[circulo].length;
+  const resposta = prompt(`Quantas bolinhas no círculo ${circulo}?`, atual);
+
+  if (resposta === null) return;
+
+  let novoTotal = parseInt(resposta);
+  if (isNaN(novoTotal) || novoTotal < 0) novoTotal = 0;
+
+  const novoArray = [];
+  for (let i = 0; i < novoTotal; i++) {
+    novoArray.push(gastosCirculos[circulo][i] || false);
+  }
+
+  gastosCirculos[circulo] = novoArray;
+
+  renderSlotsCirculo(circulo);
+  salvarTudo();
+}
+
+function renderSlotsCirculo(circulo) {
+  const container = document.getElementById(`slotsCirculo${circulo}`);
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  const slots = gastosCirculos[circulo] || [];
+
+  slots.forEach((usado, i) => {
+    const bolinha = document.createElement("div");
+    bolinha.className = "slot-bolinha" + (usado ? " usado" : "");
+
+    bolinha.onclick = () => {
+      gastosCirculos[circulo][i] = !gastosCirculos[circulo][i];
+      renderSlotsCirculo(circulo);
+      salvarTudo();
+    };
+
+    container.appendChild(bolinha);
+  });
 }
 
 function editarItem(index) {
@@ -775,6 +919,18 @@ function criarPersonagem() {
   idiomas: "",
   diario: "",
   proficienciasExtras: "",
+gastosCirculos: {
+  0: [],
+  1: [],
+  2: [],
+  3: [],
+  4: [],
+  5: [],
+  6: [],
+  7: [],
+  8: [],
+  9: []
+},
 
   vidaMax: 50,
   vidaAtual: 50,
@@ -1148,6 +1304,9 @@ if (profExtras) profExtras.value = p.proficienciasExtras || "";
     nomeArquivo.innerText = p.imagem ? "Imagem carregada" : "Nenhum arquivo escolhido";
   }
 
+  
+
+
   dominio = p.dominio || [false, false, false, false, false, false];
   vidaAtual = p.vidaAtual ?? 50;
   vidaTemp = p.vidaTemp ?? 0;
@@ -1156,6 +1315,25 @@ if (profExtras) profExtras.value = p.proficienciasExtras || "";
   poderes = p.poderes || [];
   profs = p.profs || {};
   armaduras = p.armaduras || [];
+  gastosCirculos = p.gastosCirculos || {
+  0: [],
+  1: [],
+  2: [],
+  3: [],
+  4: [],
+  5: [],
+  6: [],
+  7: [],
+  8: [],
+  9: []
+};
+
+for (let i = 0; i <= 9; i++) {
+  if (!Array.isArray(gastosCirculos[i])) {
+    gastosCirculos[i] = [];
+  }
+  renderSlotsCirculo(i);
+}
   saves = p.saves || {};
   exaustao = p.exaustao ?? 0;
   morte = p.morte || {
@@ -1163,6 +1341,8 @@ if (profExtras) profExtras.value = p.proficienciasExtras || "";
     falhas: [false, false, false]
   };
 
+
+  
   renderInv();
   renderArmas();
   renderPoderes();
@@ -1219,6 +1399,7 @@ function salvarTudo() {
   p.inventario = inventario;
   p.armas = armas;
   p.poderes = poderes;
+  p.gastosCirculos = gastosCirculos;
   p.profs = profs;
   p.saves = saves;
   p.exaustao = exaustao;
@@ -1598,67 +1779,103 @@ function atualizarEstadoLowHP() {
 }
 
 function renderPoderes() {
-  const ul = document.getElementById("listaPoderes");
-  if (!ul) return;
+  const listaPoderesComuns = document.getElementById("listaPoderesComuns");
 
-  ul.innerHTML = "";
+  const listasCirculos = {
+    0: document.getElementById("listaMagiasCirculo0"),
+    1: document.getElementById("listaMagiasCirculo1"),
+    2: document.getElementById("listaMagiasCirculo2"),
+    3: document.getElementById("listaMagiasCirculo3"),
+    4: document.getElementById("listaMagiasCirculo4"),
+    5: document.getElementById("listaMagiasCirculo5"),
+    6: document.getElementById("listaMagiasCirculo6"),
+    7: document.getElementById("listaMagiasCirculo7"),
+    8: document.getElementById("listaMagiasCirculo8"),
+    9: document.getElementById("listaMagiasCirculo9")
+  };
+
+  if (listaPoderesComuns) listaPoderesComuns.innerHTML = "";
+
+  Object.values(listasCirculos).forEach(lista => {
+    if (lista) lista.innerHTML = "";
+  });
 
   poderes.forEach((poder, index) => {
     const icone = getIconeTipo(poder.tipo);
+    const circulo = (poder.circulo ?? "").toString().trim();
 
     const li = document.createElement("li");
     li.className = "poder-card";
 
     li.innerHTML = `
-  <div class="poder-info" onclick="verPoder(${index})">
-    <strong class="poder-nome">${icone} ${poder.nome || "Sem nome"}</strong>
-    ${poder.dano ? `<div class="poder-tags" style="margin-top:6px;"><span class="tag-dano">${poder.dano}</span></div>` : ""}
-    <p class="poder-preview">
-  ${
-    poder.desc
-      ? poder.desc.split("\n")[0].substring(0, 60) +
-        (poder.desc.split("\n")[0].length > 60 ? "..." : "")
-      : "Sem descrição"
-  }
-</p>
-  </div>
+      <div class="poder-info" onclick="verPoder(${index})">
+        <strong class="poder-nome">${icone} ${poder.nome || "Sem nome"}</strong>
 
-  <div class="item-acoes">
-    <div class="acoes-topo">
-      <button type="button" class="btn-mover" onclick="event.stopPropagation(); moverPoderCima(${index})">↑</button>
-      <button type="button" class="btn-mover" onclick="event.stopPropagation(); moverPoderBaixo(${index})">↓</button>
-      <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarPoder(${index})">✏️</button>
-    </div>
+        ${
+          poder.dano
+            ? `<div class="poder-tags" style="margin-top:6px;"><span class="tag-dano">${poder.dano}</span></div>`
+            : ""
+        }
 
-    <button type="button" class="poder-remover" onclick="event.stopPropagation(); removerPoder(${index})">X</button>
-  </div>
-`;
+        ${
+          circulo !== ""
+            ? `<div class="poder-tags" style="margin-top:6px;"><span class="tag-circulo">Círculo ${circulo}</span></div>`
+            : ""
+        }
 
-    ul.appendChild(li);
+        <p class="poder-preview">
+          ${poder.desc ? poder.desc.substring(0, 70) + (poder.desc.length > 70 ? "..." : "") : "Sem descrição"}
+        </p>
+      </div>
+
+      <div class="item-acoes">
+        <div class="acoes-topo">
+          <button type="button" class="btn-mover" onclick="event.stopPropagation(); moverPoderCima(${index})">▲</button>
+<button type="button" class="btn-mover" onclick="event.stopPropagation(); moverPoderBaixo(${index})">▼</button>
+          <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarPoder(${index})">✏️</button>
+          <button type="button" class="item-remover" onclick="event.stopPropagation(); removerPoder(${index})">X</button>
+        </div>
+      </div>
+    `;
+
+    if (circulo === "") {
+      if (listaPoderesComuns) listaPoderesComuns.appendChild(li);
+    } else if (listasCirculos[circulo]) {
+      listasCirculos[circulo].appendChild(li);
+    } else {
+      if (listaPoderesComuns) listaPoderesComuns.appendChild(li);
+    }
   });
-}
 
-  function aoMover(ev) {
-    atualizarDestino(ev.clientY);
-  }
-
-  function aoSoltar() {
-    card.classList.remove("dragging");
-
-    lista.querySelectorAll(".poder-card").forEach(c => {
-      c.classList.remove("drag-over");
-    });
-
-    window.removeEventListener("pointermove", aoMover);
-    window.removeEventListener("pointerup", aoSoltar);
-
-    if (destino !== origem) {
-      moverPoderPorDrag(origem, destino);
+  for (let i = 0; i <= 9; i++) {
+    const inputGasto = document.getElementById(`gastoCirculo${i}`);
+    if (inputGasto) {
+      inputGasto.value = gastosCirculos[i] || 0;
     }
   }
+}
 
-  window.addEventListener("pointermove", aoMover);
-  window.addEventListener("pointerup", aoSoltar);
+function aoMover(ev) {
+  atualizarDestino(ev.clientY);
+}
+
+function aoSoltar() {
+  card.classList.remove("dragging");
+
+  lista.querySelectorAll(".poder-card").forEach(c => {
+    c.classList.remove("drag-over");
+  });
+
+  window.removeEventListener("pointermove", aoMover);
+  window.removeEventListener("pointerup", aoSoltar);
+
+  if (destino !== origem) {
+    moverPoderPorDrag(origem, destino);
+  }
+}
+
+window.addEventListener("pointermove", aoMover);
+window.addEventListener("pointerup", aoSoltar);
 
 function moverPoderPorDrag(origem, destino) {
   if (origem === destino || origem < 0 || destino < 0) return;
@@ -2086,29 +2303,83 @@ function ativarDragTemp() {
   });
 }
 
+function getGrupoPoder(poder) {
+  const circulo = (poder?.circulo ?? "").toString().trim();
+
+  if (circulo === "") return "comum";
+
+  const numero = parseInt(circulo, 10);
+
+  if (isNaN(numero) || numero < 0 || numero > 9) {
+    return "comum";
+  }
+
+  return `circulo-${numero}`;
+}
+
 function moverPoderCima(index) {
-  if (index <= 0) return;
-  animarTrocaPoder(index, index - 1);
+  moverPoderNoGrupo(index, -1);
 }
 
 function moverPoderBaixo(index) {
-  if (index >= poderes.length - 1) return;
-  animarTrocaPoder(index, index + 1);
+  moverPoderNoGrupo(index, 1);
 }
 
-function animarTrocaPoder(origem, destino) {
-  const cards = document.querySelectorAll("#listaPoderes .poder-card");
-  const cardOrigem = cards[origem];
-  const cardDestino = cards[destino];
+function moverPoderNoGrupo(indexOriginal, direcao) {
+  const poderAtual = poderes[indexOriginal];
+  if (!poderAtual) return;
 
-  if (!cardOrigem || !cardDestino) return;
+  const grupo = getGrupoPoder(poderAtual);
+
+  const indicesDoGrupo = poderes
+    .map((p, i) => ({ poder: p, index: i }))
+    .filter(item => getGrupoPoder(item.poder) === grupo)
+    .map(item => item.index);
+
+  const posicaoNoGrupo = indicesDoGrupo.indexOf(indexOriginal);
+  if (posicaoNoGrupo === -1) return;
+
+  const novaPosicaoNoGrupo = posicaoNoGrupo + direcao;
+  if (novaPosicaoNoGrupo < 0 || novaPosicaoNoGrupo >= indicesDoGrupo.length) return;
+
+  const indexDestino = indicesDoGrupo[novaPosicaoNoGrupo];
+  animarTrocaPoder(indexOriginal, indexDestino, grupo);
+}
+
+function animarTrocaPoder(origem, destino, grupo) {
+  let seletorLista = "#listaPoderesComuns";
+
+  if (grupo !== "comum") {
+    const numero = grupo.replace("circulo-", "");
+    seletorLista = `#listaMagiasCirculo${numero}`;
+  }
+
+  const cards = Array.from(document.querySelectorAll(`${seletorLista} .poder-card`));
+
+  const indicesDoGrupo = poderes
+    .map((p, i) => ({ poder: p, index: i }))
+    .filter(item => getGrupoPoder(item.poder) === grupo)
+    .map(item => item.index);
+
+  const posOrigem = indicesDoGrupo.indexOf(origem);
+  const posDestino = indicesDoGrupo.indexOf(destino);
+
+  const cardOrigem = cards[posOrigem];
+  const cardDestino = cards[posDestino];
+
+  if (!cardOrigem || !cardDestino) {
+    [poderes[origem], poderes[destino]] = [poderes[destino], poderes[origem]];
+    renderPoderes();
+    salvarTudo();
+    return;
+  }
 
   const rectOrigem = cardOrigem.getBoundingClientRect();
   const rectDestino = cardDestino.getBoundingClientRect();
   const distancia = rectDestino.top - rectOrigem.top;
 
-  cardOrigem.style.transition = "transform 0.22s ease, opacity 0.22s ease";
-  cardDestino.style.transition = "transform 0.22s ease, opacity 0.22s ease";
+  cardOrigem.style.transition = "transform 0.22s ease";
+  cardDestino.style.transition = "transform 0.22s ease";
 
   cardOrigem.style.transform = `translateY(${distancia}px)`;
   cardDestino.style.transform = `translateY(${-distancia}px)`;
@@ -2117,10 +2388,7 @@ function animarTrocaPoder(origem, destino) {
   cardDestino.style.zIndex = "2";
 
   setTimeout(() => {
-    const temp = poderes[origem];
-    poderes[origem] = poderes[destino];
-    poderes[destino] = temp;
-
+    [poderes[origem], poderes[destino]] = [poderes[destino], poderes[origem]];
     renderPoderes();
     salvarTudo();
   }, 220);
