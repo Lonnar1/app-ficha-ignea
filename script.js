@@ -271,7 +271,26 @@ function editarPoder(index) {
       <input id="editPoderNome" value="${poder.nome || ""}">
 
       <label class="popup-label">Tipo</label>
-      <input id="editPoderTipo" value="${poder.tipo || ""}">
+      <select id="editPoderTipo" class="input-personagem">
+        <option value="">Tipo de dano</option>
+        <option value="fogo" ${poder.tipo === "fogo" ? "selected" : ""}>🔥 Fogo</option>
+        <option value="gelo" ${poder.tipo === "gelo" ? "selected" : ""}>❄️ Gelo</option>
+        <option value="raio" ${poder.tipo === "raio" ? "selected" : ""}>⚡ Raio</option>
+        <option value="trovejante" ${poder.tipo === "trovejante" ? "selected" : ""}>🌩️ Trovejante</option>
+        <option value="necrotico" ${poder.tipo === "necrotico" ? "selected" : ""}>💀 Necrótico</option>
+        <option value="radiante" ${poder.tipo === "radiante" ? "selected" : ""}>✨ Radiante</option>
+        <option value="veneno" ${poder.tipo === "veneno" ? "selected" : ""}>☠️ Veneno</option>
+        <option value="agua" ${poder.tipo === "agua" ? "selected" : ""}>💧 Água</option>
+        <option value="psiquico" ${poder.tipo === "psiquico" ? "selected" : ""}>🧠 Psíquico</option>
+        <option value="corte" ${poder.tipo === "corte" ? "selected" : ""}>🔪 Corte</option>
+        <option value="perfurante" ${poder.tipo === "perfurante" ? "selected" : ""}>📌 Perfurante</option>
+        <option value="concussao" ${poder.tipo === "concussao" ? "selected" : ""}>💥 Concussão</option>
+        <option value="metal" ${poder.tipo === "metal" ? "selected" : ""}>⚙️ Metal</option>
+        <option value="fisico" ${poder.tipo === "fisico" ? "selected" : ""}>🗡️ Físico</option>
+        <option value="vento" ${poder.tipo === "vento" ? "selected" : ""}>🍃 Vento</option>
+        <option value="madeira" ${poder.tipo === "madeira" ? "selected" : ""}>🌳 Madeira</option>
+        <option value="terra" ${poder.tipo === "terra" ? "selected" : ""}>🌍 Terra</option>
+      </select>
 
       <label class="popup-label">Dano</label>
       <input id="editPoderDano" value="${poder.dano || ""}">
