@@ -16,6 +16,8 @@ let profs = {};
 let saves = {};
 let imagemBase64 = "";
 let exaustao = 0;
+let armaduras = [];
+let editandoArmadura = -1;
 
 let personagens = JSON.parse(localStorage.getItem("personagens")) || [];
 let personagemAtual = null;
@@ -467,7 +469,20 @@ function renderPersonagens() {
         <span class="card-nome">${p.nome || "Sem nome"}</span>
         <span class="card-classe">${p.classe || "Sem classe"}</span>
       </div>
-      <button type="button" onclick="deletarPersonagem(${i}); event.stopPropagation()">X</button>
+
+      <div class="card-acoes">
+        <button
+          type="button"
+          class="btn-duplicar"
+          onclick="duplicarPersonagem(${i}); event.stopPropagation();"
+        >⧉</button>
+
+        <button
+          type="button"
+          class="btn-deletar"
+          onclick="deletarPersonagem(${i}); event.stopPropagation();"
+        >X</button>
+      </div>
     `;
 
     card.onclick = () => carregarPersonagem(i);
@@ -480,6 +495,55 @@ function renderPersonagens() {
   add.onclick = criarPersonagem;
   div.appendChild(add);
 }
+
+
+function duplicarPersonagem(index) {
+  const original = personagens[index];
+  if (!original) return;
+
+  const copia = JSON.parse(JSON.stringify(original));
+  copia.nome = (original.nome || "Sem nome") + " (Cópia)";
+
+  personagens.push(copia);
+  salvarPersonagens();
+  renderPersonagens();
+}
+
+function toggleSecao(id, titulo) {
+  const box = document.getElementById(id);
+  if (!box) return;
+
+  box.classList.toggle("fechado");
+
+  const estaFechado = box.classList.contains("fechado");
+
+  if (titulo) {
+    titulo.classList.toggle("fechado", estaFechado);
+  }
+
+  localStorage.setItem("secao_" + id, estaFechado ? "fechada" : "aberta");
+}
+
+function restaurarSecoes() {
+  const secoes = document.querySelectorAll(".conteudo-toggle");
+
+  secoes.forEach(box => {
+    const id = box.id;
+    if (!id) return;
+
+    const estado = localStorage.getItem("secao_" + id);
+    const titulo = document.querySelector(`[onclick*="${id}"]`);
+
+    if (estado === "fechada") {
+      box.classList.add("fechado");
+      if (titulo) titulo.classList.add("fechado");
+    } else {
+      box.classList.remove("fechado");
+      if (titulo) titulo.classList.remove("fechado");
+    }
+  });
+}
+
 function renderAliados() {
   const ul = document.getElementById("listaAliados");
   if (!ul || personagemAtual === null) return;
@@ -652,7 +716,7 @@ function criarPersonagem() {
   carisma: 10,
   bonusProf: 2,
 
-  
+  armaduras: [],
   aliados: [],
   inventario: [],
   armas: [],
@@ -698,6 +762,138 @@ function toggleDiario() {
   } else {
     box.style.display = "none";
   }
+}
+
+function addArmadura() {
+  const nome = document.getElementById("armaduraNome").value.trim();
+  const ca = document.getElementById("armaduraCA").value.trim();
+  const desc = document.getElementById("armaduraDesc").value.trim();
+
+  if (!nome) return;
+
+  const novaArmadura = {
+    nome,
+    ca,
+    desc
+  };
+
+  if (editandoArmadura >= 0) {
+    armaduras[editandoArmadura] = novaArmadura;
+    editandoArmadura = -1;
+  } else {
+    armaduras.push(novaArmadura);
+  }
+
+  renderArmaduras();
+  salvarTudo();
+
+  document.getElementById("armaduraNome").value = "";
+  document.getElementById("armaduraCA").value = "";
+  document.getElementById("armaduraDesc").value = "";
+}
+
+function renderArmaduras() {
+  const ul = document.getElementById("listaArmaduras");
+  if (!ul) return;
+
+  ul.innerHTML = "";
+
+  armaduras.forEach((armadura, index) => {
+    const li = document.createElement("li");
+    li.className = "armadura-card";
+
+    li.innerHTML = `
+      <div class="armadura-info" onclick="verArmadura(${index})">
+        <strong class="armadura-nome">${armadura.nome || "Sem nome"}</strong>
+        <p class="armadura-ca-preview">CA: ${armadura.ca || "Sem CA"}</p>
+        <p class="armadura-desc-preview">
+          ${armadura.desc ? armadura.desc.substring(0, 60) + (armadura.desc.length > 60 ? "..." : "") : "Sem descrição"}
+        </p>
+      </div>
+
+      <div class="item-acoes">
+        <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarArmadura(${index})">✏️</button>
+        <button type="button" class="arma-remover" onclick="event.stopPropagation(); removerArmadura(${index})">X</button>
+      </div>
+    `;
+
+    ul.appendChild(li);
+  });
+}
+
+function verArmadura(index) {
+  const armadura = armaduras[index];
+  if (!armadura) return;
+
+  const html = `
+    <div class="popup-bloco">
+      <div>
+        <span class="popup-label">CA</span>
+        <div class="popup-descricao">${armadura.ca || "Sem CA"}</div>
+      </div>
+
+      <div style="margin-top: 12px;">
+        <span class="popup-label">Descrição</span>
+        <div class="popup-descricao">${armadura.desc || "Sem descrição"}</div>
+      </div>
+    </div>
+  `;
+
+  abrirPopup(armadura.nome || "Sem nome", html, true, () => editarArmadura(index));
+}
+
+function editarArmadura(index) {
+  const armadura = armaduras[index];
+  if (!armadura) return;
+
+  const html = `
+    <div class="popup-form">
+      <label class="popup-label">Nome</label>
+      <input id="editArmaduraNome" value="${armadura.nome || ""}">
+
+      <label class="popup-label">CA</label>
+      <input id="editArmaduraCA" value="${armadura.ca || ""}">
+
+      <label class="popup-label">Descrição</label>
+      <textarea id="editArmaduraDesc">${armadura.desc || ""}</textarea>
+
+      <button class="popup-salvar-btn" onclick="salvarEdicaoArmadura(${index})">
+        Salvar
+      </button>
+    </div>
+  `;
+
+  abrirPopup("Editar armadura", html, true, null);
+}
+
+function salvarEdicaoArmadura(index) {
+  const nome = document.getElementById("editArmaduraNome").value.trim();
+  const ca = document.getElementById("editArmaduraCA").value.trim();
+  const desc = document.getElementById("editArmaduraDesc").value.trim();
+
+  if (!nome) return;
+
+  armaduras[index] = {
+    nome,
+    ca,
+    desc
+  };
+
+  renderArmaduras();
+  salvarTudo();
+  fecharPopup();
+}
+
+function removerArmadura(index) {
+  const armadura = armaduras[index];
+  if (!armadura) return;
+
+  const confirmar = confirm(`Remover "${armadura.nome}"?`);
+  if (!confirmar) return;
+
+  armaduras.splice(index, 1);
+  renderArmaduras();
+  salvarTudo();
 }
 
 function carregarPersonagem(index) {
@@ -756,6 +952,7 @@ if (profExtras) profExtras.value = p.proficienciasExtras || "";
   armas = p.armas || [];
   poderes = p.poderes || [];
   profs = p.profs || {};
+  armaduras = p.armaduras || [];
   saves = p.saves || {};
   exaustao = p.exaustao ?? 0;
   morte = p.morte || {
@@ -777,6 +974,8 @@ if (profExtras) profExtras.value = p.proficienciasExtras || "";
   entrarFicha();
   renderAliados();  
   renderDominio();
+  restaurarSecoes();
+  renderArmaduras();
 }
 
 /* ================= SALVAR ================= */
@@ -795,6 +994,7 @@ function salvarTudo() {
   p.antecedentes = document.getElementById("antecedentes").value;
   p.idiomas = document.getElementById("idiomas").value;
   p.resistencias = document.getElementById("resistencias").value,
+  p.armaduras = armaduras;
   p.diario = document.getElementById("diario").value;
   p.proficienciasExtras = document.getElementById("proficienciasExtras")?.value || "";
   p.imagem = imagemBase64;
@@ -1163,19 +1363,22 @@ function renderPoderes() {
     li.className = "poder-card";
 
     li.innerHTML = `
-      <div class="poder-info" onclick="verPoder(${index})">
-        <strong class="poder-nome">${icone} ${poder.nome || "Sem nome"}</strong>
-        ${poder.dano ? `<div class="popup-tags" style="margin-top:6px;"><span class="tag-dano">${poder.dano}</span></div>` : ""}
-        <p class="poder-preview">${poder.desc ? poder.desc.substring(0, 70) + (poder.desc.length > 70 ? "..." : "") : "Sem descrição"}</p>
-      </div>
+  <div class="poder-info" onclick="verPoder(${index})">
+    <strong class="poder-nome">${icone} ${poder.nome || "Sem nome"}</strong>
+    ${poder.dano ? `<div class="poder-tags" style="margin-top:6px;"><span class="tag-dano">${poder.dano}</span></div>` : ""}
+    <p class="poder-preview">${poder.desc ? poder.desc.substring(0, 70) + (poder.desc.length > 70 ? "..." : "") : "Sem descrição"}</p>
+  </div>
 
-      <div class="item-acoes">
-        <button type="button" class="btn-mover" onclick="event.stopPropagation(); moverPoderCima(${index})">↑</button>
-        <button type="button" class="btn-mover" onclick="event.stopPropagation(); moverPoderBaixo(${index})">↓</button>
-        <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarPoder(${index})">✏️</button>
-        <button type="button" class="poder-remover" onclick="event.stopPropagation(); removerPoder(${index})">X</button>
-      </div>
-    `;
+  <div class="item-acoes">
+    <div class="acoes-topo">
+      <button type="button" class="btn-mover" onclick="event.stopPropagation(); moverPoderCima(${index})">↑</button>
+      <button type="button" class="btn-mover" onclick="event.stopPropagation(); moverPoderBaixo(${index})">↓</button>
+      <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarPoder(${index})">✏️</button>
+    </div>
+
+    <button type="button" class="poder-remover" onclick="event.stopPropagation(); removerPoder(${index})">X</button>
+  </div>
+`;
 
     ul.appendChild(li);
   });
@@ -1765,3 +1968,7 @@ if ("serviceWorker" in navigator) {
     .then(() => console.log("SW registrado"))
     .catch(err => console.log("Erro SW:", err));
 }
+
+window.onload = function () {
+  restaurarSecoes();
+};
