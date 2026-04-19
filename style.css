@@ -3261,4 +3261,10 @@ body.low-hp::after {
 
 .item-animar-baixo {
   animation: descerItem 0.25s ease;
+
+.poder-preview {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 }
