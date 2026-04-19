@@ -4,7 +4,7 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon-512.png">
   <link rel="apple-touch-icon" href="icon-512.png">
-  <meta name="theme-color" content="#2b1b14">
+  <meta name="theme-color" content="#1a1410">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ficha Ígnea</title>
@@ -292,6 +292,23 @@
       <input id="armaduraCA" placeholder="CA (ex: 16)">
       <textarea id="armaduraDesc" placeholder="Descrição da armadura"></textarea>
 
+      <div class="toggle-cargas">
+        <span class="toggle-cargas-texto">Usa cargas</span>
+        <label class="switch-cargas">
+          <input type="checkbox" id="armaduraTemCargas" onchange="toggleCampoCargasArmadura()">
+          <span class="slider-cargas"></span>
+        </label>
+      </div>
+
+      <input
+        id="armaduraMaxCargas"
+        type="number"
+        min="1"
+        max="20"
+        placeholder="Qtd. de cargas"
+        style="display:none;"
+      >
+
       <div class="add-linha">
         <button class="inv-add-btn" onclick="addArmadura()">+</button>
       </div>
@@ -470,7 +487,27 @@
     <div id="boxPoderForm" class="conteudo-toggle aberto">
       <div class="poder-add">
         <input id="poderNome" placeholder="Nome do poder">
-        <input id="poderTipo" placeholder="Tipo de dano (ex: fogo, gelo, raio, necrótico)">
+        <select id="poderTipo" class="input-personagem">
+  <option value="">Tipo de dano</option>
+
+      <option value="fogo">🔥 Fogo</option>
+      <option value="gelo">❄️ Gelo</option>
+      <option value="raio">⚡ Raio</option>
+      <option value="trovejante">🌩️ Trovejante</option>
+      <option value="necrotico">💀 Necrótico</option>
+      <option value="radiante">✨ Radiante</option>
+      <option value="veneno">☠️ Veneno</option>
+      <option value="agua">💧 Agua</option>
+      <option value="psiquico">🧠 Psíquico</option>
+      <option value="corte">🔪 Corte</option>
+      <option value="perfurante">📌 Perfurante</option>
+      <option value="concussao">💥 Concussão</option>
+      <option value="metal"> ⚙️ Metal</option>
+      <option value="fisico">🗡️ Físico</option>
+      <option value="fisico">🍃 Vento</option>
+      <option value="madeira"> 🌳 Madeira</option>
+      <optionn value="Terra"> 🌍 Terra</optionn>
+      </select>
         <input id="poderDano" placeholder="Dano (ex: 2d6, 1d8+3)">
 
         <div class="poder-linha">
