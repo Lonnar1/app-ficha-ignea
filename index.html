@@ -78,26 +78,24 @@
 
   <!-- 🔥 ALIADOS -->
   <div class="secao-toggle">
-    <h2 class="titulo-secao titulo-toggle" onclick="toggleSecao('boxAliadosForm', this)">
-      <span>Aliados</span>
-      <span class="setinha">▼</span>
-    </h2>
+  <h2 class="titulo-secao titulo-toggle" onclick="toggleSecao('boxAliadosForm', this)">
+    <span>Aliados</span>
+    <span class="setinha">▼</span>
+  </h2>
 
-    <div id="boxAliadosForm" class="conteudo-toggle aberto">
-      <div class="inv-add">
-  <input id="itemNome" placeholder="Nome do item">
-  <textarea id="itemDesc" placeholder="Descrição"></textarea>
-  <input id="itemQtd" type="number" min="1" placeholder="Quantidade">
-</div>
-
-<div class="add-linha">
-  <button class="inv-add-btn" onclick="addItem()">+</button>
-</div>
+  <div id="boxAliadosForm" class="conteudo-toggle aberto">
+    <div class="inv-add">
+      <input id="aliadoNome" placeholder="Nome do aliado">
+      <textarea id="aliadoDesc" placeholder="Descrição do aliado"></textarea>
     </div>
 
-    <!-- 👇 LISTA SEMPRE VISÍVEL -->
-    <ul id="listaAliados" class="lista-sempre-visivel"></ul>
+    <div class="add-linha">
+      <button class="inv-add-btn" onclick="adicionarAliado()">+</button>
+    </div>
   </div>
+
+  <ul id="listaAliados" class="lista-sempre-visivel"></ul>
+</div>
 
 </div>
 
@@ -426,18 +424,25 @@
     </div>
 
     <div class="secao-toggle">
-  <h3 class="subtitulo-inventario titulo-toggle" onclick="toggleSecao('boxItensForm', this)">
+  <h2 class="titulo-secao titulo-toggle" onclick="toggleSecao('boxItensForm', this)">
     <span>Itens</span>
     <span class="setinha">▼</span>
-  </h3>
+  </h2>
 
   <div id="boxItensForm" class="conteudo-toggle aberto">
     <div class="inv-add">
-      <input id="item" placeholder="Nome do item">
+      <input id="itemNome" placeholder="Nome do item">
       <textarea id="itemDesc" placeholder="Descrição"></textarea>
-        <input id="itemQtd" type="number" min="1" placeholder="Quantidade">
-
+      <input id="itemQtd" type="number" min="1" placeholder="Quantidade">
     </div>
+
+    <div class="add-linha">
+      <button class="inv-add-btn" onclick="addItem()">+</button>
+    </div>
+  </div>
+
+  <ul id="lista" class="lista-sempre-visivel"></ul>
+</div>
 
     <div class="add-linha">
       <button class="inv-add-btn" onclick="addItem()">+</button>
