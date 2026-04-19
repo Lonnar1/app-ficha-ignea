@@ -3716,3 +3716,428 @@ body::after {
 .item-preview {
   margin-top: 6px;
 }
+
+/* ================= SUBABAS PODERES / MAGIAS ================= */
+.subtabs-poderes,
+.subtabs-circulos {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 10px 0 14px 0;
+}
+
+.subtab-poder,
+.subtab-circulo {
+  border: none;
+  border-radius: 10px;
+  padding: 8px 14px;
+  background: #4a3b31;
+  color: #f1e6cf;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s ease;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+.subtab-poder:hover,
+.subtab-circulo:hover {
+  background: #5a4b3d;
+  transform: translateY(-1px);
+}
+
+.subtab-poder.active,
+.subtab-circulo.active {
+  background: #b89654;
+  color: #1b1411;
+  box-shadow:
+    0 0 0 1px rgba(241, 230, 207, 0.15),
+    0 4px 10px rgba(0,0,0,0.25);
+}
+
+.subconteudo-poder,
+.subconteudo-circulo {
+  animation: fadeSubAba 0.2s ease;
+}
+
+@keyframes fadeSubAba {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ================= BLOCO DE GASTO DE CÍRCULO ================= */
+.bloco-gasto-circulo {
+  margin: 8px 0 14px 0;
+  padding: 12px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #312621 0%, #261d18 100%);
+  border: 1px solid rgba(200, 169, 107, 0.15);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.22);
+}
+
+.label-gasto-circulo {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #f3d9a2;
+}
+
+.input-gasto-circulo {
+  width: 100%;
+  margin: 0;
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  background: #4a3b31;
+  color: #f8f1df;
+  border: 1px solid rgba(241, 230, 207, 0.08);
+  border-radius: 10px;
+  padding: 10px;
+}
+
+/* ================= TAG DO CÍRCULO ================= */
+.tag-circulo {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(184, 150, 84, 0.12);
+  border: 1px solid rgba(184, 150, 84, 0.5);
+  color: #f3d9a2;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* ================= ESPAÇO DAS LISTAS ================= */
+#listaPoderesComuns,
+#listaMagiasCirculo0,
+#listaMagiasCirculo1,
+#listaMagiasCirculo2,
+#listaMagiasCirculo3,
+#listaMagiasCirculo4,
+#listaMagiasCirculo5,
+#listaMagiasCirculo6,
+#listaMagiasCirculo7,
+#listaMagiasCirculo8,
+#listaMagiasCirculo9 {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.subaba-magias-topo {
+  margin-bottom: 10px;
+}
+
+.subaba-magias-topo h3 {
+  margin: 0 0 8px 0;
+  font-family: 'Cinzel', serif;
+  color: #f3d9a2;
+  font-size: 18px;
+  letter-spacing: 0.5px;
+}
+
+.topo-slots-circulo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  color: #e7c58a;
+}
+
+.slots-circulo {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.slot-bolinha {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #b89654;
+  background: transparent;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.slot-bolinha.usado {
+  background: #b89654;
+  box-shadow: 0 0 6px #b89654;
+}
+
+.subaba-poderes {
+  display: none;
+}
+
+.subaba-poderes.active {
+  display: block;
+}
+
+.circulo-box {
+  display: none;
+}
+
+.circulo-box.active {
+  display: block;
+}
+
+.poder-card {
+  transition: transform 0.25s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  will-change: transform;
+}
+
+.poder-card.animando {
+  z-index: 2;
+}
+
+/* ================= POLIMENTO VISUAL - PODERES E MAGIAS ================= */
+
+.subtabs-poderes {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 14px 0 18px;
+}
+
+.subtab-poder {
+  min-width: 110px;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 14px;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.subtabs-circulos {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 10px 0 18px;
+}
+
+.subtab-circulo {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border-radius: 12px;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.circulo-box {
+  border-radius: 16px;
+  padding: 4px 0 0;
+}
+
+.gasto-circulo-box {
+  margin-bottom: 14px;
+}
+
+.topo-slots-circulo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.topo-slots-circulo span {
+  flex: 1;
+  font-size: 17px;
+  font-weight: bold;
+  color: #f3d9a2;
+}
+
+.btn-editar-slots {
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(200, 169, 107, 0.35);
+  border-radius: 10px;
+  background: rgba(200, 169, 107, 0.15);
+  color: #f3d9a2;
+  cursor: pointer;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-editar-slots:hover {
+  transform: scale(1.05);
+  background: rgba(200, 169, 107, 0.25);
+}
+
+.slots-circulo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-height: 28px;
+  margin-bottom: 8px;
+}
+
+.slot-bolinha {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #c8a662;
+  background: transparent;
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.slot-bolinha.usado {
+  background: #c8a662;
+  box-shadow: 0 0 8px rgba(200, 166, 98, 0.35);
+}
+
+.slot-bolinha:hover {
+  transform: scale(1.08);
+}
+
+.poder-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 14px 12px;
+  border-radius: 16px;
+}
+
+.poder-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.poder-nome {
+  display: block;
+  font-size: 17px;
+  margin-bottom: 6px;
+  line-height: 1.2;
+}
+
+.poder-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.poder-preview {
+  margin-top: 10px;
+  line-height: 1.45;
+}
+
+.item-acoes {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.acoes-topo {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-mover,
+.btn-editar,
+.item-remover {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-mover {
+  background: #8a6f4d;
+  color: #f8f1df;
+  border: none;
+  font-size: 16px;
+}
+
+.btn-mover:hover {
+  background: #a3855d;
+  transform: scale(1.05);
+}
+
+.btn-editar {
+  background: rgba(200, 169, 107, 0.15);
+  color: #f3d9a2;
+  border: 1px solid rgba(200, 169, 107, 0.35);
+  font-size: 15px;
+}
+
+.btn-editar:hover {
+  background: rgba(200, 169, 107, 0.25);
+  transform: scale(1.05);
+}
+
+.item-remover {
+  background: #a61d1d;
+  color: #fff;
+  border: none;
+  font-size: 18px;
+}
+
+.item-remover:hover {
+  background: #c62828;
+  transform: scale(1.05);
+}
+
+.btn-mover:focus,
+.btn-mover:active {
+  outline: none;
+  transform: none;
+}
+
+.btn-mover:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(184, 150, 84, 0.25);
+}
+
+/* CENTRALIZAR TEXTO DO CÍRCULO */
+.topo-slots-circulo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center; /* 👈 centraliza tudo */
+  margin-bottom: 10px;
+}
+
+/* TEXTO "Círculo X" */
+.topo-slots-circulo span {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+
+  font-family: 'Cinzel', serif; /* 👈 mesma fonte do site */
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 1px;
+
+  color: #f3d9a2;
+}
+
+/* BOTÃO DE EDITAR (mantém na direita) */
+.btn-editar-slots {
+  position: absolute;
+  right: 0;
+}
