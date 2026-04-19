@@ -3618,3 +3618,58 @@ body::after {
     0 0 0 2px rgba(27, 20, 17, 0.6),
     0 4px 10px rgba(0, 0, 0, 0.3);
 }
+
+
+.item-acoes {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.acoes-topo {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-mover,
+.btn-editar,
+.item-remover {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  transition: 0.2s ease;
+}
+
+.btn-mover {
+  background: #8a6b46;
+  color: #f8f1df;
+}
+
+.btn-mover:hover {
+  background: #a17c52;
+  transform: scale(1.05);
+}
+
+.btn-editar {
+  background: #8a6b46;
+  color: #1b1411;
+}
+
+.btn-editar:hover {
+  background: #b89654;
+  transform: scale(1.05);
+}
+
+.btn-mover,
+.btn-editar,
+.item-remover {
+  width: 36px;
+  height: 36px;
+  font-size: 16px;
+}
