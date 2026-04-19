@@ -79,18 +79,33 @@ function normalizarTipo(tipo) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
+function toggleCampoCargasArmadura() {
+  const check = document.getElementById("armaduraTemCargas");
+  const input = document.getElementById("armaduraMaxCargas");
+
+  if (!check || !input) return;
+
+  if (check.checked) {
+    input.style.display = "block";
+  } else {
+    input.style.display = "none";
+    input.value = "";
+  }
+}
+
 function getIconeTipo(tipo) {
   const t = normalizarTipo(tipo);
 
   if (t.includes("fogo")) return "🔥";
   if (t.includes("gelo")) return "❄️";
+  if(t.includes("agua")) return "💧"
   if (t.includes("raio")) return "⚡";
   if (t.includes("trovej")) return "🌩️";
   if (t.includes("necrot")) return "💀";
   if (t.includes("radiante")) return "✨";
   if (t.includes("veneno")) return "☠️";
   if (t.includes("psiqu")) return "🧠";
-  if (t.includes("corte")) return "🗡️";
+  if (t.includes("corte")) return "🔪";
   if (t.includes("perfur")) return "📌";
   if (t.includes("concuss")) return "💥";
   if (t.includes("fisico")) return "🗡️";
@@ -769,15 +784,36 @@ function addArmadura() {
   const ca = document.getElementById("armaduraCA").value.trim();
   const desc = document.getElementById("armaduraDesc").value.trim();
 
+  const temCargasEl = document.getElementById("armaduraTemCargas");
+  const maxCargasEl = document.getElementById("armaduraMaxCargas");
+
+  const temCargas = !!temCargasEl?.checked;
+  const maxCargas = temCargas ? (parseInt(maxCargasEl?.value) || 0) : 0;
+
   if (!nome) return;
+  if (temCargas && maxCargas <= 0) return;
 
   const novaArmadura = {
     nome,
     ca,
-    desc
+    desc,
+    temCargas,
+    maxCargas,
+    cargasGastas: temCargas ? Array(maxCargas).fill(false) : []
   };
 
   if (editandoArmadura >= 0) {
+    const armaduraAnterior = armaduras[editandoArmadura];
+
+    if (
+      armaduraAnterior?.temCargas &&
+      temCargas &&
+      armaduraAnterior.maxCargas === maxCargas &&
+      Array.isArray(armaduraAnterior.cargasGastas)
+    ) {
+      novaArmadura.cargasGastas = armaduraAnterior.cargasGastas;
+    }
+
     armaduras[editandoArmadura] = novaArmadura;
     editandoArmadura = -1;
   } else {
@@ -790,6 +826,23 @@ function addArmadura() {
   document.getElementById("armaduraNome").value = "";
   document.getElementById("armaduraCA").value = "";
   document.getElementById("armaduraDesc").value = "";
+
+  if (temCargasEl) temCargasEl.checked = false;
+  if (maxCargasEl) {
+    maxCargasEl.value = "";
+    maxCargasEl.style.display = "none";
+  }
+}
+
+
+
+function toggleCargaArmadura(indexArmadura, indexCarga) {
+  const armadura = armaduras[indexArmadura];
+  if (!armadura || !armadura.temCargas || !Array.isArray(armadura.cargasGastas)) return;
+
+  armadura.cargasGastas[indexCarga] = !armadura.cargasGastas[indexCarga];
+  renderArmaduras();
+  salvarTudo();
 }
 
 function renderArmaduras() {
@@ -802,6 +855,22 @@ function renderArmaduras() {
     const li = document.createElement("li");
     li.className = "armadura-card";
 
+    const cargasHTML = armadura.temCargas && armadura.maxCargas > 0
+      ? `
+        <div class="arma-cargas-box">
+          <span class="arma-cargas-label">Cargas</span>
+          <div class="arma-cargas-checks">
+            ${Array.from({ length: armadura.maxCargas }, (_, i) => `
+              <div
+                class="arma-carga-check ${armadura.cargasGastas?.[i] ? "ativo" : ""}"
+                onclick="event.stopPropagation(); toggleCargaArmadura(${index}, ${i})"
+              ></div>
+            `).join("")}
+          </div>
+        </div>
+      `
+      : "";
+
     li.innerHTML = `
       <div class="armadura-info" onclick="verArmadura(${index})">
         <strong class="armadura-nome">${armadura.nome || "Sem nome"}</strong>
@@ -809,6 +878,7 @@ function renderArmaduras() {
         <p class="armadura-desc-preview">
           ${armadura.desc ? armadura.desc.substring(0, 60) + (armadura.desc.length > 60 ? "..." : "") : "Sem descrição"}
         </p>
+        ${cargasHTML}
       </div>
 
       <div class="item-acoes">
@@ -819,6 +889,20 @@ function renderArmaduras() {
 
     ul.appendChild(li);
   });
+}
+
+function toggleCampoCargasArmadura() {
+  const check = document.getElementById("armaduraTemCargas");
+  const input = document.getElementById("armaduraMaxCargas");
+
+  if (!check || !input) return;
+
+  if (check.checked) {
+    input.style.display = "block";
+  } else {
+    input.style.display = "none";
+    input.value = "";
+  }
 }
 
 function verArmadura(index) {
@@ -857,6 +941,30 @@ function editarArmadura(index) {
       <label class="popup-label">Descrição</label>
       <textarea id="editArmaduraDesc">${armadura.desc || ""}</textarea>
 
+      <div class="toggle-cargas" style="margin-top:10px;">
+        <span class="toggle-cargas-texto">Usa cargas</span>
+
+        <label class="switch-cargas">
+          <input
+            type="checkbox"
+            id="editArmaduraTemCargas"
+            ${armadura.temCargas ? "checked" : ""}
+            onchange="toggleEditCampoCargasArmadura()"
+          >
+          <span class="slider-cargas"></span>
+        </label>
+      </div>
+
+      <input
+        id="editArmaduraMaxCargas"
+        type="number"
+        min="1"
+        max="20"
+        placeholder="Qtd. de cargas"
+        value="${armadura.maxCargas || ""}"
+        style="display:${armadura.temCargas ? "block" : "none"};"
+      >
+
       <button class="popup-salvar-btn" onclick="salvarEdicaoArmadura(${index})">
         Salvar
       </button>
@@ -866,17 +974,53 @@ function editarArmadura(index) {
   abrirPopup("Editar armadura", html, true, null);
 }
 
+function toggleEditCampoCargasArmadura() {
+  const check = document.getElementById("editArmaduraTemCargas");
+  const input = document.getElementById("editArmaduraMaxCargas");
+
+  if (!check || !input) return;
+
+  if (check.checked) {
+    input.style.display = "block";
+  } else {
+    input.style.display = "none";
+    input.value = "";
+  }
+}
+
 function salvarEdicaoArmadura(index) {
   const nome = document.getElementById("editArmaduraNome").value.trim();
   const ca = document.getElementById("editArmaduraCA").value.trim();
   const desc = document.getElementById("editArmaduraDesc").value.trim();
 
+  const temCargas = !!document.getElementById("editArmaduraTemCargas")?.checked;
+  const maxCargas = temCargas ? (parseInt(document.getElementById("editArmaduraMaxCargas")?.value) || 0) : 0;
+
   if (!nome) return;
+  if (temCargas && maxCargas <= 0) return;
+
+  const armaduraAnterior = armaduras[index];
+
+  let cargasGastas = [];
+  if (temCargas) {
+    if (
+      armaduraAnterior?.temCargas &&
+      armaduraAnterior.maxCargas === maxCargas &&
+      Array.isArray(armaduraAnterior.cargasGastas)
+    ) {
+      cargasGastas = armaduraAnterior.cargasGastas;
+    } else {
+      cargasGastas = Array(maxCargas).fill(false);
+    }
+  }
 
   armaduras[index] = {
     nome,
     ca,
-    desc
+    desc,
+    temCargas,
+    maxCargas,
+    cargasGastas
   };
 
   renderArmaduras();
