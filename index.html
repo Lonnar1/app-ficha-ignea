@@ -23,9 +23,15 @@
 
   <!-- ================= TELA INICIAL ================= -->
   <div id="tela-inicial" class="container">
-    <h2 class="titulo-secao">Selecionar Personagem</h2>
-    <div class="grid-personagens" id="listaPersonagens"></div>
+  <h2 class="titulo-secao">Selecionar Personagem</h2>
+  <div class="grid-personagens" id="listaPersonagens"></div>
+
+  <div class="acoes-ficha-fixas">
+    <button class="btn-acao-ficha" onclick="ativarModoExportacao()">📤 Exportar</button>
+    <button class="btn-acao-ficha" onclick="abrirImportacao()">📂 Importar</button>
+    <input type="file" id="importarFicha" accept=".json" style="display:none;">
   </div>
+</div>
 
   <!-- ================= FICHA ================= -->
   <div class="container" id="ficha" style="display:none;">
@@ -87,6 +93,7 @@
     <div class="inv-add">
       <input id="aliadoNome" placeholder="Nome do aliado">
       <textarea id="aliadoDesc" placeholder="Descrição do aliado"></textarea>
+      <input id="aliadoLocal" placeholder="Região / Local">
     </div>
 
     <div class="add-linha">
@@ -567,17 +574,24 @@
 <div id="subaba-magias" class="subaba-poderes" style="display:none;">
 
   <div class="subtabs-circulos">
+
+  <div class="bloco-circulos">
     <button class="subtab-circulo active" onclick="trocarSubAbaCirculo(0, this)">0</button>
     <button class="subtab-circulo" onclick="trocarSubAbaCirculo(1, this)">1</button>
     <button class="subtab-circulo" onclick="trocarSubAbaCirculo(2, this)">2</button>
     <button class="subtab-circulo" onclick="trocarSubAbaCirculo(3, this)">3</button>
     <button class="subtab-circulo" onclick="trocarSubAbaCirculo(4, this)">4</button>
+  </div>
+
+  <div class="bloco-circulos">
     <button class="subtab-circulo" onclick="trocarSubAbaCirculo(5, this)">5</button>
     <button class="subtab-circulo" onclick="trocarSubAbaCirculo(6, this)">6</button>
     <button class="subtab-circulo" onclick="trocarSubAbaCirculo(7, this)">7</button>
     <button class="subtab-circulo" onclick="trocarSubAbaCirculo(8, this)">8</button>
     <button class="subtab-circulo" onclick="trocarSubAbaCirculo(9, this)">9</button>
   </div>
+
+</div>
 
   <!-- ================= CÍRCULOS ================= -->
 
@@ -703,16 +717,14 @@
 </div>
 </div>
 
-  <div id="popup" class="popup" style="display:none;">
-  <div class="popup-content">
-    <div class="popup-acoes">
-      <span class="fechar" onclick="fecharPopup()">X</span>
+<div id="popup" class="popup" style="display:none;">
+    <div class="popup-content">
+      <span class="fechar" onclick="fecharPopup()">&times;</span>
+      <h3 id="popup-titulo"></h3>
+      <div id="popup-texto"></div>
+      <button id="popup-editar" class="popup-salvar-btn" style="display:none;">Editar</button>
     </div>
-
-    <h3 id="popup-titulo"></h3>
-    <div id="popup-texto"></div>
   </div>
-</div>
 
   <script src="script.js"></script>
   <script>
