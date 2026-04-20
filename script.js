@@ -37,6 +37,7 @@ let armaduras = [];
 let editandoArmadura = -1;
 let personagens = JSON.parse(localStorage.getItem("personagens")) || [];
 let personagemAtual = null;
+let modoExportacao = false;
 
 /* ================= DADOS FIXOS ================= */
 
@@ -75,6 +76,41 @@ const efeitosExaustao = [
 
 
 
+function ativarModoExportacao() {
+  if (!personagens || personagens.length === 0) {
+    alert("Você ainda não tem fichas para exportar.");
+    return;
+  }
+
+  modoExportacao = true;
+  alert("Toque na ficha que você quer exportar.");
+}
+
+function exportarFicha(index) {
+  const personagens = JSON.parse(localStorage.getItem("personagens")) || [];
+  const ficha = personagens[index];
+
+  if (!ficha) {
+    alert("Ficha não encontrada.");
+    return;
+  }
+
+  const nomeArquivo = (ficha.nome && ficha.nome.trim())
+    ? ficha.nome.trim().replace(/[\\/:*?\"<>|]/g, "_")
+    : `ficha-${index + 1}`;
+
+  const blob = new Blob([JSON.stringify(ficha, null, 2)], {
+    type: "application/json"
+  });
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${nomeArquivo}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function mod(v) {
   return Math.floor((v - 10) / 2);
 }
@@ -83,6 +119,15 @@ function get(id) {
   const el = document.getElementById(id);
   if (!el) return 0;
   return parseInt(el.value) || 0;
+}
+
+function exportarFichaAtual() {
+  if (personagemAtual === null || personagemAtual === undefined) {
+    alert("Selecione uma ficha primeiro.");
+    return;
+  }
+
+  exportarFicha(personagemAtual);
 }
 
 function salvarPersonagens() {
@@ -480,7 +525,19 @@ function editarPoder(index) {
       <input id="editPoderDano" value="${poder.dano || ""}">
 
       <label class="popup-label">Círculo</label>
-      <input id="editPoderCirculo" value="${poder.circulo || ""}">
+<select id="editPoderCirculo" class="input-personagem">
+  <option value="" ${(poder.circulo ?? "") === "" ? "selected" : ""}>Sem círculo (Poder)</option>
+  <option value="0" ${String(poder.circulo ?? "") === "0" ? "selected" : ""}>Círculo 0 (Truque)</option>
+  <option value="1" ${String(poder.circulo ?? "") === "1" ? "selected" : ""}>Círculo 1</option>
+  <option value="2" ${String(poder.circulo ?? "") === "2" ? "selected" : ""}>Círculo 2</option>
+  <option value="3" ${String(poder.circulo ?? "") === "3" ? "selected" : ""}>Círculo 3</option>
+  <option value="4" ${String(poder.circulo ?? "") === "4" ? "selected" : ""}>Círculo 4</option>
+  <option value="5" ${String(poder.circulo ?? "") === "5" ? "selected" : ""}>Círculo 5</option>
+  <option value="6" ${String(poder.circulo ?? "") === "6" ? "selected" : ""}>Círculo 6</option>
+  <option value="7" ${String(poder.circulo ?? "") === "7" ? "selected" : ""}>Círculo 7</option>
+  <option value="8" ${String(poder.circulo ?? "") === "8" ? "selected" : ""}>Círculo 8</option>
+  <option value="9" ${String(poder.circulo ?? "") === "9" ? "selected" : ""}>Círculo 9</option>
+</select>
 
       <label class="popup-label">Conjuração</label>
       <input id="editPoderTempo" value="${poder.tempo || ""}">
@@ -703,7 +760,16 @@ function renderPersonagens() {
       </div>
     `;
 
-    card.onclick = () => carregarPersonagem(i);
+    card.onclick = () => {
+  if (modoExportacao) {
+    modoExportacao = false;
+    exportarFicha(i);
+    return;
+  }
+
+  personagemAtual = i;
+  carregarPersonagem(i);
+};
     div.appendChild(card);
   });
 
@@ -778,18 +844,21 @@ function renderAliados() {
     li.className = "item-card";
 
     li.innerHTML = `
-  <div class="item-info">
-    <strong>${aliado.nome}</strong>
-    <div class="item-preview">
-      ${aliado.desc || ""}
-    </div>
-  </div>
+      <div class="item-info">
+        <strong class="item-nome">${aliado.nome || "Sem nome"}</strong>
+        ${aliado.local ? `<div class="aliado-local">📍 ${aliado.local}</div>` : ""}
+        <p class="item-preview">
+          ${aliado.desc ? aliado.desc.substring(0, 80) + (aliado.desc.length > 80 ? "..." : "") : "Sem descrição"}
+        </p>
+      </div>
 
-  <div class="item-acoes">
-    <button type="button" class="btn-editar" onclick="editarAliado(${index})">✏️</button>
-    <button type="button" class="item-remover" onclick="removerAliado(${index})">X</button>
-  </div>
-`;
+      <div class="item-acoes">
+        <div class="acoes-topo">
+          <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarAliado(${index})">✏️</button>
+        </div>
+        <button type="button" class="item-remover" onclick="event.stopPropagation(); removerAliado(${index})">X</button>
+      </div>
+    `;
 
     ul.appendChild(li);
   });
@@ -848,10 +917,15 @@ function editarAliado(index) {
   const aliado = p.aliados[index];
   if (!aliado) return;
 
+  console.log("clicou editar aliado", index);
+
   const html = `
     <div class="popup-form">
       <label class="popup-label">Nome</label>
       <input id="editAliadoNome" value="${aliado.nome || ""}">
+
+      <label class="popup-label">Região / Local</label>
+      <input id="editAliadoLocal" value="${aliado.local || ""}">
 
       <label class="popup-label">Descrição</label>
       <textarea id="editAliadoDesc">${aliado.desc || ""}</textarea>
@@ -870,12 +944,14 @@ function salvarEdicaoAliado(index) {
   if (!p || !Array.isArray(p.aliados)) return;
 
   const nome = document.getElementById("editAliadoNome").value.trim();
+  const local = document.getElementById("editAliadoLocal").value.trim();
   const desc = document.getElementById("editAliadoDesc").value.trim();
 
   if (!nome) return;
 
   p.aliados[index] = {
     nome,
+    local,
     desc
   };
 
@@ -886,6 +962,7 @@ function salvarEdicaoAliado(index) {
 
 function adicionarAliado() {
   const nome = document.getElementById("aliadoNome").value.trim();
+  const local = document.getElementById("aliadoLocal").value.trim();
   const desc = document.getElementById("aliadoDesc").value.trim();
 
   if (!nome) return;
@@ -897,10 +974,12 @@ function adicionarAliado() {
 
   p.aliados.push({
     nome,
+    local,
     desc
   });
 
   document.getElementById("aliadoNome").value = "";
+  document.getElementById("aliadoLocal").value = "";
   document.getElementById("aliadoDesc").value = "";
 
   salvarTudo();
@@ -1270,8 +1349,12 @@ function carregarPersonagem(index) {
   document.getElementById("deslocamento").value = p.deslocamento ?? 9;
   document.getElementById("antecedentes").value = p.antecedentes || "";
   document.getElementById("idiomas").value = p.idiomas || "";
-  document.getElementById("resistencias").value = p.resistencias || "";
-  document.getElementById("diario").value = p.diario || "";
+
+  const resistenciasEl = document.getElementById("resistencias");
+const diarioEl = document.getElementById("diario");
+
+if (resistenciasEl) resistenciasEl.value = p.resistencias || "";
+if (diarioEl) diarioEl.value = p.diario || "";
   
 
   document.getElementById("forca").value = p.forca ?? 10;
@@ -1376,11 +1459,14 @@ function salvarTudo() {
   p.altura = document.getElementById("altura").value;
   p.antecedentes = document.getElementById("antecedentes").value;
   p.idiomas = document.getElementById("idiomas").value;
-  p.resistencias = document.getElementById("resistencias").value,
   p.armaduras = armaduras;
-  p.diario = document.getElementById("diario").value;
   p.proficienciasExtras = document.getElementById("proficienciasExtras")?.value || "";
   p.imagem = imagemBase64;
+  const resistenciasEl = document.getElementById("resistencias");
+const diarioEl = document.getElementById("diario");
+
+p.resistencias = resistenciasEl ? resistenciasEl.value : "";
+p.diario = diarioEl ? diarioEl.value : "";
 
   p.vidaMax = get("vidaMax");
   p.vidaAtual = vidaAtual;
@@ -1855,27 +1941,129 @@ function renderPoderes() {
   }
 }
 
+function abrirImportacao() {
+  const input = document.getElementById("importarFicha");
+
+  if (!input) {
+    alert("Input de importação não encontrado no HTML.");
+    console.error("Elemento #importarFicha não existe.");
+    return;
+  }
+
+  input.value = "";
+  input.click();
+}
+
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  const popup = document.getElementById("popup");
+  if (popup && popup.parentElement !== document.body) {
+    document.body.appendChild(popup);
+  }
+
+  const inputImportar = document.getElementById("importarFicha");
+
+  if (!inputImportar) {
+    console.warn("Input #importarFicha não encontrado ao carregar a página.");
+    return;
+  }
+
+  inputImportar.addEventListener("change", importarFichaArquivo);
+});
+
+function importarFichaArquivo(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function(event) {
+    try {
+      const dadosImportados = JSON.parse(event.target.result);
+
+      let personagens = JSON.parse(localStorage.getItem("personagens")) || [];
+
+      if (Array.isArray(dadosImportados)) {
+        personagens.push(...dadosImportados);
+      } else {
+        personagens.push(dadosImportados);
+      }
+
+      localStorage.setItem("personagens", JSON.stringify(personagens));
+
+      alert("Ficha importada com sucesso!");
+      location.reload();
+    } catch (erro) {
+      console.error("Erro ao importar ficha:", erro);
+      alert("Arquivo inválido ou corrompido.");
+    }
+  };
+
+  reader.readAsText(file);
+}
+
+function exportarFicha(index) {
+  const personagens = JSON.parse(localStorage.getItem("personagens")) || [];
+  const ficha = personagens[index];
+
+  if (!ficha) {
+    alert("Ficha não encontrada.");
+    return;
+  }
+
+  const nomeArquivo = (ficha.nome && ficha.nome.trim())
+    ? ficha.nome.trim().replace(/[\\/:*?"<>|]/g, "_")
+    : `ficha-${index + 1}`;
+
+  const blob = new Blob([JSON.stringify(ficha, null, 2)], {
+    type: "application/json"
+  });
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${nomeArquivo}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function colarFicha() {
+  const codigo = prompt("Cole o código:");
+  const dados = atob(codigo);
+  localStorage.setItem("personagens", dados);
+  location.reload();
+}
+
 function aoMover(ev) {
   atualizarDestino(ev.clientY);
 }
 
 function aoSoltar() {
-  card.classList.remove("dragging");
+  const card = document.querySelector(".poder-card.dragging");
+  const lista = document.getElementById("listaPoderes");
 
-  lista.querySelectorAll(".poder-card").forEach(c => {
-    c.classList.remove("drag-over");
-  });
+  if (card) {
+    card.classList.remove("dragging");
+  }
+
+  if (lista) {
+    lista.querySelectorAll(".poder-card").forEach(c => {
+      c.classList.remove("drag-over");
+    });
+  }
 
   window.removeEventListener("pointermove", aoMover);
   window.removeEventListener("pointerup", aoSoltar);
 
-  if (destino !== origem) {
+  if (
+    typeof destino !== "undefined" &&
+    typeof origem !== "undefined" &&
+    destino !== origem
+  ) {
     moverPoderPorDrag(origem, destino);
   }
 }
-
-window.addEventListener("pointermove", aoMover);
-window.addEventListener("pointerup", aoSoltar);
 
 function moverPoderPorDrag(origem, destino) {
   if (origem === destino || origem < 0 || destino < 0) return;
