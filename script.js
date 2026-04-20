@@ -1894,35 +1894,32 @@ function renderPoderes() {
     li.className = "poder-card";
 
     li.innerHTML = `
-      <div class="poder-info" onclick="verPoder(${index})">
-        <strong class="poder-nome">${icone} ${poder.nome || "Sem nome"}</strong>
+  <div class="poder-info" onclick="verPoder(${index})">
+    <strong class="poder-nome">${icone} ${poder.nome || "Sem nome"}</strong>
 
-        ${
-          poder.dano
-            ? `<div class="poder-tags" style="margin-top:6px;"><span class="tag-dano">${poder.dano}</span></div>`
-            : ""
-        }
-
-        ${
-          circulo !== ""
-            ? `<div class="poder-tags" style="margin-top:6px;"><span class="tag-circulo">Círculo ${circulo}</span></div>`
-            : ""
-        }
-
-        <p class="poder-preview">
-          ${poder.desc ? poder.desc.substring(0, 70) + (poder.desc.length > 70 ? "..." : "") : "Sem descrição"}
-        </p>
+    ${poder.dano ? `
+      <div class="poder-tags">
+        <span class="tag-dano">${poder.dano}</span>
       </div>
+    ` : ""}
 
-      <div class="item-acoes">
-        <div class="acoes-topo">
-          <button type="button" class="btn-mover" onclick="event.stopPropagation(); moverPoderCima(${index})">▲</button>
-<button type="button" class="btn-mover" onclick="event.stopPropagation(); moverPoderBaixo(${index})">▼</button>
-          <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarPoder(${index})">✏️</button>
-          <button type="button" class="item-remover" onclick="event.stopPropagation(); removerPoder(${index})">X</button>
-        </div>
-      </div>
-    `;
+    <p class="poder-preview">
+      ${poder.desc ? poder.desc.substring(0, 70) + (poder.desc.length > 70 ? "..." : "") : "Sem descrição"}
+    </p>
+  </div>
+
+  <div class="item-acoes">
+
+    <div class="acoes-topo">
+      <button class="btn-mover" onclick="moverPoderCima(${index})">▲</button>
+      <button class="btn-mover" onclick="moverPoderBaixo(${index})">▼</button>
+      <button class="btn-editar" onclick="editarPoder(${index})">✏️</button>
+    </div>
+
+    <button class="btn-deletar" onclick="removerPoder(${index})">X</button>
+
+  </div>
+`;
 
     if (circulo === "") {
       if (listaPoderesComuns) listaPoderesComuns.appendChild(li);
