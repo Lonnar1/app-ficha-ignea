@@ -38,6 +38,8 @@ let editandoArmadura = -1;
 let personagens = JSON.parse(localStorage.getItem("personagens")) || [];
 let personagemAtual = null;
 let modoExportacao = false;
+let imagemPosX = 50;
+let imagemPosY = 50;
 
 /* ================= DADOS FIXOS ================= */
 
@@ -371,6 +373,33 @@ function editarItem(index) {
       <label class="popup-label">Quantidade</label>
       <input id="editItemQtd" type="number" min="1" value="${item.qtd || 1}">
 
+      <div class="toggle-cargas" style="margin-top:10px;">
+        <span class="toggle-cargas-texto">Requer sintonia</span>
+        <label class="switch-cargas">
+          <input
+            type="checkbox"
+            id="editItemRequerSintonia"
+            ${item.requerSintonia ? "checked" : ""}
+            onchange="toggleEditSintoniaItem()"
+          >
+          <span class="slider-cargas"></span>
+        </label>
+      </div>
+
+      <div id="boxEditItemSintonizado" style="display:${item.requerSintonia ? "block" : "none"};">
+        <div class="toggle-cargas" style="margin-top:10px;">
+          <span class="toggle-cargas-texto">Está sintonizado</span>
+          <label class="switch-cargas">
+            <input
+              type="checkbox"
+              id="editItemSintonizado"
+              ${item.sintonizado ? "checked" : ""}
+            >
+            <span class="slider-cargas"></span>
+          </label>
+        </div>
+      </div>
+
       <button class="popup-salvar-btn" onclick="salvarEdicaoItem(${index})">
         Salvar
       </button>
@@ -380,17 +409,22 @@ function editarItem(index) {
   abrirPopup("Editar item", html, true, null);
 }
 
+
 function salvarEdicaoItem(index) {
   const nome = document.getElementById("editItemNome").value.trim();
   const desc = document.getElementById("editItemDesc").value.trim();
   const qtd = parseInt(document.getElementById("editItemQtd")?.value) || 1;
+  const requerSintonia = !!document.getElementById("editItemRequerSintonia")?.checked;
+  const sintonizado = requerSintonia && !!document.getElementById("editItemSintonizado")?.checked;
 
   if (!nome) return;
 
   inventario[index] = {
     nome,
     desc,
-    qtd
+    qtd,
+    requerSintonia,
+    sintonizado
   };
 
   renderInv();
@@ -667,6 +701,10 @@ function trocarAba(id, btn = null) {
       if (botao) botao.classList.add("active");
     }
 
+    setTimeout(() => {
+  ativarDragImagemPreview();
+}, 100);
+
     atualizarEstadoLowHP();
     return;
   }
@@ -706,6 +744,13 @@ function trocarAba(id, btn = null) {
       novaAba.classList.add("show");
     });
   });
+
+  setTimeout(() => {
+  if (id === "personagem") {
+    ativarDragImagemPreview();
+  }
+}, 100);
+
 }
 
 function entrarFicha() {
@@ -736,8 +781,13 @@ function renderPersonagens() {
 
   personagens.forEach((p, i) => {
     const card = document.createElement("div");
-    card.className = "card";
-    card.style.backgroundImage = `url('${p.imagem || ""}')`;
+card.className = "card";
+card.style.backgroundImage = `url('${p.imagem || ""}')`;
+
+const posX = p.imagemPosX ?? 50;
+const posY = p.imagemPosY ?? 50;
+card.style.backgroundPosition = `${posX}% ${posY}%`;
+card.style.backgroundSize = "cover";
 
     card.innerHTML = `
       <div class="card-info">
@@ -994,10 +1044,12 @@ function criarPersonagem() {
   idade: "",
   altura: "",
   imagem: "",
+  imagemPosX: 50,
+  imagemPosY: 50,
   antecedentes: "",
   idiomas: "",
   diario: "",
-  proficienciasExtras: "",
+  proficienciasExtras: "", 
 gastosCirculos: {
   0: [],
   1: [],
@@ -1387,6 +1439,14 @@ if (profExtras) profExtras.value = p.proficienciasExtras || "";
     nomeArquivo.innerText = p.imagem ? "Imagem carregada" : "Nenhum arquivo escolhido";
   }
 
+  imagemPosX = p.imagemPosX ?? 50;
+imagemPosY = p.imagemPosY ?? 50;
+
+const preview = document.getElementById("preview");
+if (preview) {
+  preview.style.objectPosition = `${imagemPosX}% ${imagemPosY}%`;
+}
+
   
 
 
@@ -1442,9 +1502,127 @@ for (let i = 0; i <= 9; i++) {
   renderDominio();
   restaurarSecoes();
   renderArmaduras();
+
+  setTimeout(() => {
+  ativarDragImagemPreview();
+}, 100);
 }
 
 /* ================= SALVAR ================= */
+
+function abrirEditorImagem() {
+  if (!imagemBase64) {
+    alert("Escolha uma imagem primeiro.");
+    return;
+  }
+
+  const editorWrap = document.getElementById("editorImagemInline");
+  const editor = document.getElementById("previewEditor");
+
+  if (!editorWrap || !editor) return;
+
+  editor.src = imagemBase64;
+  editor.style.objectPosition = `${imagemPosX}% ${imagemPosY}%`;
+
+  editorWrap.classList.remove("fechado");
+  ativarDragEditorImagem();
+}
+
+function fecharEditorImagem() {
+  const editorWrap = document.getElementById("editorImagemInline");
+  if (editorWrap) {
+    editorWrap.classList.add("fechado");
+  }
+}
+
+function salvarEditorImagem() {
+  const preview = document.getElementById("preview");
+  if (preview) {
+    preview.style.objectPosition = `${imagemPosX}% ${imagemPosY}%`;
+  }
+
+  salvarTudo();
+  renderPersonagens();
+  fecharEditorImagem();
+}
+
+function ativarDragEditorImagem() {
+  const img = document.getElementById("previewEditor");
+  if (!img) return;
+
+  if (img.dataset.dragAtivo === "1") return;
+  img.dataset.dragAtivo = "1";
+
+  let arrastando = false;
+  let ultimoX = 0;
+  let ultimoY = 0;
+
+  function aplicarPosicao() {
+    imagemPosX = Math.max(0, Math.min(100, imagemPosX));
+    imagemPosY = Math.max(0, Math.min(100, imagemPosY));
+    img.style.objectPosition = `${imagemPosX}% ${imagemPosY}%`;
+  }
+
+  img.addEventListener("mousedown", (e) => {
+    arrastando = true;
+    ultimoX = e.clientX;
+    ultimoY = e.clientY;
+    img.classList.add("arrastando");
+    e.preventDefault();
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (!arrastando) return;
+
+    const dx = e.clientX - ultimoX;
+    const dy = e.clientY - ultimoY;
+
+    ultimoX = e.clientX;
+    ultimoY = e.clientY;
+
+    imagemPosX -= dx * 0.2;
+    imagemPosY -= dy * 0.2;
+
+    aplicarPosicao();
+  });
+
+  document.addEventListener("mouseup", () => {
+    if (!arrastando) return;
+    arrastando = false;
+    img.classList.remove("arrastando");
+  });
+
+  img.addEventListener("touchstart", (e) => {
+    if (!e.touches[0]) return;
+    arrastando = true;
+    ultimoX = e.touches[0].clientX;
+    ultimoY = e.touches[0].clientY;
+    img.classList.add("arrastando");
+  }, { passive: true });
+
+  document.addEventListener("touchmove", (e) => {
+    if (!arrastando || !e.touches[0]) return;
+
+    const dx = e.touches[0].clientX - ultimoX;
+    const dy = e.touches[0].clientY - ultimoY;
+
+    ultimoX = e.touches[0].clientX;
+    ultimoY = e.touches[0].clientY;
+
+    imagemPosX -= dx * 0.2;
+    imagemPosY -= dy * 0.2;
+
+    aplicarPosicao();
+  }, { passive: true });
+
+  document.addEventListener("touchend", () => {
+    if (!arrastando) return;
+    arrastando = false;
+    img.classList.remove("arrastando");
+  });
+
+  aplicarPosicao();
+}
 
 function salvarTudo() {
   if (personagemAtual === null) return;
@@ -1462,8 +1640,10 @@ function salvarTudo() {
   p.armaduras = armaduras;
   p.proficienciasExtras = document.getElementById("proficienciasExtras")?.value || "";
   p.imagem = imagemBase64;
+  p.imagemPosX = imagemPosX;
+  p.imagemPosY = imagemPosY;
   const resistenciasEl = document.getElementById("resistencias");
-const diarioEl = document.getElementById("diario");
+  const diarioEl = document.getElementById("diario");
 
 p.resistencias = resistenciasEl ? resistenciasEl.value : "";
 p.diario = diarioEl ? diarioEl.value : "";
@@ -1520,13 +1700,135 @@ function previewImagem() {
 
   const reader = new FileReader();
   reader.onload = function (e) {
-    imagemBase64 = e.target.result;
-    preview.src = imagemBase64;
-    salvarTudo();
-    renderPersonagens();
-  };
-  reader.readAsDataURL(file);
+  imagemBase64 = e.target.result;
+  imagemPosX = 50;
+  imagemPosY = 50;
+
+  preview.src = imagemBase64;
+  preview.style.objectPosition = `${imagemPosX}% ${imagemPosY}%`;
+
+  salvarTudo();
+  renderPersonagens();
+};
+
+reader.readAsDataURL(file);
 }
+
+
+function abrirEditorImagem() {
+  if (!imagemBase64) {
+    alert("Escolha uma imagem primeiro.");
+    return;
+  }
+
+  const editorWrap = document.getElementById("editorImagemInline");
+  const editor = document.getElementById("previewEditor");
+
+  if (!editorWrap || !editor) return;
+
+  editor.src = imagemBase64;
+  editor.style.objectPosition = `${imagemPosX}% ${imagemPosY}%`;
+
+  editorWrap.classList.remove("fechado");
+  ativarDragEditorImagem();
+}
+
+function fecharEditorImagem() {
+  const editorWrap = document.getElementById("editorImagemInline");
+  if (editorWrap) {
+    editorWrap.classList.add("fechado");
+  }
+}
+
+function salvarEditorImagem() {
+  const preview = document.getElementById("preview");
+  if (preview) {
+    preview.style.objectPosition = `${imagemPosX}% ${imagemPosY}%`;
+  }
+
+  salvarTudo();
+  renderPersonagens();
+  fecharEditorImagem();
+}
+
+function ativarDragEditorImagem() {
+  const img = document.getElementById("previewEditor");
+  if (!img) return;
+
+  if (img.dataset.dragAtivo === "1") return;
+  img.dataset.dragAtivo = "1";
+
+  let arrastando = false;
+  let ultimoX = 0;
+  let ultimoY = 0;
+
+  function aplicarPosicao() {
+    imagemPosX = Math.max(0, Math.min(100, imagemPosX));
+    imagemPosY = Math.max(0, Math.min(100, imagemPosY));
+    img.style.objectPosition = `${imagemPosX}% ${imagemPosY}%`;
+  }
+
+  img.addEventListener("mousedown", (e) => {
+    arrastando = true;
+    ultimoX = e.clientX;
+    ultimoY = e.clientY;
+    img.classList.add("arrastando");
+    e.preventDefault();
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (!arrastando) return;
+
+    const dx = e.clientX - ultimoX;
+    const dy = e.clientY - ultimoY;
+
+    ultimoX = e.clientX;
+    ultimoY = e.clientY;
+
+    imagemPosX -= dx * 0.2;
+    imagemPosY -= dy * 0.2;
+
+    aplicarPosicao();
+  });
+
+  document.addEventListener("mouseup", () => {
+    if (!arrastando) return;
+    arrastando = false;
+    img.classList.remove("arrastando");
+  });
+
+  img.addEventListener("touchstart", (e) => {
+    if (!e.touches[0]) return;
+    arrastando = true;
+    ultimoX = e.touches[0].clientX;
+    ultimoY = e.touches[0].clientY;
+    img.classList.add("arrastando");
+  }, { passive: true });
+
+  document.addEventListener("touchmove", (e) => {
+    if (!arrastando || !e.touches[0]) return;
+
+    const dx = e.touches[0].clientX - ultimoX;
+    const dy = e.touches[0].clientY - ultimoY;
+
+    ultimoX = e.touches[0].clientX;
+    ultimoY = e.touches[0].clientY;
+
+    imagemPosX -= dx * 0.2;
+    imagemPosY -= dy * 0.2;
+
+    aplicarPosicao();
+  }, { passive: true });
+
+  document.addEventListener("touchend", () => {
+    if (!arrastando) return;
+    arrastando = false;
+    img.classList.remove("arrastando");
+  });
+
+  aplicarPosicao();
+}
+
 
 /* ================= INVENTÁRIO ================= */
 
@@ -1534,13 +1836,17 @@ function addItem() {
   const nome = document.getElementById("itemNome")?.value.trim();
   const desc = document.getElementById("itemDesc")?.value.trim();
   const qtd = parseInt(document.getElementById("itemQtd")?.value) || 1;
+  const requerSintonia = !!document.getElementById("itemRequerSintonia")?.checked;
+  const sintonizado = requerSintonia && !!document.getElementById("itemSintonizado")?.checked;
 
   if (!nome) return;
 
   const novoItem = {
     nome,
     desc,
-    qtd
+    qtd,
+    requerSintonia,
+    sintonizado
   };
 
   if (editandoItem >= 0) {
@@ -1556,6 +1862,24 @@ function addItem() {
   document.getElementById("itemNome").value = "";
   document.getElementById("itemDesc").value = "";
   document.getElementById("itemQtd").value = "";
+  document.getElementById("itemRequerSintonia").checked = false;
+  document.getElementById("itemSintonizado").checked = false;
+  document.getElementById("boxItemSintonizado").style.display = "none";
+}
+
+function toggleSintoniaItem() {
+  const requer = document.getElementById("itemRequerSintonia");
+  const box = document.getElementById("boxItemSintonizado");
+  const sintonizado = document.getElementById("itemSintonizado");
+
+  if (!requer || !box || !sintonizado) return;
+
+  if (requer.checked) {
+    box.style.display = "block";
+  } else {
+    box.style.display = "none";
+    sintonizado.checked = false;
+  }
 }
 
 function renderInv() {
@@ -1570,8 +1894,20 @@ function renderInv() {
 
     li.innerHTML = `
       <div class="item-info" onclick="verItem(${index})">
-        <strong class="item-nome">${item.nome || "Sem nome"}</strong>
-        <span class="item-qtd">x${item.qtd || 1}</span>
+        <div class="item-topo-linha">
+          <strong class="item-nome">
+            ${item.nome || "Sem nome"}
+            ${item.requerSintonia ? `<span class="item-tag-sintonia">${item.sintonizado ? "Sint." : "Req. Sint."}</span>` : ""}
+          </strong>
+
+          <span class="item-qtd-badge">x${item.qtd || 1}</span>
+        </div>
+
+        <div class="item-subtags">
+          ${item.requerSintonia ? `<span class="item-subtag">🔗 Requer sintonia</span>` : ""}
+          ${item.sintonizado ? `<span class="item-subtag ativo">✅ Sintonizado</span>` : ""}
+        </div>
+
         <p class="item-preview">
           ${item.desc ? item.desc.substring(0, 60) + (item.desc.length > 60 ? "..." : "") : "Sem descrição"}
         </p>
@@ -1590,6 +1926,21 @@ function renderInv() {
 
     ul.appendChild(li);
   });
+}
+
+function toggleEditSintoniaItem() {
+  const requer = document.getElementById("editItemRequerSintonia");
+  const box = document.getElementById("boxEditItemSintonizado");
+  const sintonizado = document.getElementById("editItemSintonizado");
+
+  if (!requer || !box) return;
+
+  if (requer.checked) {
+    box.style.display = "block";
+  } else {
+    box.style.display = "none";
+    if (sintonizado) sintonizado.checked = false;
+  }
 }
 
 function moverItemCima(index) {
@@ -1635,6 +1986,17 @@ function verItem(index) {
       </div>
 
       <div style="margin-top: 12px;">
+        <span class="popup-label">Sintonia</span>
+        <div class="popup-descricao">
+          ${
+            item.requerSintonia
+              ? (item.sintonizado ? "Requer sintonia — Sintonizado" : "Requer sintonia — Não sintonizado")
+              : "Não requer sintonia"
+          }
+        </div>
+      </div>
+
+      <div style="margin-top: 12px;">
         <span class="popup-label">Descrição</span>
         <div class="popup-descricao">${item.desc || "Sem descrição"}</div>
       </div>
@@ -1643,6 +2005,8 @@ function verItem(index) {
 
   abrirPopup(item.nome || "Sem nome", html, true, () => editarItem(index));
 }
+
+
 function removerItem(index) {
   const item = inventario[index];
   if (!item) return;
@@ -2679,3 +3043,7 @@ if ("serviceWorker" in navigator) {
 window.onload = function () {
   restaurarSecoes();
 };
+
+document.addEventListener("DOMContentLoaded", () => {
+  ativarDragImagemPreview();
+});
