@@ -2342,19 +2342,23 @@ function importarFichaArquivo(e) {
   reader.onload = function(event) {
     try {
       const dadosImportados = JSON.parse(event.target.result);
-
-      let personagens = JSON.parse(localStorage.getItem("personagens")) || [];
+      let personagensSalvos = JSON.parse(localStorage.getItem("personagens")) || [];
 
       if (Array.isArray(dadosImportados)) {
-        personagens.push(...dadosImportados);
+        dadosImportados.forEach(p => {
+          p.imagem = "";
+        });
+        personagensSalvos.push(...dadosImportados);
       } else {
-        personagens.push(dadosImportados);
+        dadosImportados.imagem = "";
+        personagensSalvos.push(dadosImportados);
       }
 
-      localStorage.setItem("personagens", JSON.stringify(personagens));
+      localStorage.setItem("personagens", JSON.stringify(personagensSalvos));
 
-      alert("Ficha importada com sucesso!");
+      alert("Ficha importada com sucesso! A imagem precisa ser adicionada separadamente.");
       location.reload();
+
     } catch (erro) {
       console.error("Erro ao importar ficha:", erro);
       alert("Arquivo inválido ou corrompido.");
