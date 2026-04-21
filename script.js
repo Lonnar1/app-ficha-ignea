@@ -1979,29 +1979,29 @@ function verItem(index) {
   if (!item) return;
 
   const html = `
-    <div class="popup-bloco">
-      <div>
-        <span class="popup-label">Quantidade</span>
-        <div class="popup-descricao">${item.qtd || 1}</div>
-      </div>
+  <div class="popup-bloco">
+    <div>
+      <span class="popup-label">Quantidade</span>
+      <div class="popup-descricao popup-descricao-pequena">${item.qtd || 1}</div>
+    </div>
 
-      <div style="margin-top: 12px;">
-        <span class="popup-label">Sintonia</span>
-        <div class="popup-descricao">
-          ${
-            item.requerSintonia
-              ? (item.sintonizado ? "Requer sintonia — Sintonizado" : "Requer sintonia — Não sintonizado")
-              : "Não requer sintonia"
-          }
-        </div>
-      </div>
-
-      <div style="margin-top: 12px;">
-        <span class="popup-label">Descrição</span>
-        <div class="popup-descricao">${item.desc || "Sem descrição"}</div>
+    <div style="margin-top: 12px;">
+      <span class="popup-label">Sintonia</span>
+      <div class="popup-descricao popup-descricao-pequena">
+        ${
+          item.requerSintonia
+            ? (item.sintonizado ? "Requer sintonia — Sintonizado" : "Requer sintonia — Não sintonizado")
+            : "Não requer sintonia"
+        }
       </div>
     </div>
-  `;
+
+    <div style="margin-top: 12px;">
+      <span class="popup-label">Descrição</span>
+      <div class="popup-descricao popup-descricao-grande">${item.desc || "Sem descrição"}</div>
+    </div>
+  </div>
+`;
 
   abrirPopup(item.nome || "Sem nome", html, true, () => editarItem(index));
 }
