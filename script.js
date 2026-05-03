@@ -3,6 +3,17 @@ let morte = {
   falhas: [false, false, false]
 };
 
+let racasCustomSalvas = JSON.parse(localStorage.getItem("racasCustomSalvas")) || [];
+let editandoRacaCustom = -1;
+let bonusRacaCustom = {
+  forca: 0,
+  destreza: 0,
+  constituicao: 0,
+  inteligencia: 0,
+  sabedoria: 0,
+  carisma: 0
+};
+
 let gastosCirculos = {
   0: [],
   1: [],
@@ -19,6 +30,7 @@ let gastosCirculos = {
 for (let i = 0; i <= 9; i++) {
   renderSlotsCirculo(i);
 }
+let nomeRacaCustom = "";
 let dominio = [false, false, false, false, false, false];
 let editandoItem = -1;
 let editandoArma = -1;
@@ -64,6 +76,20 @@ const pericias = [
   { nome: "Sobrevivência", attr: "sabedoria" }
 ];
 
+const racas = {
+  custom: {},
+  humano: { forca: 1, destreza: 1, constituicao: 1, inteligencia: 1, sabedoria: 1, carisma: 1 },
+  elfo: { destreza: 2 },
+  anao: { constituicao: 2 },
+  halfling: { destreza: 2 },
+  meio_elfo: { carisma: 2, destreza: 1 },
+  meio_orc: { forca: 2, constituicao: 1 },
+  draconato: { forca: 2, carisma: 1 },
+  tiefling: { carisma: 2, inteligencia: 1 },
+  gnomo: { inteligencia: 2 },
+  tritao: { forca: 1, constituicao: 1, carisma: 1 }
+};
+
 const efeitosExaustao = [
   "Sem exaustão",
   "Desvantagem em testes de habilidade",
@@ -78,6 +104,8 @@ const efeitosExaustao = [
 
 
 
+
+
 function ativarModoExportacao() {
   if (!personagens || personagens.length === 0) {
     alert("Você ainda não tem fichas para exportar.");
@@ -85,7 +113,57 @@ function ativarModoExportacao() {
   }
 
   modoExportacao = true;
-  alert("Toque na ficha que você quer exportar.");
+  mostrarAvisoExportacao();
+}
+
+function mostrarAvisoExportacao() {
+  const aviso = document.createElement("div");
+  aviso.innerText = "Clique na ficha para baixá-la";
+
+  aviso.style.position = "fixed";
+  aviso.style.bottom = "90px";
+  aviso.style.left = "50%";
+  aviso.style.transform = "translateX(-50%)";
+  aviso.style.background = "#2c221d";
+  aviso.style.color = "#f8f1df";
+  aviso.style.padding = "10px 16px";
+  aviso.style.borderRadius = "10px";
+  aviso.style.zIndex = "9999";
+  aviso.style.fontSize = "14px";
+  aviso.style.boxShadow = "0 0 10px rgba(0,0,0,0.5)";
+
+  document.body.appendChild(aviso);
+
+  setTimeout(() => {
+    aviso.remove();
+  }, 2000);
+}
+
+function getAtributoFinal(attr) {
+  const base = get(attr);
+  const racaSelect = document.getElementById("racaSelect")?.value || "";
+
+  let bonusRaca = 0;
+
+  if (racaSelect.startsWith("custom_")) {
+    const index = parseInt(racaSelect.replace("custom_", ""));
+    bonusRaca = racasCustomSalvas[index]?.bonus?.[attr] || 0;
+  } else if (racaSelect !== "") {
+    bonusRaca = racas[racaSelect]?.[attr] || 0;
+  }
+
+  return Math.min(base + bonusRaca, 20);
+}
+
+
+
+function atualizarAtributosFinaisVisuais() {
+  ["forca", "destreza", "constituicao", "inteligencia", "sabedoria", "carisma"].forEach(attr => {
+    const el = document.getElementById(`final_${attr}`);
+    if (!el) return;
+
+    el.textContent = getAtributoFinal(attr);
+  });
 }
 
 function exportarFicha(index) {
@@ -111,6 +189,216 @@ function exportarFicha(index) {
   a.download = `${nomeArquivo}.json`;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function aoMudarRaca() {
+  const select = document.getElementById("racaSelect");
+  const raca = select?.value || "";
+
+  if (raca === "custom") {
+    abrirPopupGerenciarRacasCustom();
+    select.value = "";
+    return;
+  }
+
+  atualizarTudo();
+  salvarTudo();
+}
+
+function salvarRacasCustomStorage() {
+  localStorage.setItem("racasCustomSalvas", JSON.stringify(racasCustomSalvas));
+}
+
+function atualizarDropdownRacas() {
+  const select = document.getElementById("racaSelect");
+  if (!select) return;
+
+  document.querySelectorAll(".raca-custom").forEach(op => op.remove());
+
+  const optionCustom = select.querySelector('option[value="custom"]');
+
+  racasCustomSalvas.forEach((raca, index) => {
+    const option = document.createElement("option");
+    option.value = "custom_" + index;
+    option.textContent = raca.nome || `Raça custom ${index + 1}`;
+    option.classList.add("raca-custom");
+
+    if (optionCustom && optionCustom.nextSibling) {
+      select.insertBefore(option, optionCustom.nextSibling);
+    } else {
+      select.appendChild(option);
+    }
+  });
+}
+
+function abrirPopupGerenciarRacasCustom() {
+  let lista = "";
+
+  racasCustomSalvas.forEach((raca, index) => {
+    lista += `
+      <div class="raca-custom-card">
+        <strong>${raca.nome}</strong>
+
+        <div class="raca-custom-acoes">
+          <button class="raca-btn raca-btn-editar" onclick="editarRacaCustom(${index})">
+  ✏️ Editar
+</button>
+
+<button class="raca-btn raca-btn-deletar" onclick="deletarRacaCustom(${index})">
+  🗑️
+</button>
+        </div>
+      </div>
+    `;
+  });
+
+  if (!lista) {
+    lista = `<p style="text-align:center; color:#cdb791;">Nenhuma raça custom criada.</p>`;
+  }
+
+  abrirPopup("Raças custom", `
+    <div class="popup-form">
+      ${lista}
+
+      <button class="popup-salvar-btn" onclick="abrirPopupBonusCustom()">
+        + Nova raça custom
+      </button>
+    </div>
+  `, true, null);
+}
+
+function abrirPopupBonusCustom(index = -1) {
+  editandoRacaCustom = index;
+
+  const raca = index >= 0 ? racasCustomSalvas[index] : null;
+  const bonus = raca?.bonus || {};
+
+  const html = `
+    <div class="popup-form">
+      <label class="popup-label">Nome da raça</label>
+      <input id="nomeRacaCustom" value="${raca?.nome || ""}">
+
+      <label class="popup-label">Força</label>
+      <input id="bonusCustomForca" type="number" value="${bonus.forca || 0}">
+
+      <label class="popup-label">Destreza</label>
+      <input id="bonusCustomDestreza" type="number" value="${bonus.destreza || 0}">
+
+      <label class="popup-label">Constituição</label>
+      <input id="bonusCustomConstituicao" type="number" value="${bonus.constituicao || 0}">
+
+      <label class="popup-label">Inteligência</label>
+      <input id="bonusCustomInteligencia" type="number" value="${bonus.inteligencia || 0}">
+
+      <label class="popup-label">Sabedoria</label>
+      <input id="bonusCustomSabedoria" type="number" value="${bonus.sabedoria || 0}">
+
+      <label class="popup-label">Carisma</label>
+      <input id="bonusCustomCarisma" type="number" value="${bonus.carisma || 0}">
+
+      <button class="popup-salvar-btn" onclick="salvarBonusRacaCustom()">
+        Salvar
+      </button>
+    </div>
+  `;
+
+  abrirPopup(index >= 0 ? "Editar raça custom" : "Nova raça custom", html, true, null);
+}
+
+function salvarBonusRacaCustom() {
+  const nome = document.getElementById("nomeRacaCustom")?.value.trim() || "Raça custom";
+
+  const raca = {
+    nome,
+    bonus: {
+      forca: parseInt(document.getElementById("bonusCustomForca")?.value) || 0,
+      destreza: parseInt(document.getElementById("bonusCustomDestreza")?.value) || 0,
+      constituicao: parseInt(document.getElementById("bonusCustomConstituicao")?.value) || 0,
+      inteligencia: parseInt(document.getElementById("bonusCustomInteligencia")?.value) || 0,
+      sabedoria: parseInt(document.getElementById("bonusCustomSabedoria")?.value) || 0,
+      carisma: parseInt(document.getElementById("bonusCustomCarisma")?.value) || 0
+    }
+  };
+
+  if (editandoRacaCustom >= 0) {
+    racasCustomSalvas[editandoRacaCustom] = raca;
+  } else {
+    racasCustomSalvas.push(raca);
+  }
+
+  salvarRacasCustomStorage();
+  atualizarDropdownRacas();
+  atualizarTudo();
+  salvarTudo();
+  fecharPopup();
+}
+
+function editarRacaCustom(index) {
+  abrirPopupBonusCustom(index);
+}
+
+function deletarRacaCustom(index) {
+  if (!confirm("Deseja deletar essa raça custom?")) return;
+
+  const select = document.getElementById("racaSelect");
+  const valorAtual = select?.value;
+
+  racasCustomSalvas.splice(index, 1);
+
+  salvarRacasCustomStorage();
+  atualizarDropdownRacas();
+
+  if (valorAtual === `custom_${index}` && select) {
+    select.value = "";
+  }
+
+  atualizarTudo();
+  salvarTudo();
+  abrirPopupGerenciarRacasCustom();
+}
+
+function abrirPopupBonusCustom() {
+  const html = `
+    <div class="popup-form">
+
+      <label class="popup-label">Nome da raça</label>
+      <input id="nomeRacaCustom" value="${nomeRacaCustom || ""}">
+
+      <label class="popup-label">Força</label>
+      <input id="bonusCustomForca" type="number" value="${bonusRacaCustom.forca || 0}">
+
+      <label class="popup-label">Destreza</label>
+      <input id="bonusCustomDestreza" type="number" value="${bonusRacaCustom.destreza || 0}">
+
+      <label class="popup-label">Constituição</label>
+      <input id="bonusCustomConstituicao" type="number" value="${bonusRacaCustom.constituicao || 0}">
+
+      <label class="popup-label">Inteligência</label>
+      <input id="bonusCustomInteligencia" type="number" value="${bonusRacaCustom.inteligencia || 0}">
+
+      <label class="popup-label">Sabedoria</label>
+      <input id="bonusCustomSabedoria" type="number" value="${bonusRacaCustom.sabedoria || 0}">
+
+      <label class="popup-label">Carisma</label>
+      <input id="bonusCustomCarisma" type="number" value="${bonusRacaCustom.carisma || 0}">
+
+      <button class="popup-salvar-btn" onclick="salvarBonusRacaCustom()">
+        Salvar
+      </button>
+    </div>
+  `;
+
+  abrirPopup("Raça Custom", html, true, null);
+}
+
+function getNomeRacaAtual() {
+  const raca = document.getElementById("racaSelect")?.value;
+
+  if (raca === "custom") {
+    return nomeRacaCustom || "Custom";
+  }
+
+  return raca || "Sem raça";
 }
 
 function mod(v) {
@@ -179,6 +467,8 @@ function getIconeTipo(tipo) {
   if (t.includes("luz")) return "🌕";
   if (t.includes("espirit")) return "🌓";
   if (t.includes("vento")) return "🍃";
+  if (t.includes("madeira")) return "🌳";
+  if (t.includes("terra")) return "🌍";
 
   return "🔮";
 }
@@ -199,6 +489,26 @@ function getClasseTipo(tipo) {
   if (t.includes("concuss")) return "tipo-concussao";
 
   return "tipo-padrao";
+}
+
+function atualizarDropdownRacas() {
+  const select = document.getElementById("racaSelect");
+  if (!select) return;
+
+  // remove antigas custom (sem mexer nas fixas)
+  const antigas = document.querySelectorAll(".raca-custom");
+  antigas.forEach(el => el.remove());
+
+  // adiciona custom salvas
+  racasCustomSalvas.forEach((raca, index) => {
+    const option = document.createElement("option");
+    option.value = "custom_" + index;
+    option.textContent = raca.nome;
+    option.classList.add("raca-custom");
+
+    select.insertBefore(option, select.children[2]); 
+    // 🔥 coloca logo abaixo de "Custom"
+  });
 }
 
 function trocarSubAbaPoderes(tipo, btn) {
@@ -535,25 +845,29 @@ function editarPoder(index) {
 
       <label class="popup-label">Tipo</label>
       <select id="editPoderTipo" class="input-personagem">
-        <option value="">Tipo de dano</option>
-        <option value="fogo" ${poder.tipo === "fogo" ? "selected" : ""}>🔥 Fogo</option>
-        <option value="gelo" ${poder.tipo === "gelo" ? "selected" : ""}>❄️ Gelo</option>
-        <option value="raio" ${poder.tipo === "raio" ? "selected" : ""}>⚡ Raio</option>
-        <option value="trovejante" ${poder.tipo === "trovejante" ? "selected" : ""}>🌩️ Trovejante</option>
-        <option value="necrotico" ${poder.tipo === "necrotico" ? "selected" : ""}>💀 Necrótico</option>
-        <option value="radiante" ${poder.tipo === "radiante" ? "selected" : ""}>✨ Radiante</option>
-        <option value="veneno" ${poder.tipo === "veneno" ? "selected" : ""}>☠️ Veneno</option>
-        <option value="agua" ${poder.tipo === "agua" ? "selected" : ""}>💧 Água</option>
-        <option value="psiquico" ${poder.tipo === "psiquico" ? "selected" : ""}>🧠 Psíquico</option>
-        <option value="corte" ${poder.tipo === "corte" ? "selected" : ""}>🔪 Corte</option>
-        <option value="perfurante" ${poder.tipo === "perfurante" ? "selected" : ""}>📌 Perfurante</option>
-        <option value="concussao" ${poder.tipo === "concussao" ? "selected" : ""}>💥 Concussão</option>
-        <option value="metal" ${poder.tipo === "metal" ? "selected" : ""}>⚙️ Metal</option>
-        <option value="fisico" ${poder.tipo === "fisico" ? "selected" : ""}>🗡️ Físico</option>
-        <option value="vento" ${poder.tipo === "vento" ? "selected" : ""}>🍃 Vento</option>
-        <option value="madeira" ${poder.tipo === "madeira" ? "selected" : ""}>🌳 Madeira</option>
-        <option value="terra" ${poder.tipo === "terra" ? "selected" : ""}>🌍 Terra</option>
-      </select>
+  <option value="">Tipo de dano</option>
+  <option value="fogo" ${normalizarTipo(poder.tipo) === "fogo" ? "selected" : ""}>🔥 Fogo</option>
+  <option value="gelo" ${normalizarTipo(poder.tipo) === "gelo" ? "selected" : ""}>❄️ Gelo</option>
+  <option value="raio" ${normalizarTipo(poder.tipo) === "raio" ? "selected" : ""}>⚡ Raio</option>
+  <option value="trovejante" ${normalizarTipo(poder.tipo) === "trovejante" ? "selected" : ""}>🌩️ Trovejante</option>
+  <option value="necrotico" ${normalizarTipo(poder.tipo) === "necrotico" ? "selected" : ""}>💀 Necrótico</option>
+  <option value="radiante" ${normalizarTipo(poder.tipo) === "radiante" ? "selected" : ""}>✨ Radiante</option>
+  <option value="veneno" ${normalizarTipo(poder.tipo) === "veneno" ? "selected" : ""}>☠️ Veneno</option>
+  <option value="agua" ${normalizarTipo(poder.tipo) === "agua" ? "selected" : ""}>💧 Água</option>
+  <option value="magico" ${normalizarTipo(poder.tipo) === "magico" ? "selected" : ""}>☄️ Mágico</option>
+  <option value="psiquico" ${normalizarTipo(poder.tipo) === "psiquico" ? "selected" : ""}>🧠 Psíquico</option>
+  <option value="corte" ${normalizarTipo(poder.tipo) === "corte" ? "selected" : ""}>🔪 Corte</option>
+  <option value="perfurante" ${normalizarTipo(poder.tipo) === "perfurante" ? "selected" : ""}>📌 Perfurante</option>
+  <option value="concussao" ${normalizarTipo(poder.tipo) === "concussao" ? "selected" : ""}>💥 Concussão</option>
+  <option value="metal" ${normalizarTipo(poder.tipo) === "metal" ? "selected" : ""}>⚙️ Metal</option>
+  <option value="fisico" ${normalizarTipo(poder.tipo) === "fisico" ? "selected" : ""}>🗡️ Físico</option>
+  <option value="vento" ${normalizarTipo(poder.tipo) === "vento" ? "selected" : ""}>🍃 Vento</option>
+  <option value="madeira" ${normalizarTipo(poder.tipo) === "madeira" ? "selected" : ""}>🌳 Madeira</option>
+  <option value="terra" ${normalizarTipo(poder.tipo) === "terra" ? "selected" : ""}>🌍 Terra</option>
+  <option value="trevas" ${normalizarTipo(poder.tipo) === "trevas" ? "selected" : ""}>🌑 Trevas</option>
+  <option value="luz" ${normalizarTipo(poder.tipo) === "luz" ? "selected" : ""}>🌕 Luz</option>
+  <option value="espirito" ${normalizarTipo(poder.tipo) === "espirito" ? "selected" : ""}>🌓 Espírito</option>
+</select>
 
       <label class="popup-label">Dano</label>
       <input id="editPoderDano" value="${poder.dano || ""}">
@@ -1393,13 +1707,25 @@ function carregarPersonagem(index) {
 
   document.getElementById("classe").value = p.classe || "";
   document.getElementById("nome").value = p.nome || "";
-  document.getElementById("raca").value = p.raca || "";
+  const racaSelect = document.getElementById("racaSelect");
+if (racaSelect) {
+  racaSelect.value = p.racaSelect || p.raca || "";
+}
+  bonusRacaCustom = p.bonusRacaCustom || {
+  forca: 0,
+  destreza: 0,
+  constituicao: 0,
+  inteligencia: 0,
+  sabedoria: 0,
+  carisma: 0
+};
   document.getElementById("idade").value = p.idade || "";
   document.getElementById("altura").value = p.altura || "";
   document.getElementById("vidaMax").value = p.vidaMax ?? 50;
   document.getElementById("ca").value = p.ca ?? "";
   document.getElementById("deslocamento").value = p.deslocamento ?? 9;
-  document.getElementById("antecedentes").value = p.antecedentes || "";
+  const antecedenteSelect = document.getElementById("antecedenteSelect");
+if (antecedenteSelect) antecedenteSelect.value = p.antecedenteSelect || p.antecedentes || "custom";
   document.getElementById("idiomas").value = p.idiomas || "";
 
   const resistenciasEl = document.getElementById("resistencias");
@@ -1449,7 +1775,7 @@ if (preview) {
 
   
 
-
+  
   dominio = p.dominio || [false, false, false, false, false, false];
   vidaAtual = p.vidaAtual ?? 50;
   vidaTemp = p.vidaTemp ?? 0;
@@ -1458,6 +1784,8 @@ if (preview) {
   poderes = p.poderes || [];
   profs = p.profs || {};
   armaduras = p.armaduras || [];
+  nomeRacaCustom = p.nomeRacaCustom || "";
+  atualizarNomeOpcaoCustom();
   gastosCirculos = p.gastosCirculos || {
   0: [],
   1: [],
@@ -1632,10 +1960,14 @@ function salvarTudo() {
 
   p.nome = document.getElementById("nome").value;
   p.classe = document.getElementById("classe").value;
-  p.raca = document.getElementById("raca").value;
+  p.racaSelect = document.getElementById("racaSelect")?.value || "custom";
+  p.raca = p.racaSelect;
+  p.bonusRacaCustom = bonusRacaCustom;
   p.idade = document.getElementById("idade").value;
+  p.nomeRacaCustom = nomeRacaCustom;
   p.altura = document.getElementById("altura").value;
-  p.antecedentes = document.getElementById("antecedentes").value;
+  p.antecedenteSelect = document.getElementById("antecedenteSelect")?.value || "custom";
+  p.antecedentes = p.antecedenteSelect;
   p.idiomas = document.getElementById("idiomas").value;
   p.armaduras = armaduras;
   p.proficienciasExtras = document.getElementById("proficienciasExtras")?.value || "";
@@ -1687,6 +2019,15 @@ p.diario = diarioEl ? diarioEl.value : "";
 }
 
 /* ================= IMAGEM ================= */
+
+function atualizarNomeOpcaoCustom() {
+  const optionCustom = document.querySelector('#racaSelect option[value="custom"]');
+  if (!optionCustom) return;
+
+  optionCustom.textContent = nomeRacaCustom?.trim()
+    ? nomeRacaCustom.trim()
+    : "Raças Personalizadas";
+}
 
 function previewImagem() {
   const input = document.getElementById("imagem");
@@ -2221,7 +2562,7 @@ function atualizarEstadoLowHP() {
 
   const combateAtivo = abaCombate && abaCombate.id === "combate";
 
-  if (vidaTotal <= 15 && combateAtivo) {
+  if (vidaTotal < 15 && combateAtivo) {
     document.body.classList.add("low-hp");
   } else {
     document.body.classList.remove("low-hp");
@@ -2381,14 +2722,24 @@ function exportarFicha(index) {
     ? ficha.nome.trim().replace(/[\\/:*?"<>|]/g, "_")
     : `ficha-${index + 1}`;
 
-  const blob = new Blob([JSON.stringify(ficha, null, 2)], {
+  const conteudo = JSON.stringify(ficha, null, 2);
+  const arquivo = `${nomeArquivo}.json`;
+
+  // Android WebView
+  if (window.Android && Android.exportarFicha) {
+    Android.exportarFicha(conteudo, arquivo);
+    return;
+  }
+
+  // Navegador normal
+  const blob = new Blob([conteudo], {
     type: "application/json"
   });
 
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${nomeArquivo}.json`;
+  a.download = arquivo;
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -2694,7 +3045,7 @@ function atualizarBadgesSaves() {
     const badge = document.getElementById(`save_${attr}`);
     if (!badge) return;
 
-    const valor = mod(get(attr)) + (saves[attr] ? bonus : 0);
+    const valor = mod(getAtributoFinal(attr)) + (saves[attr] ? bonus : 0);
 
     if (saves[attr]) {
       badge.style.display = "flex";
@@ -2709,15 +3060,17 @@ function atualizarBadgesSaves() {
 /* ================= PERÍCIAS ================= */
 
 function atualizarTudo() {
+  atualizarAtributosFinaisVisuais();
   const bonus = get("bonusProf");
 
+  
   const mods = {
-    forca: mod(get("forca")),
-    destreza: mod(get("destreza")),
-    constituicao: mod(get("constituicao")),
-    inteligencia: mod(get("inteligencia")),
-    sabedoria: mod(get("sabedoria")),
-    carisma: mod(get("carisma"))
+    forca: mod(getAtributoFinal("forca")),
+    destreza: mod(getAtributoFinal("destreza")),
+    constituicao: mod(getAtributoFinal("constituicao")),
+    inteligencia: mod(getAtributoFinal("inteligencia")),
+    sabedoria: mod(getAtributoFinal("sabedoria")),
+    carisma: mod(getAtributoFinal("carisma"))
   };
 
   document.getElementById("mod_forca").innerText = mods.forca >= 0 ? `+${mods.forca}` : mods.forca;
@@ -2755,6 +3108,30 @@ const valor = mods[pericia.attr] + bonusFinal;
       `;
       lista.appendChild(div);
     });
+
+    function atualizarAtributos() {
+  ["forca","destreza","constituicao","inteligencia","sabedoria","carisma"].forEach(attr => {
+    const el = document.getElementById(`mod_${attr}`);
+    if (el) {
+      el.innerText = mod(getAtributoFinal(attr));
+    }
+  });
+}
+
+function atualizarAtributosVisuais() {
+  const attrs = ["forca","destreza","constituicao","inteligencia","sabedoria","carisma"];
+
+  attrs.forEach(attr => {
+    const baseInput = document.getElementById(attr);
+    const display = baseInput?.parentElement?.querySelector(".valor-attr"); // ou equivalente
+
+    if (!baseInput || !display) return;
+
+    const final = getAtributoFinal(attr);
+    display.innerText = final;
+  });
+}
+
   }
 
   atualizarBadgesSaves();
@@ -2870,6 +3247,14 @@ function getGrupoPoder(poder) {
   return `circulo-${numero}`;
 }
 
+function limitarAtributo(input) {
+  let valor = parseInt(input.value);
+
+  if (isNaN(valor)) return;
+  if (valor > 20) input.value = 20;
+  if (valor < 1) input.value = 1;
+}
+
 function moverPoderCima(index) {
   moverPoderNoGrupo(index, -1);
 }
@@ -2967,7 +3352,7 @@ function init() {
   limparFocoBotoesVida();
 
   const nome = document.getElementById("nome");
-  const raca = document.getElementById("raca");
+  const raca = document.getElementById("racaSelect");
   const classe = document.getElementById("classe");
   const ca = document.getElementById("ca");
   const deslocamento = document.getElementById("deslocamento");
@@ -3006,7 +3391,8 @@ function init() {
     "dtBase",
     "dtAtributo",
     "dtProf",
-    "antecedentes",
+    "racaSelect",
+    "antecedenteSelect",
     "aliados",
     "idiomas"
   ];
@@ -3051,3 +3437,5 @@ window.onload = function () {
 document.addEventListener("DOMContentLoaded", () => {
   ativarDragImagemPreview();
 });
+
+atualizarDropdownRacas();
