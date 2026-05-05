@@ -39,21 +39,21 @@
 
 ---
 
+
 ## 📖 Sobre o Projeto
+O Ficha Ígnea nasceu da necessidade de ter uma ficha de personagem D&D 5e completa, organizada e sempre acessível — agora com suporte a armazenamento local e em nuvem.
 
-O **Ficha Ígnea** nasceu da necessidade de ter uma ficha de personagem D&D 5e completa, organizada e sempre acessível pelo celular — sem depender de papel, caneta ou aplicativos limitados.
+O projeto é uma Progressive Web App (PWA) moderna, que pode funcionar offline, mas também oferece sincronização online para maior segurança e portabilidade dos dados.
 
-O projeto é uma **Progressive Web App (PWA)** 100% client-side: não precisa de servidor, não precisa de banco de dados e funciona completamente offline após o primeiro acesso. Todos os dados do personagem ficam salvos no próprio dispositivo do jogador.
-
-### Por que Ficha Ígnea?
+Por que Ficha Ígnea?
 
 | Problema comum | Solução do Ficha Ígnea |
 |---|---|
-| Ficha de papel rasga, molha ou se perde | Dados salvos localmente no navegador |
-| Apps pagos ou com funcionalidades limitadas | 100% gratuito e open source |
-| Interface difícil de usar no celular | Design mobile-first, responsivo |
-| Precisa de internet para funcionar | Funciona offline (PWA) |
-| Dependência de servidores externos | Sem backend, sem cadastro |
+| Ficha de papel se perde ou danifica | Dados salvos localmente e na nuvem |
+| Apps limitados ou pagos | Versão gratuita completa + plano premium opcional |
+| Dificuldade de uso no celular | Interface mobile-first e responsiva | 
+| Perda de dados ao trocar de dispositivo | Backup e sincronização online | 
+| Dependência de internet | Funciona offline com sincronização opcional |
 
 ---
 
