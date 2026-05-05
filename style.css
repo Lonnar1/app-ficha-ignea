@@ -17,7 +17,7 @@ body {
 }
 
 h1 {
-  font-family: 'Cinzel', serif;
+  font-family: "Cinzel", serif;
   text-align: center;
 }
 
@@ -46,11 +46,10 @@ h1 {
 
 .titulo-rpg {
   position: relative;
-  display: inline-block;  
+  display: inline-block;
   margin: 0;
   padding-top: 90px; /* cria espaço pra espada ficar em cima */
   text-align: center;
-  
 }
 
 .titulo-rpg span {
@@ -58,17 +57,17 @@ h1 {
   z-index: 10;
   display: inline-block;
 
-  font-family: 'Cinzel', serif;
+  font-family: "Cinzel", serif;
   font-weight: 700;
   font-size: 34px;
   letter-spacing: 2px;
   color: #f8f1df;
 
   text-shadow:
-  0 0 6px rgba(255, 140, 0, 0.8),
-  0 0 14px rgba(255, 80, 0, 0.7),
-  0 0 30px rgba(255, 40, 0, 0.5),
-  2px 2px 6px rgba(0,0,0,0.9);
+    0 0 6px rgba(255, 140, 0, 0.8),
+    0 0 14px rgba(255, 80, 0, 0.7),
+    0 0 30px rgba(255, 40, 0, 0.5),
+    2px 2px 6px rgba(0, 0, 0, 0.9);
 }
 
 @keyframes fogoTexto {
@@ -413,7 +412,7 @@ textarea {
 }
 
 .header-pericias span {
-  font-family: 'Cinzel', serif;
+  font-family: "Cinzel", serif;
   font-size: 20px;
   font-weight: bold;
   color: #f3d9a2;
@@ -505,18 +504,6 @@ textarea {
 .check:hover {
   background: rgba(200, 169, 107, 0.12);
   transform: scale(1.05);
-}
-
-.check.ativo {
-  background: #b89654;
-  border-color: #b89654;
-  color: #1b1411;
-}
-
-.check.ativo::after {
-  content: "✓";
-  font-size: 11px;
-  font-weight: bold;
 }
 
 /* ================= COMBATE ================= */
@@ -633,12 +620,6 @@ textarea {
 }
 
 /* ================= INVENTÁRIO ================= */
-.inv-add {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 15px;
-}
 
 #lista {
   list-style: none;
@@ -971,20 +952,12 @@ textarea {
   touch-action: none;
 }
 
-#preview.arrastando {
-  cursor: grabbing;
-}
-
 .upload-imagem {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
   margin: 10px 0;
-}
-
-.upload-imagem input[type="file"] {
-  display: none;
 }
 
 .botao-upload {
@@ -1170,10 +1143,6 @@ textarea {
   border-color: #b91c1c;
 }
 
-.exaustao-box {
-  text-align: center;
-}
-
 .exaustao-niveis {
   display: flex;
   justify-content: center;
@@ -1236,11 +1205,6 @@ textarea {
   flex-direction: column;
   gap: 8px;
   margin-bottom: 15px;
-}
-
-.poder-linha {
-  display: flex;
-  gap: 8px;
 }
 
 .poder-linha input {
@@ -1408,7 +1372,7 @@ textarea {
 
 .titulo-secao {
   text-align: center;
-  font-family: 'Cinzel', serif;
+  font-family: "Cinzel", serif;
   font-size: 22px;
   letter-spacing: 1px;
   color: #d8b56a;
@@ -1427,17 +1391,9 @@ textarea {
   background: rgba(200, 169, 107, 0.4);
 }
 
-.titulo-secao::before {
-  left: 0;
-}
-
-.titulo-secao::after {
-  right: 0;
-}
-
 .titulo-secao {
   text-align: center;
-  font-family: 'Cinzel', serif;
+  font-family: "Cinzel", serif;
   font-size: 20px;
   letter-spacing: 2px;
   color: #d8b56a;
@@ -1476,18 +1432,6 @@ textarea {
   flex-wrap: wrap;
 }
 
-.inspiracao-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.inspiracao-box label {
-  font-size: 12px;
-  font-weight: bold;
-  color: #cdb791;
-}
-
 .inspiracao-box input {
   width: 42px;
   height: 42px;
@@ -1501,61 +1445,6 @@ textarea {
   background: #4a3b31;
   color: #f8f1df;
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.25);
-}
-
-.dt-box {
-  margin-bottom: 16px;
-  padding: 12px;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #312621 0%, #261d18 100%);
-  border: 1px solid rgba(200, 169, 107, 0.10);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
-}
-
-.subtitulo-secao {
-  margin: 0 0 10px 0;
-  font-family: 'Cinzel', serif;
-  font-size: 18px;
-  color: #f3d9a2;
-}
-
-.dt-linha {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.dt-linha .campo {
-  flex: 1;
-}
-
-.dt-resultado-box {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(200, 169, 107, 0.12);
-}
-
-.dt-resultado-box span {
-  font-size: 14px;
-  font-weight: bold;
-  color: #cdb791;
-}
-
-#dtTotal {
-  min-width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  background: #b89654;
-  color: #1b1411;
-  font-size: 20px;
-  font-weight: bold;
 }
 
 .header-pericias-topo {
@@ -1596,13 +1485,13 @@ textarea {
   padding: 12px;
   border-radius: 14px;
   background: linear-gradient(180deg, #312621 0%, #261d18 100%);
-  border: 1px solid rgba(200, 169, 107, 0.10);
+  border: 1px solid rgba(200, 169, 107, 0.1);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.22);
 }
 
 .subtitulo-secao {
   margin: 0 0 10px 0;
-  font-family: 'Cinzel', serif;
+  font-family: "Cinzel", serif;
   font-size: 18px;
   color: #f3d9a2;
 }
@@ -1686,15 +1575,9 @@ textarea {
 }
 
 .inspiracao-box label {
-  font-family: 'Cinzel', serif; /* mesma do Perícias */
+  font-family: "Cinzel", serif; /* mesma do Perícias */
   font-size: 14px;
   color: #f3d9a2;
-}
-
-.inspiracao-box {
-  display: flex;
-  align-items: center;
-  gap: 10px;
 }
 
 .popup {
@@ -1747,7 +1630,7 @@ textarea {
 
 #popup-titulo {
   margin: 0 36px 18px 0;
-  font-family: 'Cinzel', serif;
+  font-family: "Cinzel", serif;
   font-size: 28px;
   line-height: 1.1;
   color: #f3d9a2;
@@ -1769,7 +1652,7 @@ textarea {
   display: block;
   margin-bottom: 6px;
 
-  font-family: 'Cinzel', serif;
+  font-family: "Cinzel", serif;
   font-size: 16px; /* menor */
   letter-spacing: 0.5px;
 
@@ -1790,7 +1673,7 @@ textarea {
   font-size: 16px;
 
   line-height: 1.4; /* diminui altura das linhas */
-  
+
   white-space: pre-line;
   overflow-wrap: break-word;
 }
@@ -1807,8 +1690,8 @@ textarea {
   justify-content: center;
   padding: 5px 10px;
   border-radius: 999px;
-  background: rgba(200, 169, 107, 0.10);
-  border: 1px solid rgba(200, 169, 107, 0.20);
+  background: rgba(200, 169, 107, 0.1);
+  border: 1px solid rgba(200, 169, 107, 0.2);
   color: #f3d9a2;
   font-size: 12px;
   font-weight: bold;
@@ -1855,7 +1738,7 @@ textarea {
 }
 
 .inspiracao-box label {
-  font-family: 'Cinzel', serif;
+  font-family: "Cinzel", serif;
   font-size: 14px;
   color: #f3d9a2;
   white-space: nowrap;
@@ -2077,7 +1960,7 @@ button {
   padding: 10px;
   font-weight: bold;
   cursor: pointer;
-} 
+}
 .item-acoes {
   display: flex;
   flex-direction: column;
@@ -2139,15 +2022,13 @@ button {
   filter: blur(3px);
 }
 
-
-
 button:active {
   transform: scale(0.92);
 }
 
 .inv-add-btn:active {
   transform: scale(0.85) rotate(-2deg);
-} 
+}
 
 .item-card,
 .arma-card,
@@ -2159,17 +2040,25 @@ button:active {
 .arma-card:hover,
 .poder-card:hover {
   transform: translateY(-3px) scale(1.01);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
 }
 
 #ficha {
   animation: fadeInFicha 0.4s ease;
 }
 
-.tipo-fogo { box-shadow: 0 0 10px rgba(255,80,80,0.4); }
-.tipo-gelo { box-shadow: 0 0 10px rgba(100,180,255,0.4); }
-.tipo-raio { box-shadow: 0 0 10px rgba(255,255,100,0.4); }
-.tipo-necrotico { box-shadow: 0 0 10px rgba(180,100,255,0.4); }
+.tipo-fogo {
+  box-shadow: 0 0 10px rgba(255, 80, 80, 0.4);
+}
+.tipo-gelo {
+  box-shadow: 0 0 10px rgba(100, 180, 255, 0.4);
+}
+.tipo-raio {
+  box-shadow: 0 0 10px rgba(255, 255, 100, 0.4);
+}
+.tipo-necrotico {
+  box-shadow: 0 0 10px rgba(180, 100, 255, 0.4);
+}
 
 .spawn {
   animation: spawnItem 0.3s ease;
@@ -2202,9 +2091,15 @@ button:active {
 }
 
 @keyframes glowUp {
-  0% { box-shadow: 0 0 0 rgba(200,169,107,0); }
-  50% { box-shadow: 0 0 12px rgba(200,169,107,0.7); }
-  100% { box-shadow: 0 0 0 rgba(200,169,107,0); }
+  0% {
+    box-shadow: 0 0 0 rgba(200, 169, 107, 0);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(200, 169, 107, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(200, 169, 107, 0);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2247,11 +2142,6 @@ button:active {
   gap: 12px;
   align-items: flex-start;
   margin-bottom: 12px;
-}
-
-.personagem-campos {
-  flex: 1;
-  min-width: 0;
 }
 
 .personagem-imagem-box {
@@ -2299,17 +2189,11 @@ button:active {
   margin: 0;
 }
 
-
 .personagem-topo {
   display: flex;
   align-items: flex-start;
   gap: 10px;
   margin-bottom: 14px;
-}
-
-.personagem-campos {
-  flex: 1;
-  min-width: 0;
 }
 
 .personagem-imagem-box {
@@ -2394,14 +2278,6 @@ button:active {
   margin: 0;
 }
 
-.personagem-upload .botao-upload {
-  width: 100%;
-  text-align: center;
-  padding: 8px 10px;
-  font-size: 12px;
-  border-radius: 10px;
-}
-
 .personagem-upload #nome-arquivo {
   max-width: 100%;
   font-size: 11px;
@@ -2410,7 +2286,6 @@ button:active {
   overflow: visible;
   text-overflow: unset;
 }
-
 
 /* ================= PERSONAGEM TOPO LIMPO ================= */
 
@@ -2477,16 +2352,6 @@ button:active {
   padding: 8px 10px;
   font-size: 12px;
   border-radius: 10px;
-}
-
-.personagem-upload #nome-arquivo {
-  width: 100%;
-  max-width: 100%;
-  font-size: 11px;
-  text-align: center;
-  white-space: normal;
-  overflow: visible;
-  text-overflow: unset;
 }
 
 .personagem-upload .botao-upload {
@@ -2579,7 +2444,7 @@ button:active {
 .subtitulo-inventario {
   margin: 16px 0 12px 0;
   text-align: center;
-  font-family: 'Cinzel', serif;
+  font-family: "Cinzel", serif;
   font-size: 20px;
   color: #cdb791;
   position: relative;
@@ -2879,7 +2744,10 @@ button:active {
 
 .poder-card {
   position: relative;
-  transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    opacity 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .poder-drag-handle {
@@ -2937,13 +2805,11 @@ button:active {
   transition: 0.2s;
 }
 
-.btn-mover:hover {
-  background: #7a624a;
-  transform: scale(1.05);
-}
-
 .poder-card {
-  transition: transform 0.22s ease, box-shadow 0.22s ease, opacity 0.22s ease;
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    opacity 0.22s ease;
   will-change: transform;
 }
 
@@ -3016,7 +2882,7 @@ button:active {
   cursor: pointer;
   user-select: none;
 
-  font-family: 'Cinzel', serif; /* 🔥 fonte medieval */
+  font-family: "Cinzel", serif; /* 🔥 fonte medieval */
   font-size: 20px;
   letter-spacing: 1px;
   color: #f3d9a2;
@@ -3038,7 +2904,10 @@ button:active {
   overflow: hidden;
   max-height: 500px;
   opacity: 1;
-  transition: max-height 0.3s ease, opacity 0.25s ease, margin-top 0.25s ease;
+  transition:
+    max-height 0.3s ease,
+    opacity 0.25s ease,
+    margin-top 0.25s ease;
   margin-top: 8px;
 }
 
@@ -3113,13 +2982,13 @@ button:active {
 }
 
 .titulo-toggle span {
-  font-family: 'Cinzel', serif !important;
+  font-family: "Cinzel", serif !important;
 }
 
 .titulo-linha {
   width: 100%;
   text-align: center;
-  font-family: 'Cinzel', serif !important;
+  font-family: "Cinzel", serif !important;
   font-size: 18px;
   color: #d4b06a;
   letter-spacing: 2px;
@@ -3152,20 +3021,10 @@ button:active {
   gap: 6px;
 }
 
-.acoes-topo {
-  display: flex;
-  gap: 6px;
-}
-
 .acoes-topo .btn-mover,
 .acoes-topo .btn-editar {
   width: 32px;
   height: 32px;
-}
-
-.poder-info {
-  flex: 1;
-  min-width: 0;
 }
 
 .poder-nome {
@@ -3202,11 +3061,6 @@ button:active {
   flex-shrink: 0;
 }
 
-.acoes-topo {
-  display: flex;
-  gap: 6px;
-}
-
 .btn-mover,
 .btn-editar {
   width: 32px;
@@ -3239,15 +3093,33 @@ button:active {
 }
 
 @keyframes subirItem {
-  0% { transform: translateY(0); opacity: 1; }
-  50% { transform: translateY(-15px); opacity: 0.7; }
-  100% { transform: translateY(0); opacity: 1; }
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-15px);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes descerItem {
-  0% { transform: translateY(0); opacity: 1; }
-  50% { transform: translateY(15px); opacity: 0.7; }
-  100% { transform: translateY(0); opacity: 1; }
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(15px);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .item-animar-cima {
@@ -3342,37 +3214,23 @@ select:focus {
 .dominio-box,
 .popup-content {
   box-shadow:
-    0 6px 16px rgba(0,0,0,0.28),
-    inset 0 1px 0 rgba(255,255,255,0.04),
-    inset 0 0 0 1px rgba(200,169,107,0.08);
-}
-
-.item-card,
-.arma-card,
-.poder-card,
-.pericias,
-.diario-box,
-.proficiencias-secao,
-.dominio-box,
-.popup-content {
-  box-shadow:
-    0 6px 16px rgba(0,0,0,0.28),
-    inset 0 1px 0 rgba(255,255,255,0.04),
-    inset 0 0 0 1px rgba(200,169,107,0.08);
+    0 6px 16px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    inset 0 0 0 1px rgba(200, 169, 107, 0.08);
 }
 
 .inv-add-btn,
 .botao-upload,
 .tab-btn.active,
 .btn-diario {
-  box-shadow: 0 0 10px rgba(200,169,107,0.18);
+  box-shadow: 0 0 10px rgba(200, 169, 107, 0.18);
 }
 
 #preview {
-  border: 1px solid rgba(200,169,107,0.45);
+  border: 1px solid rgba(200, 169, 107, 0.45);
   box-shadow:
-    0 0 0 2px rgba(255,255,255,0.03) inset,
-    0 6px 16px rgba(0,0,0,0.35);
+    0 0 0 2px rgba(255, 255, 255, 0.03) inset,
+    0 6px 16px rgba(0, 0, 0, 0.35);
 }
 
 .item-card:hover,
@@ -3380,30 +3238,18 @@ select:focus {
 .poder-card:hover {
   transform: translateY(-3px) scale(1.01);
   box-shadow:
-    0 10px 20px rgba(0,0,0,0.4),
-    0 0 0 1px rgba(200,169,107,0.10);
-}
-
-.titulo-secao::before,
-.titulo-secao::after,
-.subtitulo-inventario::before,
-.subtitulo-inventario::after {
-  background: linear-gradient(
-    to right,
-    transparent,
-    rgba(200,169,107,0.55),
-    transparent
-  );
+    0 10px 20px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(200, 169, 107, 0.1);
 }
 
 input:focus,
 textarea:focus,
 select:focus {
   outline: none;
-  border-color: rgba(200,169,107,0.5);
+  border-color: rgba(200, 169, 107, 0.5);
   box-shadow:
-    0 0 0 1px rgba(200,169,107,0.22),
-    0 0 10px rgba(200,169,107,0.14);
+    0 0 0 1px rgba(200, 169, 107, 0.22),
+    0 0 10px rgba(200, 169, 107, 0.14);
 }
 
 .save-badge,
@@ -3411,7 +3257,7 @@ select:focus {
 .morte-check.ativo,
 .arma-carga-check.ativo,
 .check.ativo {
-  box-shadow: 0 0 8px rgba(200,169,107,0.35);
+  box-shadow: 0 0 8px rgba(200, 169, 107, 0.35);
 }
 
 .header-rpg::before {
@@ -3423,8 +3269,8 @@ select:focus {
   left: 50%;
   transform: translateX(-50%);
   background: radial-gradient(
-    rgba(255,120,0,0.12),
-    rgba(255,80,0,0.05),
+    rgba(255, 120, 0, 0.12),
+    rgba(255, 80, 0, 0.05),
     transparent 70%
   );
   pointer-events: none;
@@ -3458,9 +3304,9 @@ select:focus {
   position: relative;
   border: 1px solid rgba(200, 169, 107, 0.14);
   box-shadow:
-    0 8px 18px rgba(0,0,0,0.28),
-    inset 0 1px 0 rgba(255,255,255,0.03),
-    inset 0 0 0 1px rgba(200,169,107,0.05);
+    0 8px 18px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    inset 0 0 0 1px rgba(200, 169, 107, 0.05);
 }
 
 .header-rpg::before {
@@ -3486,26 +3332,26 @@ select:focus {
   outline: none;
   border: 1px solid rgba(200, 169, 107, 0.35);
   box-shadow:
-    0 0 0 1px rgba(200,169,107,0.15),
-    0 0 10px rgba(200,169,107,0.12);
+    0 0 0 1px rgba(200, 169, 107, 0.15),
+    0 0 10px rgba(200, 169, 107, 0.12);
 }
 
 #preview {
   box-shadow:
-    0 8px 18px rgba(0,0,0,0.35),
-    inset 0 0 0 1px rgba(255,255,255,0.04);
+    0 8px 18px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
 .tab-btn.active {
   box-shadow:
-    inset 0 2px 0 rgba(255,255,255,0.18),
-    0 0 10px rgba(200,169,107,0.25);
+    inset 0 2px 0 rgba(255, 255, 255, 0.18),
+    0 0 10px rgba(200, 169, 107, 0.25);
 }
 
 .inv-add-btn,
 .botao-upload,
 .btn-diario {
-  box-shadow: 0 4px 10px rgba(200,169,107,0.18);
+  box-shadow: 0 4px 10px rgba(200, 169, 107, 0.18);
 }
 
 .titulo-secao::before,
@@ -3515,7 +3361,7 @@ select:focus {
   background: linear-gradient(
     to right,
     transparent,
-    rgba(200,169,107,0.55),
+    rgba(200, 169, 107, 0.55),
     transparent
   );
 }
@@ -3573,7 +3419,6 @@ select:focus {
     0 0 0 2px rgba(27, 20, 17, 0.6),
     0 4px 10px rgba(0, 0, 0, 0.3);
 }
-
 
 .item-acoes {
   display: flex;
@@ -3691,7 +3536,7 @@ select:focus {
   font-weight: bold;
   cursor: pointer;
   transition: 0.2s ease;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .subtab-poder:hover,
@@ -3706,7 +3551,7 @@ select:focus {
   color: #1b1411;
   box-shadow:
     0 0 0 1px rgba(241, 230, 207, 0.15),
-    0 4px 10px rgba(0,0,0,0.25);
+    0 4px 10px rgba(0, 0, 0, 0.25);
 }
 
 .subconteudo-poder,
@@ -3732,7 +3577,7 @@ select:focus {
   border-radius: 14px;
   background: linear-gradient(180deg, #312621 0%, #261d18 100%);
   border: 1px solid rgba(200, 169, 107, 0.15);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.22);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.22);
 }
 
 .label-gasto-circulo {
@@ -3792,7 +3637,7 @@ select:focus {
 
 .subaba-magias-topo h3 {
   margin: 0 0 8px 0;
-  font-family: 'Cinzel', serif;
+  font-family: "Cinzel", serif;
   color: #f3d9a2;
   font-size: 18px;
   letter-spacing: 0.5px;
@@ -3844,7 +3689,10 @@ select:focus {
 }
 
 .poder-card {
-  transition: transform 0.25s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
   will-change: transform;
 }
 
@@ -4083,7 +3931,7 @@ select:focus {
   left: 50%;
   transform: translateX(-50%);
 
-  font-family: 'Cinzel', serif; /* 👈 mesma fonte do site */
+  font-family: "Cinzel", serif; /* 👈 mesma fonte do site */
   font-size: 18px;
   font-weight: 600;
   letter-spacing: 1px;
@@ -4111,7 +3959,7 @@ select:focus {
   border-radius: 16px;
   background: rgba(20, 10, 8, 0.92);
   border: 1px solid rgba(255, 170, 90, 0.18);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(6px);
 }
 
@@ -4119,7 +3967,7 @@ select:focus {
   flex: 1;
 
   padding: 8px 10px; /* 👈 menor */
-  font-size: 12px;   /* 👈 menor */
+  font-size: 12px; /* 👈 menor */
 
   border-radius: 10px;
 
@@ -4127,15 +3975,11 @@ select:focus {
   background: linear-gradient(180deg, #2a1610, #1a0d09);
   color: #f6d7a8;
 
-  font-family: 'Cinzel', serif;
+  font-family: "Cinzel", serif;
   font-weight: 700;
 
   cursor: pointer;
   transition: 0.15s;
-}
-
-.btn-acao-ficha:active {
-  transform: scale(0.98);
 }
 
 .btn-acao-ficha:hover {
@@ -4144,10 +3988,9 @@ select:focus {
 }
 
 .acoes-ficha-fixas {
-  padding: 6px;      /* 👈 menor */
-  gap: 6px;          /* 👈 menos espaço entre botões */
+  padding: 6px; /* 👈 menor */
+  gap: 6px; /* 👈 menos espaço entre botões */
 }
-
 
 /* ================= RESPIRO DA ABA PODERES ================= */
 #poderes {
@@ -4244,7 +4087,7 @@ select:focus {
   background: linear-gradient(180deg, #2a1b14 0%, #1d120d 100%);
   color: #d8bf8b;
 
-  font-family: 'Cinzel', serif;
+  font-family: "Cinzel", serif;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.3px;
@@ -4253,8 +4096,8 @@ select:focus {
   transition: 0.18s ease;
 
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.03),
-    0 2px 6px rgba(0,0,0,0.18);
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 2px 6px rgba(0, 0, 0, 0.18);
 }
 
 .btn-acao-ficha:hover {
@@ -4344,11 +4187,7 @@ select:focus {
   align-items: center;
   justify-content: center;
 
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-}
-
-#preview.arrastando {
-  cursor: grabbing;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 #preview {
@@ -4371,14 +4210,10 @@ select:focus {
   border: 1px solid rgba(200, 169, 107, 0.25);
 }
 
-.editor-inline.fechado {
-  display: none;
-}
-
 .editor-titulo {
   margin: 0 0 12px 0;
   text-align: center;
-  font-family: 'Cinzel', serif;
+  font-family: "Cinzel", serif;
   color: #f3d9a2;
 }
 
@@ -4432,7 +4267,7 @@ select:focus {
 .editor-inline {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.85);
+  background: rgba(0, 0, 0, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4503,7 +4338,7 @@ select:focus {
   font-size: 11px;
   padding: 3px 8px;
   border-radius: 999px;
-  background: rgba(255,255,255,0.06);
+  background: rgba(255, 255, 255, 0.06);
   color: #d9c3a2;
 }
 
@@ -4554,22 +4389,6 @@ select:focus {
 }
 
 @keyframes piscarLowHP {
-  0% {
-    box-shadow: 0 0 0 rgba(185, 28, 28, 0);
-    border-color: #2c221d;
-  }
-
-  50% {
-    box-shadow:
-      0 0 12px rgba(239, 68, 68, 0.9),
-      0 0 22px rgba(185, 28, 28, 0.7);
-    border-color: #ef4444;
-  }
-
-  100% {
-    box-shadow: 0 0 0 rgba(185, 28, 28, 0);
-    border-color: #2c221d;
-  }
 }
 
 body.low-hp #hpBar {
@@ -4661,9 +4480,9 @@ body.low-hp #hp-fill {
   background: linear-gradient(180deg, #80684f 0%, #5f4b39 100%);
   border: 1px solid rgba(248, 241, 223, 0.08);
   box-shadow:
-    0 8px 18px rgba(0,0,0,0.42),
-    inset 0 1px 0 rgba(255,255,255,0.08),
-    inset 0 -10px 18px rgba(0,0,0,0.12);
+    0 8px 18px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -10px 18px rgba(0, 0, 0, 0.12);
 }
 
 .attr-compacto .attr-sigla {
@@ -4673,7 +4492,7 @@ body.low-hp #hp-fill {
   margin: 0;
   text-align: center;
   color: #f8f1df;
-  text-shadow: 0 2px 3px rgba(0,0,0,0.35);
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.35);
 }
 
 .attr-compacto .save-check {
@@ -4708,8 +4527,8 @@ body.low-hp #hp-fill {
   display: flex;
   align-items: center;
   justify-content: center;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.55);
-  box-shadow: inset 0 2px 6px rgba(0,0,0,0.22);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.55);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.22);
 }
 
 .attr-mod {
@@ -4725,7 +4544,7 @@ body.low-hp #hp-fill {
   align-items: center;
   justify-content: center;
   background: rgba(31, 26, 23, 0.38);
-  text-shadow: 0 2px 4px rgba(0,0,0,0.45);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.45);
 }
 
 .attr-compacto .save-badge {
@@ -4827,22 +4646,6 @@ body.low-hp #hp-fill {
   display: none;
 }
 
-.select-wrapper {
-  position: relative;
-}
-
-.select-wrapper::after {
-  content: "▼";
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-
-  color: #c8a662;
-  font-size: 12px;
-}
-
 #racaSelect {
   color: #cdb791; /* mais apagado */
 }
@@ -4883,7 +4686,6 @@ select {
   color: #c8a662;
   font-size: 12px;
 }
-
 
 /* ================= FIX SELECT PODERES ================= */
 
@@ -4978,4 +4780,59 @@ select {
   margin-bottom: 8px;
 
   border: 1px solid rgba(200, 169, 107, 0.15);
+}
+
+.linha-nivel-antecedente {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 8px;
+}
+
+#nivel {
+  text-align: center;
+}
+
+#antecedentes {
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
+  resize: none;
+}
+
+#nome-arquivo {
+  display: none;
+}
+
+.personagem-topo {
+  align-items: flex-start; /* evita desalinhamento estranho */
+}
+
+#preview {
+  height: 10000px; /* 🔥 aumenta a altura */
+  max-width: 145px; /* mantém largura controlada */
+}
+
+.carga-bolinha {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #b89654;
+  cursor: pointer;
+}
+
+.carga-bolinha.gasta {
+  background: #b89654;
+}
+
+#boxPoderForm {
+  overflow: visible !important;
+}
+
+#poderes {
+  padding-bottom: 120px;
+}
+
+.add-linha {
+  position: relative;
+  z-index: 5;
 }
