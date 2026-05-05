@@ -10,14 +10,19 @@ O projeto oferece uma experiência fluida, com armazenamento local, interface ot
 
 🚀 Demonstração
 
-## 📸 Preview
+<h2>📸 Preview</h2>
 
-![Tela de Personagem](./assets/tela-personagem.jpeg)
-![Tela de Informações](./assets/tela-informaçoes.jpeg)
-![Tela de Combate](./assets/tela-combate.jpeg)
-![Tela de Inventário](./assets/tela-inventario.jpeg)
-![Tela de Poderes](./assets/tela-poderes.jpeg)
-![Tela de Status](./assets/tela-status.jpeg)
+<p align="center">
+  <img src="./assets/tela-personagem.jpeg" width="220"/>
+  <img src="./assets/tela-informacoes.jpeg" width="220"/>
+  <img src="./assets/tela-status.jpeg" width="220"/>
+</p>
+
+<p align="center">
+  <img src="./assets/tela-combate.jpeg" width="220"/>
+  <img src="./assets/tela-inventario.jpeg" width="220"/>
+  <img src="./assets/tela-poderes.jpeg" width="220"/>
+</p>
 
 👉 Acesse o projeto online:
 https://lonnar17.github.io/app-ficha-ignea/
