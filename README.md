@@ -11,7 +11,7 @@ O projeto oferece uma experiência fluida, com armazenamento local, interface ot
 🚀 Demonstração
 
 👉 Acesse o projeto online:
-https://lonnar17.github.io/-Dndleleco/
+https://lonnar17.github.io/app-ficha-ignea/
 
 ⚙️ Funcionalidades
 👤 Personagem
