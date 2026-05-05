@@ -1219,9 +1219,10 @@ textarea {
 
 .poder-card {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  align-items: stretch; /* 🔥 ocupa altura inteira igual inventário */
   gap: 12px;
+
+  width: 100%; /* 🔥 garante largura total */
 
   margin-bottom: 12px;
   padding: 14px;
@@ -1233,6 +1234,7 @@ textarea {
 .poder-info {
   flex: 1;
   min-width: 0;
+  width: 100%; /* 🔥 força expandir igual inventário */
   cursor: pointer;
 }
 
@@ -4835,4 +4837,66 @@ select {
 .add-linha {
   position: relative;
   z-index: 5;
+}
+
+.conteudo-toggle.fechado {
+  max-height: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  opacity: 0;
+  pointer-events: none !important;
+  visibility: hidden;
+}
+
+.conteudo-toggle.fechado * {
+  pointer-events: none !important;
+}
+
+#boxPoderForm.fechado {
+  display: none !important;
+}
+
+.poder-card {
+  max-width: 100%;
+}
+
+#listaPoderes,
+#listaPoderesComuns,
+[id^="listaMagiasCirculo"] {
+  width: 100%;
+}
+
+/* 🔥 Deixar os cards de poderes/magias mais largos */
+#poderes {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+#poderes .secao-toggle,
+#poderes .subaba-poderes,
+#poderes .circulo-box {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+#listaPoderesComuns,
+#listaMagiasCirculo0,
+#listaMagiasCirculo1,
+#listaMagiasCirculo2,
+#listaMagiasCirculo3,
+#listaMagiasCirculo4,
+#listaMagiasCirculo5,
+#listaMagiasCirculo6,
+#listaMagiasCirculo7,
+#listaMagiasCirculo8,
+#listaMagiasCirculo9 {
+  width: 100% !important;
+}
+
+#poderes .poder-card {
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
 }
