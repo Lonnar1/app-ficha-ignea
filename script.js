@@ -747,6 +747,20 @@ function toggleEditCampoCargas() {
   }
 }
 
+function toggleEditCampoCargasPoder() {
+  const check = document.getElementById("editPoderTemCargas");
+  const input = document.getElementById("editPoderMaxCargas");
+
+  if (!check || !input) return;
+
+  if (check.checked) {
+    input.style.display = "block";
+  } else {
+    input.style.display = "none";
+    input.value = "";
+  }
+}
+
 function editarPoder(index) {
   const poder = poderes[index];
   if (!poder) return;
@@ -810,9 +824,33 @@ function editarPoder(index) {
       <input id="editPoderDuracao" value="${poder.duracao || ""}">
 
       <label class="popup-label">Descrição</label>
-      <textarea id="editPoderDesc">${poder.desc || ""}</textarea>
+<textarea id="editPoderDesc">${poder.desc || ""}</textarea>
 
-      <button class="popup-salvar-btn" onclick="salvarEdicaoPoder(${index})">
+<div class="toggle-cargas" style="margin-top:10px;">
+  <span class="toggle-cargas-texto">Possui uso</span>
+
+  <label class="switch-cargas">
+    <input
+      type="checkbox"
+      id="editPoderTemCargas"
+      ${poder.temCargas ? "checked" : ""}
+      onchange="toggleEditCampoCargasPoder()"
+    >
+    <span class="slider-cargas"></span>
+  </label>
+</div>
+
+<input
+  id="editPoderMaxCargas"
+  type="number"
+  min="1"
+  max="30"
+  placeholder="Qtd. de usos"
+  value="${poder.maxCargas || ""}"
+  style="display:${poder.temCargas ? "block" : "none"};"
+>
+
+<button class="popup-salvar-btn" onclick="salvarEdicaoPoder(${index})">
         Salvar
       </button>
     </div>
@@ -831,7 +869,29 @@ function salvarEdicaoPoder(index) {
   const duracao = document.getElementById("editPoderDuracao").value.trim();
   const desc = document.getElementById("editPoderDesc").value.trim();
 
+  const temCargas = !!document.getElementById("editPoderTemCargas")?.checked;
+  const maxCargas = temCargas
+    ? parseInt(document.getElementById("editPoderMaxCargas")?.value) || 0
+    : 0;
+
   if (!nome) return;
+  if (temCargas && maxCargas <= 0) return;
+
+  const poderAnterior = poderes[index];
+
+  let cargasGastas = [];
+
+  if (temCargas) {
+    if (
+      poderAnterior?.temCargas &&
+      poderAnterior.maxCargas === maxCargas &&
+      Array.isArray(poderAnterior.cargasGastas)
+    ) {
+      cargasGastas = poderAnterior.cargasGastas;
+    } else {
+      cargasGastas = Array(maxCargas).fill(false);
+    }
+  }
 
   poderes[index] = {
     nome,
@@ -842,6 +902,9 @@ function salvarEdicaoPoder(index) {
     alcance,
     duracao,
     desc,
+    temCargas,
+    maxCargas,
+    cargasGastas,
   };
 
   renderPoderes();
@@ -1201,8 +1264,6 @@ function editarAliado(index) {
 
   const aliado = p.aliados[index];
   if (!aliado) return;
-
-  console.log("clicou editar aliado", index);
 
   const html = `
     <div class="popup-form">
