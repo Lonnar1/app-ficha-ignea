@@ -11,7 +11,7 @@ O projeto oferece uma experiência fluida, com armazenamento local, interface ot
 🚀 Demonstração
 
 👉 Acesse o projeto online:
-https://lonnar17.github.io/Site-Guia-RD2/
+https://lonnar17.github.io/-Dndleleco/
 
 ⚙️ Funcionalidades
 👤 Personagem
