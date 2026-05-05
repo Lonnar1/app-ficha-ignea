@@ -13,6 +13,7 @@ O projeto oferece uma experiência fluida, com armazenamento local, interface ot
 ## 📸 Preview
 
 ![Tela de Personagem](./assets/tela-personagem.jpeg)
+![Tela de Informações](./assets/tela-informaçoes.jpeg)
 ![Tela de Combate](./assets/tela-combate.jpeg)
 ![Tela de Inventário](./assets/tela-inventario.jpeg)
 ![Tela de Poderes](./assets/tela-poderes.jpeg)
