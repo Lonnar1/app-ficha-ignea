@@ -161,16 +161,6 @@ Sistema completo de habilidades mágicas e especiais:
 
 ---
 
-### 🧠 Sistema Extra: Estilo (Devil Trigger)
-
-Um sistema de combate especial inspirado em **Devil May Cry**:
-
-- **Rank de combate** progressivo: D → C → B → A → S → SS → SSS
-- **Bônus crescentes** conforme o rank sobe durante a batalha
-- Mecânica de estilo para grupos que gostam de narrativas mais cinematográficas
-
----
-
 ## 🛠️ Tecnologias
 
 O projeto é construído com tecnologias nativas da web — sem frameworks, sem dependências externas, sem processo de build.
