@@ -2501,8 +2501,8 @@ function renderPoderes() {
       <div class="item-acoes">
 
         <div class="acoes-topo">
-          <button class="btn-mover" onclick="moverPoderCima(${index})">▲</button>
-          <button class="btn-mover" onclick="moverPoderBaixo(${index})">▼</button>
+          <button class="btn-mover" onclick="moverPoderCima(${index})">↑</button>
+          <button class="btn-mover" onclick="moverPoderBaixo(${index})">↓</button>
           <button class="btn-editar" onclick="editarPoder(${index})">✏️</button>
         </div>
 
