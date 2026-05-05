@@ -14,7 +14,7 @@ O projeto oferece uma experiência fluida, com armazenamento local, interface ot
 
 <p align="center">
   <img src="./assets/tela-personagem.jpeg" width="220"/>
-  <img src="./assets/tela-informacoes.jpeg" width="220"/>
+  <img src="./assets/tela-informaçoes.jpeg" width="220"/>
   <img src="./assets/tela-status.jpeg" width="220"/>
 </p>
 
