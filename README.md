@@ -65,6 +65,20 @@ Acesse a versão online sem instalar nada:
 
 ---
 
+## 📸 Preview
+
+<p align="center">
+  <img src="./assets/tela-personagem.jpeg" width="220"/>
+  <img src="./assets/tela-informacoes.jpeg" width="220"/>
+  <img src="./assets/tela-status.jpeg" width="220"/>
+</p>
+
+<p align="center">
+  <img src="./assets/tela-combate.jpeg" width="220"/>
+  <img src="./assets/tela-inventario.jpeg" width="220"/>
+  <img src="./assets/tela-poderes.jpeg" width="220"/>
+</p>
+
 ## ⚙️ Funcionalidades
 
 A ficha é organizada em **5 abas principais**, cada uma cobrindo uma parte fundamental do personagem.
