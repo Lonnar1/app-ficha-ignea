@@ -1,9 +1,10 @@
 let morte = {
   sucessos: [false, false, false],
-  falhas: [false, false, false]
+  falhas: [false, false, false],
 };
 
-let racasCustomSalvas = JSON.parse(localStorage.getItem("racasCustomSalvas")) || [];
+let racasCustomSalvas =
+  JSON.parse(localStorage.getItem("racasCustomSalvas")) || [];
 let editandoRacaCustom = -1;
 let bonusRacaCustom = {
   forca: 0,
@@ -11,7 +12,7 @@ let bonusRacaCustom = {
   constituicao: 0,
   inteligencia: 0,
   sabedoria: 0,
-  carisma: 0
+  carisma: 0,
 };
 
 let gastosCirculos = {
@@ -24,7 +25,7 @@ let gastosCirculos = {
   6: [],
   7: [],
   8: [],
-  9: []
+  9: [],
 };
 
 for (let i = 0; i <= 9; i++) {
@@ -73,12 +74,19 @@ const pericias = [
   { nome: "Persuasão", attr: "carisma" },
   { nome: "Prestidigitação", attr: "destreza" },
   { nome: "Religião", attr: "inteligencia" },
-  { nome: "Sobrevivência", attr: "sabedoria" }
+  { nome: "Sobrevivência", attr: "sabedoria" },
 ];
 
 const racas = {
   custom: {},
-  humano: { forca: 1, destreza: 1, constituicao: 1, inteligencia: 1, sabedoria: 1, carisma: 1 },
+  humano: {
+    forca: 1,
+    destreza: 1,
+    constituicao: 1,
+    inteligencia: 1,
+    sabedoria: 1,
+    carisma: 1,
+  },
   elfo: { destreza: 2 },
   anao: { constituicao: 2 },
   halfling: { destreza: 2 },
@@ -87,7 +95,7 @@ const racas = {
   draconato: { forca: 2, carisma: 1 },
   tiefling: { carisma: 2, inteligencia: 1 },
   gnomo: { inteligencia: 2 },
-  tritao: { forca: 1, constituicao: 1, carisma: 1 }
+  tritao: { forca: 1, constituicao: 1, carisma: 1 },
 };
 
 const efeitosExaustao = [
@@ -97,14 +105,10 @@ const efeitosExaustao = [
   "Desvantagem em ataques e testes de resistência",
   "Metade do HP máximo",
   "Velocidade = 0",
-  "Morte"
+  "Morte",
 ];
 
 /* ================= FUNÇÕES BASE ================= */
-
-
-
-
 
 function ativarModoExportacao() {
   if (!personagens || personagens.length === 0) {
@@ -155,40 +159,20 @@ function getAtributoFinal(attr) {
   return Math.min(base + bonusRaca, 20);
 }
 
-
-
 function atualizarAtributosFinaisVisuais() {
-  ["forca", "destreza", "constituicao", "inteligencia", "sabedoria", "carisma"].forEach(attr => {
+  [
+    "forca",
+    "destreza",
+    "constituicao",
+    "inteligencia",
+    "sabedoria",
+    "carisma",
+  ].forEach((attr) => {
     const el = document.getElementById(`final_${attr}`);
     if (!el) return;
 
     el.textContent = getAtributoFinal(attr);
   });
-}
-
-function exportarFicha(index) {
-  const personagens = JSON.parse(localStorage.getItem("personagens")) || [];
-  const ficha = personagens[index];
-
-  if (!ficha) {
-    alert("Ficha não encontrada.");
-    return;
-  }
-
-  const nomeArquivo = (ficha.nome && ficha.nome.trim())
-    ? ficha.nome.trim().replace(/[\\/:*?\"<>|]/g, "_")
-    : `ficha-${index + 1}`;
-
-  const blob = new Blob([JSON.stringify(ficha, null, 2)], {
-    type: "application/json"
-  });
-
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `${nomeArquivo}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 function aoMudarRaca() {
@@ -207,28 +191,6 @@ function aoMudarRaca() {
 
 function salvarRacasCustomStorage() {
   localStorage.setItem("racasCustomSalvas", JSON.stringify(racasCustomSalvas));
-}
-
-function atualizarDropdownRacas() {
-  const select = document.getElementById("racaSelect");
-  if (!select) return;
-
-  document.querySelectorAll(".raca-custom").forEach(op => op.remove());
-
-  const optionCustom = select.querySelector('option[value="custom"]');
-
-  racasCustomSalvas.forEach((raca, index) => {
-    const option = document.createElement("option");
-    option.value = "custom_" + index;
-    option.textContent = raca.nome || `Raça custom ${index + 1}`;
-    option.classList.add("raca-custom");
-
-    if (optionCustom && optionCustom.nextSibling) {
-      select.insertBefore(option, optionCustom.nextSibling);
-    } else {
-      select.appendChild(option);
-    }
-  });
 }
 
 function abrirPopupGerenciarRacasCustom() {
@@ -256,7 +218,9 @@ function abrirPopupGerenciarRacasCustom() {
     lista = `<p style="text-align:center; color:#cdb791;">Nenhuma raça custom criada.</p>`;
   }
 
-  abrirPopup("Raças custom", `
+  abrirPopup(
+    "Raças custom",
+    `
     <div class="popup-form">
       ${lista}
 
@@ -264,60 +228,33 @@ function abrirPopupGerenciarRacasCustom() {
         + Nova raça custom
       </button>
     </div>
-  `, true, null);
-}
-
-function abrirPopupBonusCustom(index = -1) {
-  editandoRacaCustom = index;
-
-  const raca = index >= 0 ? racasCustomSalvas[index] : null;
-  const bonus = raca?.bonus || {};
-
-  const html = `
-    <div class="popup-form">
-      <label class="popup-label">Nome da raça</label>
-      <input id="nomeRacaCustom" value="${raca?.nome || ""}">
-
-      <label class="popup-label">Força</label>
-      <input id="bonusCustomForca" type="number" value="${bonus.forca || 0}">
-
-      <label class="popup-label">Destreza</label>
-      <input id="bonusCustomDestreza" type="number" value="${bonus.destreza || 0}">
-
-      <label class="popup-label">Constituição</label>
-      <input id="bonusCustomConstituicao" type="number" value="${bonus.constituicao || 0}">
-
-      <label class="popup-label">Inteligência</label>
-      <input id="bonusCustomInteligencia" type="number" value="${bonus.inteligencia || 0}">
-
-      <label class="popup-label">Sabedoria</label>
-      <input id="bonusCustomSabedoria" type="number" value="${bonus.sabedoria || 0}">
-
-      <label class="popup-label">Carisma</label>
-      <input id="bonusCustomCarisma" type="number" value="${bonus.carisma || 0}">
-
-      <button class="popup-salvar-btn" onclick="salvarBonusRacaCustom()">
-        Salvar
-      </button>
-    </div>
-  `;
-
-  abrirPopup(index >= 0 ? "Editar raça custom" : "Nova raça custom", html, true, null);
+  `,
+    true,
+    null,
+  );
 }
 
 function salvarBonusRacaCustom() {
-  const nome = document.getElementById("nomeRacaCustom")?.value.trim() || "Raça custom";
+  const nome =
+    document.getElementById("nomeRacaCustom")?.value.trim() || "Raça custom";
 
   const raca = {
     nome,
     bonus: {
       forca: parseInt(document.getElementById("bonusCustomForca")?.value) || 0,
-      destreza: parseInt(document.getElementById("bonusCustomDestreza")?.value) || 0,
-      constituicao: parseInt(document.getElementById("bonusCustomConstituicao")?.value) || 0,
-      inteligencia: parseInt(document.getElementById("bonusCustomInteligencia")?.value) || 0,
-      sabedoria: parseInt(document.getElementById("bonusCustomSabedoria")?.value) || 0,
-      carisma: parseInt(document.getElementById("bonusCustomCarisma")?.value) || 0
-    }
+      destreza:
+        parseInt(document.getElementById("bonusCustomDestreza")?.value) || 0,
+      constituicao:
+        parseInt(document.getElementById("bonusCustomConstituicao")?.value) ||
+        0,
+      inteligencia:
+        parseInt(document.getElementById("bonusCustomInteligencia")?.value) ||
+        0,
+      sabedoria:
+        parseInt(document.getElementById("bonusCustomSabedoria")?.value) || 0,
+      carisma:
+        parseInt(document.getElementById("bonusCustomCarisma")?.value) || 0,
+    },
   };
 
   if (editandoRacaCustom >= 0) {
@@ -432,26 +369,12 @@ function normalizarTipo(tipo) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
-function toggleCampoCargasArmadura() {
-  const check = document.getElementById("armaduraTemCargas");
-  const input = document.getElementById("armaduraMaxCargas");
-
-  if (!check || !input) return;
-
-  if (check.checked) {
-    input.style.display = "block";
-  } else {
-    input.style.display = "none";
-    input.value = "";
-  }
-}
-
 function getIconeTipo(tipo) {
   const t = normalizarTipo(tipo);
 
   if (t.includes("fogo")) return "🔥";
   if (t.includes("gelo")) return "❄️";
-  if(t.includes("agua")) return "💧"
+  if (t.includes("agua")) return "💧";
   if (t.includes("raio")) return "⚡";
   if (t.includes("trovej")) return "🌩️";
   if (t.includes("necrot")) return "💀";
@@ -497,7 +420,7 @@ function atualizarDropdownRacas() {
 
   // remove antigas custom (sem mexer nas fixas)
   const antigas = document.querySelectorAll(".raca-custom");
-  antigas.forEach(el => el.remove());
+  antigas.forEach((el) => el.remove());
 
   // adiciona custom salvas
   racasCustomSalvas.forEach((raca, index) => {
@@ -506,19 +429,21 @@ function atualizarDropdownRacas() {
     option.textContent = raca.nome;
     option.classList.add("raca-custom");
 
-    select.insertBefore(option, select.children[2]); 
+    select.insertBefore(option, select.children[2]);
     // 🔥 coloca logo abaixo de "Custom"
   });
 }
 
 function trocarSubAbaPoderes(tipo, btn) {
   const subabas = document.querySelectorAll(".subaba-poderes");
-  subabas.forEach(el => {
+  subabas.forEach((el) => {
     el.style.display = "none";
     el.classList.remove("active");
   });
 
-  document.querySelectorAll(".subtab-poder").forEach(b => b.classList.remove("active"));
+  document
+    .querySelectorAll(".subtab-poder")
+    .forEach((b) => b.classList.remove("active"));
 
   if (tipo === "poderes-comuns") {
     const alvo = document.getElementById("subaba-poderes-comuns");
@@ -539,12 +464,13 @@ function trocarSubAbaPoderes(tipo, btn) {
   if (btn) btn.classList.add("active");
 }
 
-
 function atualizarGastoCirculo(circulo, valor) {
   let total = parseInt(valor) || 0;
   if (total < 0) total = 0;
 
-  const atual = Array.isArray(gastosCirculos[circulo]) ? gastosCirculos[circulo] : [];
+  const atual = Array.isArray(gastosCirculos[circulo])
+    ? gastosCirculos[circulo]
+    : [];
   const novoArray = [];
 
   for (let i = 0; i < total; i++) {
@@ -556,24 +482,16 @@ function atualizarGastoCirculo(circulo, valor) {
   salvarTudo();
 }
 
-function salvarGastosCirculos() {
-  for (let i = 0; i <= 9; i++) {
-    if (!Array.isArray(gastosCirculos[i])) {
-      gastosCirculos[i] = [];
-    }
-  }
-
-  salvarTudo();
-}
-
 function trocarSubAbaCirculo(circulo, btn) {
   const caixas = document.querySelectorAll(".circulo-box");
-  caixas.forEach(el => {
+  caixas.forEach((el) => {
     el.style.display = "none";
     el.classList.remove("active");
   });
 
-  document.querySelectorAll(".subtab-circulo").forEach(b => b.classList.remove("active"));
+  document
+    .querySelectorAll(".subtab-circulo")
+    .forEach((b) => b.classList.remove("active"));
 
   const alvo = document.getElementById(`circulo-${circulo}`);
   if (alvo) {
@@ -587,7 +505,7 @@ function trocarSubAbaCirculo(circulo, btn) {
 function salvarGastosCirculos() {
   for (let i = 0; i <= 9; i++) {
     const input = document.getElementById(`gastoCirculo${i}`);
-    gastosCirculos[i] = input ? (parseInt(input.value) || 0) : 0;
+    gastosCirculos[i] = input ? parseInt(input.value) || 0 : 0;
   }
 
   salvarTudo();
@@ -719,13 +637,14 @@ function editarItem(index) {
   abrirPopup("Editar item", html, true, null);
 }
 
-
 function salvarEdicaoItem(index) {
   const nome = document.getElementById("editItemNome").value.trim();
   const desc = document.getElementById("editItemDesc").value.trim();
   const qtd = parseInt(document.getElementById("editItemQtd")?.value) || 1;
-  const requerSintonia = !!document.getElementById("editItemRequerSintonia")?.checked;
-  const sintonizado = requerSintonia && !!document.getElementById("editItemSintonizado")?.checked;
+  const requerSintonia = !!document.getElementById("editItemRequerSintonia")
+    ?.checked;
+  const sintonizado =
+    requerSintonia && !!document.getElementById("editItemSintonizado")?.checked;
 
   if (!nome) return;
 
@@ -734,7 +653,7 @@ function salvarEdicaoItem(index) {
     desc,
     qtd,
     requerSintonia,
-    sintonizado
+    sintonizado,
   };
 
   renderInv();
@@ -757,20 +676,14 @@ function moverItem(index, direcao) {
   }
 
   setTimeout(() => {
-    [inventario[index], inventario[novoIndex]] = [inventario[novoIndex], inventario[index]];
+    [inventario[index], inventario[novoIndex]] = [
+      inventario[novoIndex],
+      inventario[index],
+    ];
     renderInv();
     salvarTudo();
   }, 150);
 }
-
-function moverItemCima(index) {
-  moverItem(index, -1);
-}
-
-function moverItemBaixo(index) {
-  moverItem(index, 1);
-}
-
 
 function editarArma(index) {
   const arma = armas[index];
@@ -928,7 +841,7 @@ function salvarEdicaoPoder(index) {
     tempo,
     alcance,
     duracao,
-    desc
+    desc,
   };
 
   renderPoderes();
@@ -938,12 +851,15 @@ function salvarEdicaoPoder(index) {
 
 function atualizarTextoBotaoEdicao() {
   const btnItem = document.querySelector("#inventario .inv-add-btn");
-  const btnArma = document.querySelector("#combate .arma-add .inv-add-btn, #combate .arma-add button");
+  const btnArma = document.querySelector(
+    "#combate .arma-add .inv-add-btn, #combate .arma-add button",
+  );
   const btnPoder = document.querySelector("#poderes .inv-add-btn");
 
   if (btnItem) btnItem.textContent = editandoItem >= 0 ? "Salvar edição" : "+";
   if (btnArma) btnArma.textContent = editandoArma >= 0 ? "Salvar edição" : "+";
-  if (btnPoder) btnPoder.textContent = editandoPoder >= 0 ? "Salvar edição" : "+";
+  if (btnPoder)
+    btnPoder.textContent = editandoPoder >= 0 ? "Salvar edição" : "+";
 }
 
 function fecharPopup() {
@@ -957,7 +873,9 @@ function salvarEdicaoArma(index) {
   const desc = document.getElementById("editArmaDesc").value.trim();
 
   const temCargas = !!document.getElementById("editArmaTemCargas")?.checked;
-  const maxCargas = temCargas ? (parseInt(document.getElementById("editArmaMaxCargas")?.value) || 0) : 0;
+  const maxCargas = temCargas
+    ? parseInt(document.getElementById("editArmaMaxCargas")?.value) || 0
+    : 0;
 
   if (!nome) return;
   if (temCargas && maxCargas <= 0) return;
@@ -983,7 +901,7 @@ function salvarEdicaoArma(index) {
     desc,
     temCargas,
     maxCargas,
-    cargasGastas
+    cargasGastas,
   };
 
   renderArmas();
@@ -997,7 +915,8 @@ function trocarAba(id, btn = null) {
   const abas = document.querySelectorAll(".aba");
   const novaAba = document.getElementById(id);
   const abaAtual = document.querySelector(".aba.active");
-  const saindoDoCombate = abaAtual && abaAtual.id === "combate" && id !== "combate";
+  const saindoDoCombate =
+    abaAtual && abaAtual.id === "combate" && id !== "combate";
 
   if (saindoDoCombate) {
     document.body.classList.remove("low-hp");
@@ -1006,7 +925,9 @@ function trocarAba(id, btn = null) {
   if (!novaAba) return;
 
   if (abaAtual === novaAba) {
-    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document
+      .querySelectorAll(".tab-btn")
+      .forEach((b) => b.classList.remove("active"));
 
     if (btn) {
       btn.classList.add("active");
@@ -1016,14 +937,16 @@ function trocarAba(id, btn = null) {
     }
 
     setTimeout(() => {
-  ativarDragImagemPreview();
-}, 100);
+      ativarDragImagemPreview();
+    }, 100);
 
     atualizarEstadoLowHP();
     return;
   }
 
-  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document
+    .querySelectorAll(".tab-btn")
+    .forEach((b) => b.classList.remove("active"));
 
   if (btn) {
     btn.classList.add("active");
@@ -1042,7 +965,7 @@ function trocarAba(id, btn = null) {
     }, 250);
   }
 
-  abas.forEach(aba => {
+  abas.forEach((aba) => {
     if (aba !== novaAba) {
       aba.classList.remove("show", "hiding");
     }
@@ -1060,11 +983,10 @@ function trocarAba(id, btn = null) {
   });
 
   setTimeout(() => {
-  if (id === "personagem") {
-    ativarDragImagemPreview();
-  }
-}, 100);
-
+    if (id === "personagem") {
+      ativarDragImagemPreview();
+    }
+  }, 100);
 }
 
 function entrarFicha() {
@@ -1095,13 +1017,13 @@ function renderPersonagens() {
 
   personagens.forEach((p, i) => {
     const card = document.createElement("div");
-card.className = "card";
-card.style.backgroundImage = `url('${p.imagem || ""}')`;
+    card.className = "card";
+    card.style.backgroundImage = `url('${p.imagem || ""}')`;
 
-const posX = p.imagemPosX ?? 50;
-const posY = p.imagemPosY ?? 50;
-card.style.backgroundPosition = `${posX}% ${posY}%`;
-card.style.backgroundSize = "cover";
+    const posX = p.imagemPosX ?? 50;
+    const posY = p.imagemPosY ?? 50;
+    card.style.backgroundPosition = `${posX}% ${posY}%`;
+    card.style.backgroundSize = "cover";
 
     card.innerHTML = `
       <div class="card-info">
@@ -1125,15 +1047,15 @@ card.style.backgroundSize = "cover";
     `;
 
     card.onclick = () => {
-  if (modoExportacao) {
-    modoExportacao = false;
-    exportarFicha(i);
-    return;
-  }
+      if (modoExportacao) {
+        modoExportacao = false;
+        exportarFicha(i);
+        return;
+      }
 
-  personagemAtual = i;
-  carregarPersonagem(i);
-};
+      personagemAtual = i;
+      carregarPersonagem(i);
+    };
     div.appendChild(card);
   });
 
@@ -1143,7 +1065,6 @@ card.style.backgroundSize = "cover";
   add.onclick = criarPersonagem;
   div.appendChild(add);
 }
-
 
 function duplicarPersonagem(index) {
   const original = personagens[index];
@@ -1175,7 +1096,7 @@ function toggleSecao(id, titulo) {
 function restaurarSecoes() {
   const secoes = document.querySelectorAll(".conteudo-toggle");
 
-  secoes.forEach(box => {
+  secoes.forEach((box) => {
     const id = box.id;
     if (!id) return;
 
@@ -1316,7 +1237,7 @@ function salvarEdicaoAliado(index) {
   p.aliados[index] = {
     nome,
     local,
-    desc
+    desc,
   };
 
   salvarTudo();
@@ -1339,7 +1260,7 @@ function adicionarAliado() {
   p.aliados.push({
     nome,
     local,
-    desc
+    desc,
   });
 
   document.getElementById("aliadoNome").value = "";
@@ -1352,63 +1273,64 @@ function adicionarAliado() {
 
 function criarPersonagem() {
   const novo = {
-  nome: "",
-  classe: "",
-  raca: "",
-  idade: "",
-  altura: "",
-  imagem: "",
-  imagemPosX: 50,
-  imagemPosY: 50,
-  antecedentes: "",
-  idiomas: "",
-  diario: "",
-  proficienciasExtras: "", 
-gastosCirculos: {
-  0: [],
-  1: [],
-  2: [],
-  3: [],
-  4: [],
-  5: [],
-  6: [],
-  7: [],
-  8: [],
-  9: []
-},
+    nome: "",
+    classe: "",
+    raca: "",
+    idade: "",
+    altura: "",
+    nivel: "",
+    imagem: "",
+    imagemPosX: 50,
+    imagemPosY: 50,
+    antecedentes: "",
+    idiomas: "",
+    diario: "",
+    proficienciasExtras: "",
+    gastosCirculos: {
+      0: [],
+      1: [],
+      2: [],
+      3: [],
+      4: [],
+      5: [],
+      6: [],
+      7: [],
+      8: [],
+      9: [],
+    },
 
-  vidaMax: 50,
-  vidaAtual: 50,
-  vidaTemp: 0,
-  ca: "",
-  deslocamento: 9,
+    vidaMax: 50,
+    vidaAtual: 50,
+    vidaTemp: 0,
+    ca: "",
+    deslocamento: 9,
 
-  forca: 10,
-  destreza: 10,
-  constituicao: 10,
-  inteligencia: 10,
-  sabedoria: 10,
-  carisma: 10,
-  bonusProf: 2,
+    forca: 10,
+    destreza: 10,
+    constituicao: 10,
+    inteligencia: 10,
+    sabedoria: 10,
+    carisma: 10,
+    bonusProf: 2,
 
-  armaduras: [],
-  aliados: [],
-  inventario: [],
-  armas: [],
-  poderes: [],
-  profs: {},
-  saves: {},
-  exaustao: 0,
-  inspiracao: 0,
-  dtBase: 8,
-  dtAtributo: 0,
-  dtProf: 2,
-  dominio: [false, false, false, false, false, false],
-  morte: {
-    sucessos: [false, false, false],
-    falhas: [false, false, false]
-  }
-};
+    armaduras: [],
+    aliados: [],
+    inventario: [],
+    armas: [],
+    poderes: [],
+    profs: {},
+    saves: {},
+    exaustao: 0,
+    inspiracao: 0,
+    dtBase: 8,
+    dtAtributo: 0,
+    dtProf: 2,
+    dominio: [false, false, false, false, false, false],
+    morte: {
+      sucessos: [false, false, false],
+      falhas: [false, false, false],
+    },
+  };
 
   personagens.push(novo);
   salvarPersonagens();
@@ -1448,7 +1370,7 @@ function addArmadura() {
   const maxCargasEl = document.getElementById("armaduraMaxCargas");
 
   const temCargas = !!temCargasEl?.checked;
-  const maxCargas = temCargas ? (parseInt(maxCargasEl?.value) || 0) : 0;
+  const maxCargas = temCargas ? parseInt(maxCargasEl?.value) || 0 : 0;
 
   if (!nome) return;
   if (temCargas && maxCargas <= 0) return;
@@ -1459,7 +1381,7 @@ function addArmadura() {
     desc,
     temCargas,
     maxCargas,
-    cargasGastas: temCargas ? Array(maxCargas).fill(false) : []
+    cargasGastas: temCargas ? Array(maxCargas).fill(false) : [],
   };
 
   if (editandoArmadura >= 0) {
@@ -1494,11 +1416,10 @@ function addArmadura() {
   }
 }
 
-
-
 function toggleCargaArmadura(indexArmadura, indexCarga) {
   const armadura = armaduras[indexArmadura];
-  if (!armadura || !armadura.temCargas || !Array.isArray(armadura.cargasGastas)) return;
+  if (!armadura || !armadura.temCargas || !Array.isArray(armadura.cargasGastas))
+    return;
 
   armadura.cargasGastas[indexCarga] = !armadura.cargasGastas[indexCarga];
   renderArmaduras();
@@ -1515,21 +1436,25 @@ function renderArmaduras() {
     const li = document.createElement("li");
     li.className = "armadura-card";
 
-    const cargasHTML = armadura.temCargas && armadura.maxCargas > 0
-      ? `
+    const cargasHTML =
+      armadura.temCargas && armadura.maxCargas > 0
+        ? `
         <div class="arma-cargas-box">
           <span class="arma-cargas-label">Cargas</span>
           <div class="arma-cargas-checks">
-            ${Array.from({ length: armadura.maxCargas }, (_, i) => `
+            ${Array.from(
+              { length: armadura.maxCargas },
+              (_, i) => `
               <div
                 class="arma-carga-check ${armadura.cargasGastas?.[i] ? "ativo" : ""}"
                 onclick="event.stopPropagation(); toggleCargaArmadura(${index}, ${i})"
               ></div>
-            `).join("")}
+            `,
+            ).join("")}
           </div>
         </div>
       `
-      : "";
+        : "";
 
     li.innerHTML = `
       <div class="armadura-info" onclick="verArmadura(${index})">
@@ -1583,7 +1508,9 @@ function verArmadura(index) {
     </div>
   `;
 
-  abrirPopup(armadura.nome || "Sem nome", html, true, () => editarArmadura(index));
+  abrirPopup(armadura.nome || "Sem nome", html, true, () =>
+    editarArmadura(index),
+  );
 }
 
 function editarArmadura(index) {
@@ -1654,7 +1581,9 @@ function salvarEdicaoArmadura(index) {
   const desc = document.getElementById("editArmaduraDesc").value.trim();
 
   const temCargas = !!document.getElementById("editArmaduraTemCargas")?.checked;
-  const maxCargas = temCargas ? (parseInt(document.getElementById("editArmaduraMaxCargas")?.value) || 0) : 0;
+  const maxCargas = temCargas
+    ? parseInt(document.getElementById("editArmaduraMaxCargas")?.value) || 0
+    : 0;
 
   if (!nome) return;
   if (temCargas && maxCargas <= 0) return;
@@ -1680,7 +1609,7 @@ function salvarEdicaoArmadura(index) {
     desc,
     temCargas,
     maxCargas,
-    cargasGastas
+    cargasGastas,
   };
 
   renderArmaduras();
@@ -1708,32 +1637,34 @@ function carregarPersonagem(index) {
   document.getElementById("classe").value = p.classe || "";
   document.getElementById("nome").value = p.nome || "";
   const racaSelect = document.getElementById("racaSelect");
-if (racaSelect) {
-  racaSelect.value = p.racaSelect || p.raca || "";
-}
+  if (racaSelect) {
+    racaSelect.value = p.racaSelect || p.raca || "";
+  }
   bonusRacaCustom = p.bonusRacaCustom || {
-  forca: 0,
-  destreza: 0,
-  constituicao: 0,
-  inteligencia: 0,
-  sabedoria: 0,
-  carisma: 0
-};
+    forca: 0,
+    destreza: 0,
+    constituicao: 0,
+    inteligencia: 0,
+    sabedoria: 0,
+    carisma: 0,
+  };
   document.getElementById("idade").value = p.idade || "";
   document.getElementById("altura").value = p.altura || "";
+  document.getElementById("nivel").value = p.nivel || "";
+  document.getElementById("antecedentes").value = p.antecedentes || "";
   document.getElementById("vidaMax").value = p.vidaMax ?? 50;
   document.getElementById("ca").value = p.ca ?? "";
   document.getElementById("deslocamento").value = p.deslocamento ?? 9;
   const antecedenteSelect = document.getElementById("antecedenteSelect");
-if (antecedenteSelect) antecedenteSelect.value = p.antecedenteSelect || p.antecedentes || "custom";
+  if (antecedenteSelect)
+    antecedenteSelect.value = p.antecedenteSelect || p.antecedentes || "custom";
   document.getElementById("idiomas").value = p.idiomas || "";
 
   const resistenciasEl = document.getElementById("resistencias");
-const diarioEl = document.getElementById("diario");
+  const diarioEl = document.getElementById("diario");
 
-if (resistenciasEl) resistenciasEl.value = p.resistencias || "";
-if (diarioEl) diarioEl.value = p.diario || "";
-  
+  if (resistenciasEl) resistenciasEl.value = p.resistencias || "";
+  if (diarioEl) diarioEl.value = p.diario || "";
 
   document.getElementById("forca").value = p.forca ?? 10;
   document.getElementById("destreza").value = p.destreza ?? 10;
@@ -1747,7 +1678,7 @@ if (diarioEl) diarioEl.value = p.diario || "";
   if (inspiracao) inspiracao.value = p.inspiracao ?? 0;
 
   const profExtras = document.getElementById("proficienciasExtras");
-if (profExtras) profExtras.value = p.proficienciasExtras || "";
+  if (profExtras) profExtras.value = p.proficienciasExtras || "";
 
   const dtBase = document.getElementById("dtBase");
   const dtAtributo = document.getElementById("dtAtributo");
@@ -1762,20 +1693,19 @@ if (profExtras) profExtras.value = p.proficienciasExtras || "";
 
   const nomeArquivo = document.getElementById("nome-arquivo");
   if (nomeArquivo) {
-    nomeArquivo.innerText = p.imagem ? "Imagem carregada" : "Nenhum arquivo escolhido";
+    nomeArquivo.innerText = p.imagem
+      ? "Imagem carregada"
+      : "Nenhum arquivo escolhido";
   }
 
   imagemPosX = p.imagemPosX ?? 50;
-imagemPosY = p.imagemPosY ?? 50;
+  imagemPosY = p.imagemPosY ?? 50;
 
-const preview = document.getElementById("preview");
-if (preview) {
-  preview.style.objectPosition = `${imagemPosX}% ${imagemPosY}%`;
-}
+  const preview = document.getElementById("preview");
+  if (preview) {
+    preview.style.objectPosition = `${imagemPosX}% ${imagemPosY}%`;
+  }
 
-  
-
-  
   dominio = p.dominio || [false, false, false, false, false, false];
   vidaAtual = p.vidaAtual ?? 50;
   vidaTemp = p.vidaTemp ?? 0;
@@ -1787,33 +1717,31 @@ if (preview) {
   nomeRacaCustom = p.nomeRacaCustom || "";
   atualizarNomeOpcaoCustom();
   gastosCirculos = p.gastosCirculos || {
-  0: [],
-  1: [],
-  2: [],
-  3: [],
-  4: [],
-  5: [],
-  6: [],
-  7: [],
-  8: [],
-  9: []
-};
+    0: [],
+    1: [],
+    2: [],
+    3: [],
+    4: [],
+    5: [],
+    6: [],
+    7: [],
+    8: [],
+    9: [],
+  };
 
-for (let i = 0; i <= 9; i++) {
-  if (!Array.isArray(gastosCirculos[i])) {
-    gastosCirculos[i] = [];
+  for (let i = 0; i <= 9; i++) {
+    if (!Array.isArray(gastosCirculos[i])) {
+      gastosCirculos[i] = [];
+    }
+    renderSlotsCirculo(i);
   }
-  renderSlotsCirculo(i);
-}
   saves = p.saves || {};
   exaustao = p.exaustao ?? 0;
   morte = p.morte || {
     sucessos: [false, false, false],
-    falhas: [false, false, false]
+    falhas: [false, false, false],
   };
 
-
-  
   renderInv();
   renderArmas();
   renderPoderes();
@@ -1826,131 +1754,17 @@ for (let i = 0; i <= 9; i++) {
   atualizarMorte();
   atualizarDT();
   entrarFicha();
-  renderAliados();  
+  renderAliados();
   renderDominio();
   restaurarSecoes();
   renderArmaduras();
 
   setTimeout(() => {
-  ativarDragImagemPreview();
-}, 100);
+    ativarDragImagemPreview();
+  }, 100);
 }
 
 /* ================= SALVAR ================= */
-
-function abrirEditorImagem() {
-  if (!imagemBase64) {
-    alert("Escolha uma imagem primeiro.");
-    return;
-  }
-
-  const editorWrap = document.getElementById("editorImagemInline");
-  const editor = document.getElementById("previewEditor");
-
-  if (!editorWrap || !editor) return;
-
-  editor.src = imagemBase64;
-  editor.style.objectPosition = `${imagemPosX}% ${imagemPosY}%`;
-
-  editorWrap.classList.remove("fechado");
-  ativarDragEditorImagem();
-}
-
-function fecharEditorImagem() {
-  const editorWrap = document.getElementById("editorImagemInline");
-  if (editorWrap) {
-    editorWrap.classList.add("fechado");
-  }
-}
-
-function salvarEditorImagem() {
-  const preview = document.getElementById("preview");
-  if (preview) {
-    preview.style.objectPosition = `${imagemPosX}% ${imagemPosY}%`;
-  }
-
-  salvarTudo();
-  renderPersonagens();
-  fecharEditorImagem();
-}
-
-function ativarDragEditorImagem() {
-  const img = document.getElementById("previewEditor");
-  if (!img) return;
-
-  if (img.dataset.dragAtivo === "1") return;
-  img.dataset.dragAtivo = "1";
-
-  let arrastando = false;
-  let ultimoX = 0;
-  let ultimoY = 0;
-
-  function aplicarPosicao() {
-    imagemPosX = Math.max(0, Math.min(100, imagemPosX));
-    imagemPosY = Math.max(0, Math.min(100, imagemPosY));
-    img.style.objectPosition = `${imagemPosX}% ${imagemPosY}%`;
-  }
-
-  img.addEventListener("mousedown", (e) => {
-    arrastando = true;
-    ultimoX = e.clientX;
-    ultimoY = e.clientY;
-    img.classList.add("arrastando");
-    e.preventDefault();
-  });
-
-  document.addEventListener("mousemove", (e) => {
-    if (!arrastando) return;
-
-    const dx = e.clientX - ultimoX;
-    const dy = e.clientY - ultimoY;
-
-    ultimoX = e.clientX;
-    ultimoY = e.clientY;
-
-    imagemPosX -= dx * 0.2;
-    imagemPosY -= dy * 0.2;
-
-    aplicarPosicao();
-  });
-
-  document.addEventListener("mouseup", () => {
-    if (!arrastando) return;
-    arrastando = false;
-    img.classList.remove("arrastando");
-  });
-
-  img.addEventListener("touchstart", (e) => {
-    if (!e.touches[0]) return;
-    arrastando = true;
-    ultimoX = e.touches[0].clientX;
-    ultimoY = e.touches[0].clientY;
-    img.classList.add("arrastando");
-  }, { passive: true });
-
-  document.addEventListener("touchmove", (e) => {
-    if (!arrastando || !e.touches[0]) return;
-
-    const dx = e.touches[0].clientX - ultimoX;
-    const dy = e.touches[0].clientY - ultimoY;
-
-    ultimoX = e.touches[0].clientX;
-    ultimoY = e.touches[0].clientY;
-
-    imagemPosX -= dx * 0.2;
-    imagemPosY -= dy * 0.2;
-
-    aplicarPosicao();
-  }, { passive: true });
-
-  document.addEventListener("touchend", () => {
-    if (!arrastando) return;
-    arrastando = false;
-    img.classList.remove("arrastando");
-  });
-
-  aplicarPosicao();
-}
 
 function salvarTudo() {
   if (personagemAtual === null) return;
@@ -1966,19 +1780,20 @@ function salvarTudo() {
   p.idade = document.getElementById("idade").value;
   p.nomeRacaCustom = nomeRacaCustom;
   p.altura = document.getElementById("altura").value;
-  p.antecedenteSelect = document.getElementById("antecedenteSelect")?.value || "custom";
-  p.antecedentes = p.antecedenteSelect;
+  p.nivel = document.getElementById("nivel")?.value || "";
+  p.antecedentes = document.getElementById("antecedentes")?.value || "";
   p.idiomas = document.getElementById("idiomas").value;
   p.armaduras = armaduras;
-  p.proficienciasExtras = document.getElementById("proficienciasExtras")?.value || "";
+  p.proficienciasExtras =
+    document.getElementById("proficienciasExtras")?.value || "";
   p.imagem = imagemBase64;
   p.imagemPosX = imagemPosX;
   p.imagemPosY = imagemPosY;
   const resistenciasEl = document.getElementById("resistencias");
   const diarioEl = document.getElementById("diario");
 
-p.resistencias = resistenciasEl ? resistenciasEl.value : "";
-p.diario = diarioEl ? diarioEl.value : "";
+  p.resistencias = resistenciasEl ? resistenciasEl.value : "";
+  p.diario = diarioEl ? diarioEl.value : "";
 
   p.vidaMax = get("vidaMax");
   p.vidaAtual = vidaAtual;
@@ -2021,7 +1836,9 @@ p.diario = diarioEl ? diarioEl.value : "";
 /* ================= IMAGEM ================= */
 
 function atualizarNomeOpcaoCustom() {
-  const optionCustom = document.querySelector('#racaSelect option[value="custom"]');
+  const optionCustom = document.querySelector(
+    '#racaSelect option[value="custom"]',
+  );
   if (!optionCustom) return;
 
   optionCustom.textContent = nomeRacaCustom?.trim()
@@ -2041,20 +1858,19 @@ function previewImagem() {
 
   const reader = new FileReader();
   reader.onload = function (e) {
-  imagemBase64 = e.target.result;
-  imagemPosX = 50;
-  imagemPosY = 50;
+    imagemBase64 = e.target.result;
+    imagemPosX = 50;
+    imagemPosY = 50;
 
-  preview.src = imagemBase64;
-  preview.style.objectPosition = `${imagemPosX}% ${imagemPosY}%`;
+    preview.src = imagemBase64;
+    preview.style.objectPosition = `${imagemPosX}% ${imagemPosY}%`;
 
-  salvarTudo();
-  renderPersonagens();
-};
+    salvarTudo();
+    renderPersonagens();
+  };
 
-reader.readAsDataURL(file);
+  reader.readAsDataURL(file);
 }
-
 
 function abrirEditorImagem() {
   if (!imagemBase64) {
@@ -2138,28 +1954,36 @@ function ativarDragEditorImagem() {
     img.classList.remove("arrastando");
   });
 
-  img.addEventListener("touchstart", (e) => {
-    if (!e.touches[0]) return;
-    arrastando = true;
-    ultimoX = e.touches[0].clientX;
-    ultimoY = e.touches[0].clientY;
-    img.classList.add("arrastando");
-  }, { passive: true });
+  img.addEventListener(
+    "touchstart",
+    (e) => {
+      if (!e.touches[0]) return;
+      arrastando = true;
+      ultimoX = e.touches[0].clientX;
+      ultimoY = e.touches[0].clientY;
+      img.classList.add("arrastando");
+    },
+    { passive: true },
+  );
 
-  document.addEventListener("touchmove", (e) => {
-    if (!arrastando || !e.touches[0]) return;
+  document.addEventListener(
+    "touchmove",
+    (e) => {
+      if (!arrastando || !e.touches[0]) return;
 
-    const dx = e.touches[0].clientX - ultimoX;
-    const dy = e.touches[0].clientY - ultimoY;
+      const dx = e.touches[0].clientX - ultimoX;
+      const dy = e.touches[0].clientY - ultimoY;
 
-    ultimoX = e.touches[0].clientX;
-    ultimoY = e.touches[0].clientY;
+      ultimoX = e.touches[0].clientX;
+      ultimoY = e.touches[0].clientY;
 
-    imagemPosX -= dx * 0.2;
-    imagemPosY -= dy * 0.2;
+      imagemPosX -= dx * 0.2;
+      imagemPosY -= dy * 0.2;
 
-    aplicarPosicao();
-  }, { passive: true });
+      aplicarPosicao();
+    },
+    { passive: true },
+  );
 
   document.addEventListener("touchend", () => {
     if (!arrastando) return;
@@ -2170,15 +1994,16 @@ function ativarDragEditorImagem() {
   aplicarPosicao();
 }
 
-
 /* ================= INVENTÁRIO ================= */
 
 function addItem() {
   const nome = document.getElementById("itemNome")?.value.trim();
   const desc = document.getElementById("itemDesc")?.value.trim();
   const qtd = parseInt(document.getElementById("itemQtd")?.value) || 1;
-  const requerSintonia = !!document.getElementById("itemRequerSintonia")?.checked;
-  const sintonizado = requerSintonia && !!document.getElementById("itemSintonizado")?.checked;
+  const requerSintonia =
+    !!document.getElementById("itemRequerSintonia")?.checked;
+  const sintonizado =
+    requerSintonia && !!document.getElementById("itemSintonizado")?.checked;
 
   if (!nome) return;
 
@@ -2187,7 +2012,7 @@ function addItem() {
     desc,
     qtd,
     requerSintonia,
-    sintonizado
+    sintonizado,
   };
 
   if (editandoItem >= 0) {
@@ -2293,7 +2118,10 @@ function moverItemCima(index) {
   item.classList.add("item-animar-cima");
 
   setTimeout(() => {
-    [inventario[index - 1], inventario[index]] = [inventario[index], inventario[index - 1]];
+    [inventario[index - 1], inventario[index]] = [
+      inventario[index],
+      inventario[index - 1],
+    ];
     renderInv();
     salvarTudo();
   }, 200);
@@ -2308,12 +2136,14 @@ function moverItemBaixo(index) {
   item.classList.add("item-animar-baixo");
 
   setTimeout(() => {
-    [inventario[index + 1], inventario[index]] = [inventario[index], inventario[index + 1]];
+    [inventario[index + 1], inventario[index]] = [
+      inventario[index],
+      inventario[index + 1],
+    ];
     renderInv();
     salvarTudo();
   }, 200);
 }
-
 
 function verItem(index) {
   const item = inventario[index];
@@ -2331,7 +2161,9 @@ function verItem(index) {
       <div class="popup-descricao popup-descricao-pequena">
         ${
           item.requerSintonia
-            ? (item.sintonizado ? "Requer sintonia — Sintonizado" : "Requer sintonia — Não sintonizado")
+            ? item.sintonizado
+              ? "Requer sintonia — Sintonizado"
+              : "Requer sintonia — Não sintonizado"
             : "Não requer sintonia"
         }
       </div>
@@ -2346,7 +2178,6 @@ function verItem(index) {
 
   abrirPopup(item.nome || "Sem nome", html, true, () => editarItem(index));
 }
-
 
 function removerItem(index) {
   const item = inventario[index];
@@ -2372,7 +2203,7 @@ function addArma() {
   const maxCargasEl = document.getElementById("armaMaxCargas");
 
   const temCargas = !!temCargasEl?.checked;
-  const maxCargas = temCargas ? (parseInt(maxCargasEl?.value) || 0) : 0;
+  const maxCargas = temCargas ? parseInt(maxCargasEl?.value) || 0 : 0;
 
   if (!nome) return;
   if (temCargas && maxCargas <= 0) return;
@@ -2383,7 +2214,7 @@ function addArma() {
     desc,
     temCargas,
     maxCargas,
-    cargasGastas: temCargas ? Array(maxCargas).fill(false) : []
+    cargasGastas: temCargas ? Array(maxCargas).fill(false) : [],
   };
 
   if (editandoArma >= 0) {
@@ -2428,21 +2259,25 @@ function renderArmas() {
     const li = document.createElement("li");
     li.className = "arma-card";
 
-    const cargasHTML = arma.temCargas && arma.maxCargas > 0
-      ? `
+    const cargasHTML =
+      arma.temCargas && arma.maxCargas > 0
+        ? `
         <div class="arma-cargas-box">
           <span class="arma-cargas-label">Cargas</span>
           <div class="arma-cargas-checks">
-            ${Array.from({ length: arma.maxCargas }, (_, i) => `
+            ${Array.from(
+              { length: arma.maxCargas },
+              (_, i) => `
               <div
                 class="arma-carga-check ${arma.cargasGastas?.[i] ? "ativo" : ""}"
                 onclick="event.stopPropagation(); toggleCargaArma(${index}, ${i})"
               ></div>
-            `).join("")}
+            `,
+            ).join("")}
           </div>
         </div>
       `
-      : "";
+        : "";
 
     li.innerHTML = `
       <div class="arma-info" onclick="verArma(${index})">
@@ -2522,6 +2357,10 @@ function addPoder() {
   const alcance = document.getElementById("poderAlcance").value.trim();
   const duracao = document.getElementById("poderDuracao").value.trim();
   const desc = document.getElementById("poderDesc").value.trim();
+  const temCargas = !!document.getElementById("poderTemCargas")?.checked;
+  const maxCargas = temCargas
+    ? parseInt(document.getElementById("poderMaxCargas")?.value) || 0
+    : 0;
 
   if (!nome) return;
 
@@ -2533,7 +2372,10 @@ function addPoder() {
     tempo,
     alcance,
     duracao,
-    desc
+    desc,
+    temCargas,
+    maxCargas,
+    cargasGastas: temCargas ? Array(maxCargas).fill(false) : [],
   };
 
   if (editandoPoder >= 0) {
@@ -2554,6 +2396,9 @@ function addPoder() {
   document.getElementById("poderAlcance").value = "";
   document.getElementById("poderDuracao").value = "";
   document.getElementById("poderDesc").value = "";
+  document.getElementById("poderTemCargas").checked = false;
+  document.getElementById("poderMaxCargas").value = "";
+  document.getElementById("poderMaxCargas").style.display = "none";
 }
 
 function atualizarEstadoLowHP() {
@@ -2582,12 +2427,12 @@ function renderPoderes() {
     6: document.getElementById("listaMagiasCirculo6"),
     7: document.getElementById("listaMagiasCirculo7"),
     8: document.getElementById("listaMagiasCirculo8"),
-    9: document.getElementById("listaMagiasCirculo9")
+    9: document.getElementById("listaMagiasCirculo9"),
   };
 
   if (listaPoderesComuns) listaPoderesComuns.innerHTML = "";
 
-  Object.values(listasCirculos).forEach(lista => {
+  Object.values(listasCirculos).forEach((lista) => {
     if (lista) lista.innerHTML = "";
   });
 
@@ -2595,36 +2440,76 @@ function renderPoderes() {
     const icone = getIconeTipo(poder.tipo);
     const circulo = (poder.circulo ?? "").toString().trim();
 
+    // 🔥 ===== CARGAS =====
+    let cargasHTML = "";
+
+    if (poder.temCargas && poder.maxCargas > 0) {
+      if (!Array.isArray(poder.cargasGastas)) {
+        poder.cargasGastas = Array(poder.maxCargas).fill(false);
+      }
+
+      cargasHTML = `<div style="margin-top:6px;">`;
+
+      for (let i = 0; i < poder.maxCargas; i++) {
+        const usada = poder.cargasGastas[i];
+
+        cargasHTML += `
+          <span
+            style="
+              display:inline-block;
+              width:14px;
+              height:14px;
+              border-radius:50%;
+              border:2px solid #b89654;
+              margin-right:4px;
+              background:${usada ? "#b89654" : "transparent"};
+              cursor:pointer;
+            "
+            onclick="event.stopPropagation(); toggleCargaPoder(${index}, ${i})"
+          ></span>
+        `;
+      }
+
+      cargasHTML += `</div>`;
+    }
+    // 🔥 ===== FIM CARGAS =====
+
     const li = document.createElement("li");
     li.className = "poder-card";
 
     li.innerHTML = `
-  <div class="poder-info" onclick="verPoder(${index})">
-    <strong class="poder-nome">${icone} ${poder.nome || "Sem nome"}</strong>
+      <div class="poder-info" onclick="verPoder(${index})">
+        <strong class="poder-nome">${icone} ${poder.nome || "Sem nome"}</strong>
 
-    ${poder.dano ? `
-      <div class="poder-tags">
-        <span class="tag-dano">${poder.dano}</span>
+        ${
+          poder.dano
+            ? `
+          <div class="poder-tags">
+            <span class="tag-dano">${poder.dano}</span>
+          </div>
+        `
+            : ""
+        }
+
+        <p class="poder-preview">
+          ${poder.desc ? poder.desc.substring(0, 70) + (poder.desc.length > 70 ? "..." : "") : "Sem descrição"}
+        </p>
+
+        ${cargasHTML}
       </div>
-    ` : ""}
 
-    <p class="poder-preview">
-      ${poder.desc ? poder.desc.substring(0, 70) + (poder.desc.length > 70 ? "..." : "") : "Sem descrição"}
-    </p>
-  </div>
+      <div class="item-acoes">
 
-  <div class="item-acoes">
+        <div class="acoes-topo">
+          <button class="btn-mover" onclick="moverPoderCima(${index})">▲</button>
+          <button class="btn-mover" onclick="moverPoderBaixo(${index})">▼</button>
+          <button class="btn-editar" onclick="editarPoder(${index})">✏️</button>
+        </div>
 
-    <div class="acoes-topo">
-      <button class="btn-mover" onclick="moverPoderCima(${index})">▲</button>
-      <button class="btn-mover" onclick="moverPoderBaixo(${index})">▼</button>
-      <button class="btn-editar" onclick="editarPoder(${index})">✏️</button>
-    </div>
+        <button class="btn-deletar" onclick="removerPoder(${index})">X</button>
 
-    <button class="btn-deletar" onclick="removerPoder(${index})">X</button>
-
-  </div>
-`;
+      </div>
+    `;
 
     if (circulo === "") {
       if (listaPoderesComuns) listaPoderesComuns.appendChild(li);
@@ -2656,8 +2541,6 @@ function abrirImportacao() {
   input.click();
 }
 
-
-
 document.addEventListener("DOMContentLoaded", () => {
   const popup = document.getElementById("popup");
   if (popup && popup.parentElement !== document.body) {
@@ -2680,13 +2563,14 @@ function importarFichaArquivo(e) {
 
   const reader = new FileReader();
 
-  reader.onload = function(event) {
+  reader.onload = function (event) {
     try {
       const dadosImportados = JSON.parse(event.target.result);
-      let personagensSalvos = JSON.parse(localStorage.getItem("personagens")) || [];
+      let personagensSalvos =
+        JSON.parse(localStorage.getItem("personagens")) || [];
 
       if (Array.isArray(dadosImportados)) {
-        dadosImportados.forEach(p => {
+        dadosImportados.forEach((p) => {
           p.imagem = "";
         });
         personagensSalvos.push(...dadosImportados);
@@ -2697,9 +2581,10 @@ function importarFichaArquivo(e) {
 
       localStorage.setItem("personagens", JSON.stringify(personagensSalvos));
 
-      alert("Ficha importada com sucesso! A imagem precisa ser adicionada separadamente.");
+      alert(
+        "Ficha importada com sucesso! A imagem precisa ser adicionada separadamente.",
+      );
       location.reload();
-
     } catch (erro) {
       console.error("Erro ao importar ficha:", erro);
       alert("Arquivo inválido ou corrompido.");
@@ -2718,9 +2603,10 @@ function exportarFicha(index) {
     return;
   }
 
-  const nomeArquivo = (ficha.nome && ficha.nome.trim())
-    ? ficha.nome.trim().replace(/[\\/:*?"<>|]/g, "_")
-    : `ficha-${index + 1}`;
+  const nomeArquivo =
+    ficha.nome && ficha.nome.trim()
+      ? ficha.nome.trim().replace(/[\\/:*?"<>|]/g, "_")
+      : `ficha-${index + 1}`;
 
   const conteudo = JSON.stringify(ficha, null, 2);
   const arquivo = `${nomeArquivo}.json`;
@@ -2733,7 +2619,7 @@ function exportarFicha(index) {
 
   // Navegador normal
   const blob = new Blob([conteudo], {
-    type: "application/json"
+    type: "application/json",
   });
 
   const url = URL.createObjectURL(blob);
@@ -2764,7 +2650,7 @@ function aoSoltar() {
   }
 
   if (lista) {
-    lista.querySelectorAll(".poder-card").forEach(c => {
+    lista.querySelectorAll(".poder-card").forEach((c) => {
       c.classList.remove("drag-over");
     });
   }
@@ -2801,10 +2687,18 @@ function verPoder(index) {
 
   const tags = [
     poder.dano ? `<span class="tag-dano">${poder.dano}</span>` : "",
-    poder.circulo ? `<span class="popup-tag">Círculo: ${poder.circulo}</span>` : "",
-    poder.tempo ? `<span class="popup-tag">Conjuração: ${poder.tempo}</span>` : "",
-    poder.alcance ? `<span class="popup-tag">Alcance: ${poder.alcance}</span>` : "",
-    poder.duracao ? `<span class="popup-tag">Duração: ${poder.duracao}</span>` : ""
+    poder.circulo
+      ? `<span class="popup-tag">Círculo: ${poder.circulo}</span>`
+      : "",
+    poder.tempo
+      ? `<span class="popup-tag">Conjuração: ${poder.tempo}</span>`
+      : "",
+    poder.alcance
+      ? `<span class="popup-tag">Alcance: ${poder.alcance}</span>`
+      : "",
+    poder.duracao
+      ? `<span class="popup-tag">Duração: ${poder.duracao}</span>`
+      : "",
   ].join("");
 
   const html = `
@@ -2862,18 +2756,26 @@ function ativarDragVida() {
   });
 
   // TOUCH (celular)
-  barra.addEventListener("touchstart", (e) => {
-    if (e.target.tagName === "BUTTON") return;
+  barra.addEventListener(
+    "touchstart",
+    (e) => {
+      if (e.target.tagName === "BUTTON") return;
 
-    arrastando = true;
-    atualizarPorPosicao(e.touches[0].clientX);
-  }, { passive: true });
+      arrastando = true;
+      atualizarPorPosicao(e.touches[0].clientX);
+    },
+    { passive: true },
+  );
 
-  barra.addEventListener("touchmove", (e) => {
-    if (!arrastando) return;
+  barra.addEventListener(
+    "touchmove",
+    (e) => {
+      if (!arrastando) return;
 
-    atualizarPorPosicao(e.touches[0].clientX);
-  }, { passive: true });
+      atualizarPorPosicao(e.touches[0].clientX);
+    },
+    { passive: true },
+  );
 
   barra.addEventListener("touchend", () => {
     arrastando = false;
@@ -3009,8 +2911,12 @@ function toggleMorte(tipo, index) {
 }
 
 function atualizarMorte() {
-  const checksSucesso = document.querySelectorAll(".morte-linha:nth-of-type(1) .morte-check");
-  const checksFalha = document.querySelectorAll(".morte-linha:nth-of-type(2) .morte-check");
+  const checksSucesso = document.querySelectorAll(
+    ".morte-linha:nth-of-type(1) .morte-check",
+  );
+  const checksFalha = document.querySelectorAll(
+    ".morte-linha:nth-of-type(2) .morte-check",
+  );
 
   checksSucesso.forEach((check, i) => {
     check.classList.toggle("ativo", !!morte.sucessos[i]);
@@ -3031,17 +2937,33 @@ function toggleSave(attr) {
 }
 
 function atualizarSaves() {
-  ["forca", "destreza", "constituicao", "inteligencia", "sabedoria", "carisma"].forEach(attr => {
-    const check = document.querySelector(`.save-check[onclick="toggleSave('${attr}')"]`);
+  [
+    "forca",
+    "destreza",
+    "constituicao",
+    "inteligencia",
+    "sabedoria",
+    "carisma",
+  ].forEach((attr) => {
+    const check = document.querySelector(
+      `.save-check[onclick="toggleSave('${attr}')"]`,
+    );
     if (check) check.classList.toggle("ativo", !!saves[attr]);
   });
 }
 
 function atualizarBadgesSaves() {
   const bonus = get("bonusProf");
-  const attrs = ["forca", "destreza", "constituicao", "inteligencia", "sabedoria", "carisma"];
+  const attrs = [
+    "forca",
+    "destreza",
+    "constituicao",
+    "inteligencia",
+    "sabedoria",
+    "carisma",
+  ];
 
-  attrs.forEach(attr => {
+  attrs.forEach((attr) => {
     const badge = document.getElementById(`save_${attr}`);
     if (!badge) return;
 
@@ -3059,41 +2981,74 @@ function atualizarBadgesSaves() {
 
 /* ================= PERÍCIAS ================= */
 
+function toggleCampoCargasPoder() {
+  const check = document.getElementById("poderTemCargas");
+  const input = document.getElementById("poderMaxCargas");
+
+  if (!check || !input) return;
+
+  if (check.checked) {
+    input.style.display = "block";
+  } else {
+    input.style.display = "none";
+    input.value = "";
+  }
+}
+
+function toggleCargaPoder(index, i) {
+  const poder = poderes[index];
+  if (!poder) return;
+
+  if (!Array.isArray(poder.cargasGastas)) {
+    poder.cargasGastas = Array(poder.maxCargas || 0).fill(false);
+  }
+
+  poder.cargasGastas[i] = !poder.cargasGastas[i];
+
+  renderPoderes();
+  salvarTudo();
+}
+
 function atualizarTudo() {
   atualizarAtributosFinaisVisuais();
   const bonus = get("bonusProf");
 
-  
   const mods = {
     forca: mod(getAtributoFinal("forca")),
     destreza: mod(getAtributoFinal("destreza")),
     constituicao: mod(getAtributoFinal("constituicao")),
     inteligencia: mod(getAtributoFinal("inteligencia")),
     sabedoria: mod(getAtributoFinal("sabedoria")),
-    carisma: mod(getAtributoFinal("carisma"))
+    carisma: mod(getAtributoFinal("carisma")),
   };
 
-  document.getElementById("mod_forca").innerText = mods.forca >= 0 ? `+${mods.forca}` : mods.forca;
-  document.getElementById("mod_destreza").innerText = mods.destreza >= 0 ? `+${mods.destreza}` : mods.destreza;
-  document.getElementById("mod_constituicao").innerText = mods.constituicao >= 0 ? `+${mods.constituicao}` : mods.constituicao;
-  document.getElementById("mod_inteligencia").innerText = mods.inteligencia >= 0 ? `+${mods.inteligencia}` : mods.inteligencia;
-  document.getElementById("mod_sabedoria").innerText = mods.sabedoria >= 0 ? `+${mods.sabedoria}` : mods.sabedoria;
-  document.getElementById("mod_carisma").innerText = mods.carisma >= 0 ? `+${mods.carisma}` : mods.carisma;
+  document.getElementById("mod_forca").innerText =
+    mods.forca >= 0 ? `+${mods.forca}` : mods.forca;
+  document.getElementById("mod_destreza").innerText =
+    mods.destreza >= 0 ? `+${mods.destreza}` : mods.destreza;
+  document.getElementById("mod_constituicao").innerText =
+    mods.constituicao >= 0 ? `+${mods.constituicao}` : mods.constituicao;
+  document.getElementById("mod_inteligencia").innerText =
+    mods.inteligencia >= 0 ? `+${mods.inteligencia}` : mods.inteligencia;
+  document.getElementById("mod_sabedoria").innerText =
+    mods.sabedoria >= 0 ? `+${mods.sabedoria}` : mods.sabedoria;
+  document.getElementById("mod_carisma").innerText =
+    mods.carisma >= 0 ? `+${mods.carisma}` : mods.carisma;
 
   const lista = document.getElementById("pericias");
   if (lista) {
     lista.innerHTML = "";
 
-    pericias.forEach(pericia => {
+    pericias.forEach((pericia) => {
       let bonusFinal = 0;
 
       if (profs[pericia.nome] === 1) {
-          bonusFinal = bonus;
+        bonusFinal = bonus;
       } else if (profs[pericia.nome] === 2) {
-          bonusFinal = bonus * 2;
+        bonusFinal = bonus * 2;
       }
 
-const valor = mods[pericia.attr] + bonusFinal;
+      const valor = mods[pericia.attr] + bonusFinal;
 
       const div = document.createElement("div");
       div.className = "pericia";
@@ -3110,28 +3065,41 @@ const valor = mods[pericia.attr] + bonusFinal;
     });
 
     function atualizarAtributos() {
-  ["forca","destreza","constituicao","inteligencia","sabedoria","carisma"].forEach(attr => {
-    const el = document.getElementById(`mod_${attr}`);
-    if (el) {
-      el.innerText = mod(getAtributoFinal(attr));
+      [
+        "forca",
+        "destreza",
+        "constituicao",
+        "inteligencia",
+        "sabedoria",
+        "carisma",
+      ].forEach((attr) => {
+        const el = document.getElementById(`mod_${attr}`);
+        if (el) {
+          el.innerText = mod(getAtributoFinal(attr));
+        }
+      });
     }
-  });
-}
 
-function atualizarAtributosVisuais() {
-  const attrs = ["forca","destreza","constituicao","inteligencia","sabedoria","carisma"];
+    function atualizarAtributosVisuais() {
+      const attrs = [
+        "forca",
+        "destreza",
+        "constituicao",
+        "inteligencia",
+        "sabedoria",
+        "carisma",
+      ];
 
-  attrs.forEach(attr => {
-    const baseInput = document.getElementById(attr);
-    const display = baseInput?.parentElement?.querySelector(".valor-attr"); // ou equivalente
+      attrs.forEach((attr) => {
+        const baseInput = document.getElementById(attr);
+        const display = baseInput?.parentElement?.querySelector(".valor-attr"); // ou equivalente
 
-    if (!baseInput || !display) return;
+        if (!baseInput || !display) return;
 
-    const final = getAtributoFinal(attr);
-    display.innerText = final;
-  });
-}
-
+        const final = getAtributoFinal(attr);
+        display.innerText = final;
+      });
+    }
   }
 
   atualizarBadgesSaves();
@@ -3156,22 +3124,24 @@ function toggleProf(nome, event) {
 function limparFocoBotoesVida() {
   const botoes = document.querySelectorAll(".hp-overlay button");
 
-  botoes.forEach(botao => {
+  botoes.forEach((botao) => {
     botao.addEventListener("click", () => {
       botao.blur();
     });
 
-    botao.addEventListener("touchend", () => {
-      botao.blur();
-    }, { passive: true });
+    botao.addEventListener(
+      "touchend",
+      () => {
+        botao.blur();
+      },
+      { passive: true },
+    );
 
     botao.addEventListener("mouseup", () => {
       botao.blur();
     });
   });
 }
-
-
 
 function ativarDragTemp() {
   const barra = document.getElementById("tempBar");
@@ -3200,17 +3170,25 @@ function ativarDragTemp() {
     atualizarPorPosicao(e.clientX);
   });
 
-  barra.addEventListener("touchstart", (e) => {
-    if (e.target.tagName === "BUTTON") return;
+  barra.addEventListener(
+    "touchstart",
+    (e) => {
+      if (e.target.tagName === "BUTTON") return;
 
-    arrastando = true;
-    atualizarPorPosicao(e.touches[0].clientX);
-  }, { passive: true });
+      arrastando = true;
+      atualizarPorPosicao(e.touches[0].clientX);
+    },
+    { passive: true },
+  );
 
-  barra.addEventListener("touchmove", (e) => {
-    if (!arrastando) return;
-    atualizarPorPosicao(e.touches[0].clientX);
-  }, { passive: true });
+  barra.addEventListener(
+    "touchmove",
+    (e) => {
+      if (!arrastando) return;
+      atualizarPorPosicao(e.touches[0].clientX);
+    },
+    { passive: true },
+  );
 
   barra.addEventListener("touchend", () => {
     arrastando = false;
@@ -3271,14 +3249,15 @@ function moverPoderNoGrupo(indexOriginal, direcao) {
 
   const indicesDoGrupo = poderes
     .map((p, i) => ({ poder: p, index: i }))
-    .filter(item => getGrupoPoder(item.poder) === grupo)
-    .map(item => item.index);
+    .filter((item) => getGrupoPoder(item.poder) === grupo)
+    .map((item) => item.index);
 
   const posicaoNoGrupo = indicesDoGrupo.indexOf(indexOriginal);
   if (posicaoNoGrupo === -1) return;
 
   const novaPosicaoNoGrupo = posicaoNoGrupo + direcao;
-  if (novaPosicaoNoGrupo < 0 || novaPosicaoNoGrupo >= indicesDoGrupo.length) return;
+  if (novaPosicaoNoGrupo < 0 || novaPosicaoNoGrupo >= indicesDoGrupo.length)
+    return;
 
   const indexDestino = indicesDoGrupo[novaPosicaoNoGrupo];
   animarTrocaPoder(indexOriginal, indexDestino, grupo);
@@ -3292,12 +3271,14 @@ function animarTrocaPoder(origem, destino, grupo) {
     seletorLista = `#listaMagiasCirculo${numero}`;
   }
 
-  const cards = Array.from(document.querySelectorAll(`${seletorLista} .poder-card`));
+  const cards = Array.from(
+    document.querySelectorAll(`${seletorLista} .poder-card`),
+  );
 
   const indicesDoGrupo = poderes
     .map((p, i) => ({ poder: p, index: i }))
-    .filter(item => getGrupoPoder(item.poder) === grupo)
-    .map(item => item.index);
+    .filter((item) => getGrupoPoder(item.poder) === grupo)
+    .map((item) => item.index);
 
   const posOrigem = indicesDoGrupo.indexOf(origem);
   const posDestino = indicesDoGrupo.indexOf(destino);
@@ -3332,11 +3313,7 @@ function animarTrocaPoder(origem, destino, grupo) {
   }, 220);
 }
 
-
-
 /* ================= INIT ================= */
-
-
 
 function init() {
   atualizarTudo();
@@ -3358,9 +3335,10 @@ function init() {
   const deslocamento = document.getElementById("deslocamento");
   const idade = document.getElementById("idade");
   const altura = document.getElementById("altura");
+  const nivel = document.getElementById("nivel");
   const vidaMax = document.getElementById("vidaMax");
 
-  [nome, raca, classe, ca, deslocamento, idade, altura].forEach(el => {
+  [nome, raca, classe, ca, deslocamento, idade, altura, nivel].forEach((el) => {
     if (el) el.addEventListener("input", salvarTudo);
   });
 
@@ -3387,17 +3365,18 @@ function init() {
     "deslocamento",
     "idade",
     "altura",
+    "nivel",
     "inspiracao",
     "dtBase",
     "dtAtributo",
     "dtProf",
     "racaSelect",
-    "antecedenteSelect",
+    "antecedentes",
     "aliados",
-    "idiomas"
+    "idiomas",
   ];
 
-  camposAutoSave.forEach(id => {
+  camposAutoSave.forEach((id) => {
     const el = document.getElementById(id);
     if (!el) return;
 
@@ -3425,9 +3404,10 @@ function init() {
 document.addEventListener("DOMContentLoaded", init);
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js")
+  navigator.serviceWorker
+    .register("sw.js")
     .then(() => console.log("SW registrado"))
-    .catch(err => console.log("Erro SW:", err));
+    .catch((err) => console.log("Erro SW:", err));
 }
 
 window.onload = function () {
