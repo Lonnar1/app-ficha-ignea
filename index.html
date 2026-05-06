@@ -16,6 +16,7 @@
       href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600&family=MedievalSharp&display=swap"
       rel="stylesheet"
     />
+
   </head>
 
   <body>
@@ -27,11 +28,29 @@
     </div>
 
     <!-- ================= TELA INICIAL ================= -->
-    <div id="tela-inicial" class="container">
+    
+    <div id="loginBox" class="container login-box">
+  <h2 class="titulo-secao">Entrar na Ficha Ígnea</h2>
+
+  <input id="loginEmail" placeholder="Email" />
+  <input id="loginSenha" type="password" placeholder="Senha" />
+  <div id="loginErro" class="login-erro"></div>
+
+  <div class="login-botoes">
+    <button class="btn-login" onclick="fazerLogin()">Entrar</button>
+    <button class="btn-login btn-login-secundario" onclick="criarConta()">Criar conta</button>
+    <button class="btn-login btn-login-recuperar" onclick="recuperarSenha()">  Esqueci a senha  </button>
+  </div>
+</div>
+
+
+
+    <div id="tela-inicial" class="container" style="display:none;">
       <h2 class="titulo-secao">Selecionar Personagem</h2>
       <div class="grid-personagens" id="listaPersonagens"></div>
 
       <div class="acoes-ficha-fixas">
+        <button class="btn-sair-conta" onclick="sairConta()">Sair</button>
         <button class="btn-acao-ficha" onclick="ativarModoExportacao()">
           📤 Exportar
         </button>
@@ -1130,5 +1149,260 @@
           .catch((err) => console.log("Erro SW:", err));
       }
     </script>
+
+ <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+  import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut,
+  sendPasswordResetEmail,
+  setPersistence,
+  browserLocalPersistence
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  import {
+    getFirestore,
+    doc,
+    setDoc,
+    getDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCRbpNWige23ErKLRzt5BYNF3ltCYaRw24",
+    authDomain: "ficha-ignea.firebaseapp.com",
+    projectId: "ficha-ignea",
+    storageBucket: "ficha-ignea.firebasestorage.app",
+    messagingSenderId: "810805802203",
+    appId: "1:810805802203:web:5968e477ae99fee33348fe",
+    measurementId: "G-Z73L6FD3BX"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  await setPersistence(auth, browserLocalPersistence);
+
+  window.usuarioAtual = null;
+
+  function mostrarErroLogin(msg) {
+    const erro = document.getElementById("loginErro");
+    if (erro) erro.textContent = msg;
+    else alert(msg);
+  }
+
+  function limparErroLogin() {
+    const erro = document.getElementById("loginErro");
+    if (erro) erro.textContent = "";
+  }
+
+  function emailEhValido(email) {
+    email = email.trim().toLowerCase();
+    if (!email.includes("@") || email.split("@").length !== 2) return false;
+
+    const [user, domain] = email.split("@");
+    if (!user || user.length < 2) return false;
+    if (!domain.includes(".")) return false;
+    if (domain.endsWith(".")) return false;
+    if (email.includes("..") || email.includes("@.")) return false;
+
+    const partes = domain.split(".");
+    const extensao = partes[partes.length - 1];
+
+    const extensoesValidas = [
+      "com", "br", "net", "org", "edu", "gov", "io", "app"
+    ];
+
+    if (!extensoesValidas.includes(extensao)) return false;
+
+    return true;
+  }
+
+  function tratarErroFirebase(code) {
+    switch (code) {
+      case "auth/email-already-in-use":
+        return "Esse email já está cadastrado.";
+      case "auth/invalid-email":
+        return "Digite um email válido.";
+      case "auth/weak-password":
+        return "A senha precisa ter pelo menos 6 caracteres.";
+      case "auth/user-not-found":
+        return "Conta não encontrada.";
+      case "auth/wrong-password":
+      case "auth/invalid-credential":
+        return "Email ou senha incorretos.";
+      case "auth/missing-password":
+        return "Digite sua senha.";
+      case "auth/too-many-requests":
+        return "Muitas tentativas. Tente novamente mais tarde.";
+      default:
+        return code || "Erro inesperado.";
+    }
+  }
+
+  async function salvarFichasNaNuvem() {
+    if (!window.usuarioAtual) return;
+
+    await setDoc(doc(db, "usuarios", window.usuarioAtual.uid), {
+      email: window.usuarioAtual.email,
+      personagens: JSON.parse(localStorage.getItem("personagens")) || [],
+      atualizadoEm: new Date().toISOString()
+    });
+  }
+
+  async function carregarFichasDaNuvem() {
+  if (!window.usuarioAtual) return;
+
+  const ref = doc(db, "usuarios", window.usuarioAtual.uid);
+  const snap = await getDoc(ref);
+
+  const fichasLocais =
+    JSON.parse(localStorage.getItem("personagens")) || [];
+
+  let fichasNuvem = [];
+
+  if (snap.exists()) {
+    fichasNuvem = snap.data().personagens || [];
+  }
+
+  // 🔥 CASO PRINCIPAL (o que estava falhando)
+  if (fichasNuvem.length === 0 && fichasLocais.length > 0) {
+    const confirmar = confirm(
+      "Encontramos fichas neste dispositivo. Deseja vincular à sua conta?"
+    );
+
+    if (confirmar) {
+      personagens = fichasLocais;
+
+      await setDoc(ref, {
+        email: window.usuarioAtual.email,
+        personagens,
+        atualizadoEm: new Date().toISOString()
+      });
+
+      alert("Fichas vinculadas com sucesso!");
+    } else {
+      personagens = [];
+      localStorage.setItem("personagens", JSON.stringify([]));
+    }
+  } else if (fichasNuvem.length > 0) {
+    // 🔥 normal (já tem na nuvem)
+    personagens = fichasNuvem;
+    localStorage.setItem("personagens", JSON.stringify(personagens));
+  } else {
+    // 🔥 não tem nada em lugar nenhum
+    personagens = [];
+  }
+
+  if (typeof renderPersonagens === "function") {
+    renderPersonagens();
+  }
+}
+
+  window.salvarFichasNaNuvem = salvarFichasNaNuvem;
+
+  window.criarConta = async () => {
+    limparErroLogin();
+
+    const email = document.getElementById("loginEmail").value.trim();
+    const senha = document.getElementById("loginSenha").value.trim();
+
+    if (!emailEhValido(email)) {
+      mostrarErroLogin("Digite um email válido.");
+      return;
+    }
+
+    if (senha.length < 6) {
+      mostrarErroLogin("A senha precisa ter pelo menos 6 caracteres.");
+      return;
+    }
+
+    try {
+      await createUserWithEmailAndPassword(auth, email, senha);
+      mostrarErroLogin("Conta criada com sucesso!");
+    } catch (e) {
+      mostrarErroLogin(tratarErroFirebase(e.code));
+    }
+  };
+
+  window.fazerLogin = async () => {
+    limparErroLogin();
+
+    const email = document.getElementById("loginEmail").value.trim();
+    const senha = document.getElementById("loginSenha").value.trim();
+
+    if (!emailEhValido(email)) {
+      mostrarErroLogin("Digite um email válido.");
+      return;
+    }
+
+    if (!senha) {
+      mostrarErroLogin("Digite sua senha.");
+      return;
+    }
+
+    try {
+      await signInWithEmailAndPassword(auth, email, senha);
+      limparErroLogin();
+    } catch (e) {
+      mostrarErroLogin(tratarErroFirebase(e.code));
+    }
+  };
+
+  window.recuperarSenha = async () => {
+    limparErroLogin();
+
+    const email = document.getElementById("loginEmail").value.trim();
+
+    if (!emailEhValido(email)) {
+      mostrarErroLogin("Digite seu email para recuperar a senha.");
+      return;
+    }
+
+    try {
+      await sendPasswordResetEmail(auth, email);
+      mostrarErroLogin("Email de recuperação enviado. Verifique sua caixa de entrada ou spam.");
+    } catch (e) {
+      mostrarErroLogin(tratarErroFirebase(e.code));
+    }
+  };
+
+  window.sairConta = async () => {
+    try {
+      await signOut(auth);
+    } catch (e) {
+      alert(tratarErroFirebase(e.code));
+    }
+  };
+
+  onAuthStateChanged(auth, async (user) => {
+    const loginBox = document.getElementById("loginBox");
+    const telaInicial = document.getElementById("tela-inicial");
+    const ficha = document.getElementById("ficha");
+
+    if (user) {
+      window.usuarioAtual = user;
+
+      if (loginBox) loginBox.style.display = "none";
+      if (telaInicial) telaInicial.style.display = "block";
+
+      await carregarFichasDaNuvem();
+    } else {
+  window.usuarioAtual = null;
+  personagemAtual = null;
+
+  if (loginBox) loginBox.style.display = "block";
+  if (telaInicial) telaInicial.style.display = "none";
+  if (ficha) ficha.style.display = "none";
+}
+  });
+
+</script>
+  
+
   </body>
 </html>
