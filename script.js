@@ -359,6 +359,10 @@ function exportarFichaAtual() {
 
 function salvarPersonagens() {
   localStorage.setItem("personagens", JSON.stringify(personagens));
+
+  if (typeof window.salvarFichasNaNuvem === "function") {
+    window.salvarFichasNaNuvem();
+  }
 }
 
 function normalizarTipo(tipo) {
@@ -2624,32 +2628,41 @@ function importarFichaArquivo(e) {
 
   const reader = new FileReader();
 
-  reader.onload = function (event) {
+  reader.onload = async function (event) {
     try {
       const dadosImportados = JSON.parse(event.target.result);
+
       let personagensSalvos =
         JSON.parse(localStorage.getItem("personagens")) || [];
 
       if (Array.isArray(dadosImportados)) {
         dadosImportados.forEach((p) => {
           p.imagem = "";
+          personagensSalvos.push(p);
         });
-        personagensSalvos.push(...dadosImportados);
       } else {
         dadosImportados.imagem = "";
         personagensSalvos.push(dadosImportados);
       }
 
-      localStorage.setItem("personagens", JSON.stringify(personagensSalvos));
+      personagens = personagensSalvos;
+      localStorage.setItem("personagens", JSON.stringify(personagens));
 
-      alert(
-        "Ficha importada com sucesso! A imagem precisa ser adicionada separadamente.",
-      );
-      location.reload();
+      if (typeof window.salvarFichasNaNuvem === "function") {
+        await window.salvarFichasNaNuvem();
+      }
+
+      if (typeof renderPersonagens === "function") {
+        renderPersonagens();
+      }
+
+      alert("Ficha importada com sucesso! A imagem precisa ser adicionada separadamente.");
     } catch (erro) {
       console.error("Erro ao importar ficha:", erro);
       alert("Arquivo inválido ou corrompido.");
     }
+
+    e.target.value = "";
   };
 
   reader.readAsText(file);
