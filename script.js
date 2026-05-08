@@ -15,6 +15,21 @@ let bonusRacaCustom = {
   carisma: 0,
 };
 
+let campanhaImagemBase64 = "";
+let campanhasMaster =
+  JSON.parse(localStorage.getItem("campanhasMaster")) || [];
+
+let campanhaAtualMaster =
+  JSON.parse(localStorage.getItem("campanhaAtualMaster")) ?? null;
+  
+function salvarCampanhasMaster() {
+  localStorage.setItem("campanhasMaster", JSON.stringify(campanhasMaster));
+  localStorage.setItem(
+    "campanhaAtualMaster",
+    JSON.stringify(campanhaAtualMaster)
+  );
+}
+
 let gastosCirculos = {
   0: [],
   1: [],
@@ -141,6 +156,156 @@ function mostrarAvisoExportacao() {
   setTimeout(() => {
     aviso.remove();
   }, 2000);
+}
+
+function previewImagemCampanha() {
+  const input = document.getElementById("campanhaImagemInput");
+  const preview = document.getElementById("previewCampanha");
+
+  if (!input?.files?.[0]) return;
+
+  const reader = new FileReader();
+
+  reader.onload = function (e) {
+    campanhaImagemBase64 = e.target.result;
+
+    preview.src = campanhaImagemBase64;
+    preview.style.display = "block";
+  };
+
+  reader.readAsDataURL(input.files[0]);
+}
+
+function abrirTelaCampanhasMaster() {
+  document.getElementById("tela-modo").style.display = "none";
+  document.getElementById("masterIgnea").style.display = "none";
+
+  const tela = document.getElementById("telaCampanhasMaster");
+  if (tela) tela.style.display = "block";
+
+  renderCampanhasMaster();
+}
+
+function renderCampanhasMaster() {
+  const lista = document.getElementById("listaCampanhasMaster");
+  if (!lista) return;
+
+  lista.innerHTML = "";
+
+  campanhasMaster.forEach((campanha, index) => {
+    const card = document.createElement("div");
+    card.className = "campanha-card";
+
+    card.innerHTML = `
+  <div
+    class="campanha-card-bg"
+    onclick="entrarCampanhaMaster(${index})"
+    style="${
+      campanha.imagem
+        ? `background-image: linear-gradient(rgba(8,5,5,0.45), rgba(8,5,5,0.88)), url('${campanha.imagem}')`
+        : ""
+    }"
+  >
+    <div class="campanha-card-conteudo">
+      <h3>${campanha.nome}</h3>
+
+      <span>${campanha.sistema || "Sistema não definido"}</span>
+
+      <p>${campanha.descricao || "Sem descrição ainda."}</p>
+    </div>
+  </div>
+
+  <button
+    class="monstro-delete campanha-delete"
+    onclick="event.stopPropagation(); deletarCampanhaMaster(${index})"
+  >
+    ×
+  </button>
+`;
+
+    lista.appendChild(card);
+  });
+}
+
+function criarCampanhaMaster() {
+  const nome = document.getElementById("novaCampanhaNome").value.trim();
+  const sistema = document.getElementById("novaCampanhaSistema").value.trim();
+  const descricao = document.getElementById("novaCampanhaDescricao").value.trim();
+
+  if (!nome) {
+    alert("Digite o nome da campanha.");
+    return;
+  }
+
+  const novaCampanha = {
+  id: Date.now(),
+  nome,
+  sistema,
+  descricao,
+  imagem: campanhaImagemBase64 || "",
+  lore: "",
+  jogadores: [],
+  sessoes: [],
+  quests: [],
+  npcs: [],
+  combates: []
+};
+
+  campanhasMaster.push(novaCampanha);
+  salvarCampanhasMaster();
+
+  document.getElementById("novaCampanhaNome").value = "";
+  document.getElementById("novaCampanhaSistema").value = "";
+  document.getElementById("novaCampanhaDescricao").value = "";
+
+  campanhaImagemBase64 = "";
+  const inputImagemCampanha = document.getElementById("campanhaImagemInput");
+  const previewCampanha = document.getElementById("previewCampanha");
+  if (inputImagemCampanha) inputImagemCampanha.value = "";
+  if (previewCampanha) {
+    previewCampanha.src = "";
+    previewCampanha.style.display = "none";
+  }
+
+  renderCampanhasMaster();
+}
+
+function entrarCampanhaMaster(index) {
+  campanhaAtualMaster = index;
+  salvarCampanhasMaster();
+
+  document.getElementById("telaCampanhasMaster").style.display = "none";
+  document.getElementById("masterIgnea").style.display = "block";
+
+  carregarDadosCampanhaAtual();
+}
+
+function deletarCampanhaMaster(index) {
+  if (!confirm("Deseja deletar esta campanha?")) return;
+
+  campanhasMaster.splice(index, 1);
+
+  if (campanhaAtualMaster === index) {
+    campanhaAtualMaster = null;
+  }
+
+  salvarCampanhasMaster();
+  renderCampanhasMaster();
+}
+
+function voltarCampanhasMaster() {
+  document.getElementById("masterIgnea").style.display = "none";
+  document.getElementById("telaCampanhasMaster").style.display = "block";
+
+  renderCampanhasMaster();
+}
+
+function carregarDadosCampanhaAtual() {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) return;
+
+  const titulo = document.getElementById("tituloCampanhaAtual");
+  if (titulo) titulo.textContent = campanha.nome;
 }
 
 function getAtributoFinal(attr) {
@@ -358,13 +523,16 @@ function exportarFichaAtual() {
 }
 
 function salvarPersonagens() {
-  localStorage.setItem("personagens", JSON.stringify(personagens));
+  try {
+    localStorage.setItem("personagens", JSON.stringify(personagens));
+  } catch (erro) {
+    console.warn("localStorage cheio. Salvando apenas na nuvem.", erro);
+  }
 
   if (typeof window.salvarFichasNaNuvem === "function") {
     window.salvarFichasNaNuvem();
   }
 }
-
 function normalizarTipo(tipo) {
   return (tipo || "")
     .toLowerCase()
@@ -978,7 +1146,16 @@ function salvarEdicaoArma(index) {
 
 /* ================= ABAS ================= */
 
+function controlarHeader(mostrar) {
+  document.body.classList.remove("modo-mestre", "sem-header", "ocultar-logo", "hide-header");
+
+  if (!mostrar) {
+    document.body.classList.add("hide-header");
+  }
+}
+
 function trocarAba(id, btn = null) {
+  document.body.classList.remove("ocultar-logo");
   const abas = document.querySelectorAll(".aba");
   const novaAba = document.getElementById(id);
   const abaAtual = document.querySelector(".aba.active");
@@ -1004,7 +1181,7 @@ function trocarAba(id, btn = null) {
     }
 
     setTimeout(() => {
-      ativarDragImagemPreview();
+      ativarDragEditorImagem();
     }, 100);
 
     atualizarEstadoLowHP();
@@ -1051,12 +1228,14 @@ function trocarAba(id, btn = null) {
 
   setTimeout(() => {
     if (id === "personagem") {
-      ativarDragImagemPreview();
+      ativarDragEditorImagem();
     }
   }, 100);
 }
 
 function entrarFicha() {
+  controlarHeader(true);
+
   const telaInicial = document.getElementById("tela-inicial");
   const ficha = document.getElementById("ficha");
 
@@ -1066,12 +1245,46 @@ function entrarFicha() {
   trocarAba("personagem");
 }
 
+function entrarModoJogadorAnimado() {
+  const tela = document.getElementById("tela-modo");
+  if (!tela) return;
+
+  tela.classList.add("saindo");
+
+  setTimeout(() => {
+    tela.classList.remove("saindo");
+    entrarModoJogador();
+
+    tela.style.opacity = "1";
+    tela.style.transform = "scale(1)";
+  }, 450);
+}
+
+function entrarModoMestreAnimado() {
+  const tela = document.getElementById("tela-modo");
+  if (!tela) return;
+
+  tela.classList.add("zoom-grimorio");
+
+  setTimeout(() => {
+    tela.classList.remove("zoom-grimorio");
+
+    entrarModoMestre();
+
+    tela.style.opacity = "1";
+    tela.style.transform = "scale(1)";
+  }, 550);
+}
+
+
+
 function voltarInicio() {
   const telaInicial = document.getElementById("tela-inicial");
   const ficha = document.getElementById("ficha");
 
   if (telaInicial) telaInicial.style.display = "block";
   if (ficha) ficha.style.display = "none";
+  document.body.classList.remove("ocultar-logo");
 }
 
 /* ================= PERSONAGENS ================= */
@@ -1402,11 +1615,47 @@ function criarPersonagem() {
   renderPersonagens();
 }
 
-function deletarPersonagem(index) {
-  if (!confirm("Tem certeza que quer excluir?")) return;
+async function deletarPersonagem(index) {
+  const personagem = personagens[index];
 
+  if (!personagem) return;
+
+  if (
+    !confirm(
+      `Tem certeza que quer excluir "${personagem.nome || "Sem nome"}"?`
+    )
+  ) {
+    return;
+  }
+
+  // 🔥 remove do Firebase
+  if (
+    personagem.id &&
+    window.usuarioAtual
+  ) {
+    try {
+      await deleteDoc(
+        doc(
+          db,
+          "usuarios",
+          window.usuarioAtual.uid,
+          "fichas",
+          String(personagem.id)
+        )
+      );
+    } catch (erro) {
+      console.error(
+        "Erro ao deletar ficha da nuvem:",
+        erro
+      );
+    }
+  }
+
+  // 🔥 remove local
   personagens.splice(index, 1);
+
   salvarPersonagens();
+
   renderPersonagens();
 
   if (personagemAtual === index) {
@@ -1825,7 +2074,7 @@ function carregarPersonagem(index) {
   renderArmaduras();
 
   setTimeout(() => {
-    ativarDragImagemPreview();
+    ativarDragEditorImagem();
   }, 100);
 }
 
@@ -1942,16 +2191,19 @@ function abrirEditorImagem() {
     alert("Escolha uma imagem primeiro.");
     return;
   }
+  
 
   const editorWrap = document.getElementById("editorImagemInline");
   const editor = document.getElementById("previewEditor");
 
   if (!editorWrap || !editor) return;
 
+  
   editor.src = imagemBase64;
   editor.style.objectPosition = `${imagemPosX}% ${imagemPosY}%`;
 
   editorWrap.classList.remove("fechado");
+  delete editor.dataset.dragAtivo;
   ativarDragEditorImagem();
 }
 
@@ -1977,9 +2229,6 @@ function ativarDragEditorImagem() {
   const img = document.getElementById("previewEditor");
   if (!img) return;
 
-  if (img.dataset.dragAtivo === "1") return;
-  img.dataset.dragAtivo = "1";
-
   let arrastando = false;
   let ultimoX = 0;
   let ultimoY = 0;
@@ -1987,18 +2236,24 @@ function ativarDragEditorImagem() {
   function aplicarPosicao() {
     imagemPosX = Math.max(0, Math.min(100, imagemPosX));
     imagemPosY = Math.max(0, Math.min(100, imagemPosY));
-    img.style.objectPosition = `${imagemPosX}% ${imagemPosY}%`;
+    img.style.setProperty(
+      "object-position",
+      `${imagemPosX}% ${imagemPosY}%`,
+      "important"
+    );
   }
 
-  img.addEventListener("mousedown", (e) => {
+  img.onmousedown = function (e) {
     arrastando = true;
     ultimoX = e.clientX;
     ultimoY = e.clientY;
     img.classList.add("arrastando");
+    if (e.cancelable) {
     e.preventDefault();
-  });
+}
+  };
 
-  document.addEventListener("mousemove", (e) => {
+  document.onmousemove = function (e) {
     if (!arrastando) return;
 
     const dx = e.clientX - ultimoX;
@@ -2007,54 +2262,16 @@ function ativarDragEditorImagem() {
     ultimoX = e.clientX;
     ultimoY = e.clientY;
 
-    imagemPosX -= dx * 0.2;
-    imagemPosY -= dy * 0.2;
+    imagemPosX -= dx * 0.35;
+    imagemPosY -= dy * 0.35;
 
     aplicarPosicao();
-  });
+  };
 
-  document.addEventListener("mouseup", () => {
-    if (!arrastando) return;
+  document.onmouseup = function () {
     arrastando = false;
     img.classList.remove("arrastando");
-  });
-
-  img.addEventListener(
-    "touchstart",
-    (e) => {
-      if (!e.touches[0]) return;
-      arrastando = true;
-      ultimoX = e.touches[0].clientX;
-      ultimoY = e.touches[0].clientY;
-      img.classList.add("arrastando");
-    },
-    { passive: true },
-  );
-
-  document.addEventListener(
-    "touchmove",
-    (e) => {
-      if (!arrastando || !e.touches[0]) return;
-
-      const dx = e.touches[0].clientX - ultimoX;
-      const dy = e.touches[0].clientY - ultimoY;
-
-      ultimoX = e.touches[0].clientX;
-      ultimoY = e.touches[0].clientY;
-
-      imagemPosX -= dx * 0.2;
-      imagemPosY -= dy * 0.2;
-
-      aplicarPosicao();
-    },
-    { passive: true },
-  );
-
-  document.addEventListener("touchend", () => {
-    if (!arrastando) return;
-    arrastando = false;
-    img.classList.remove("arrastando");
-  });
+  };
 
   aplicarPosicao();
 }
@@ -3387,6 +3604,1433 @@ function animarTrocaPoder(origem, destino, grupo) {
   }, 220);
 }
 
+/* ================= GRIMÓRIO ÍGNEO / MASTER ================= */
+
+
+const compendioPadrao = [
+ {
+  id: "padrao-goblin",
+  origem: "padrao",
+  nome: "Goblin",
+  tipo: "Humanoide",
+  regiao: "Cavernas, florestas e ruínas",
+  hpMax: 7,
+  hpAtual: 7,
+  ca: 15,
+  status: { for: 8, des: 14, con: 10, int: 10, sab: 8, car: 8 },
+  lore: "Pequeno, traiçoeiro e covarde. Costuma atacar em grupo e fugir quando está em desvantagem.",
+  habilidades: "Fuga ágil: pode escapar ou se esconder rapidamente.",
+  dialogos: ["Peguem tudo que brilha!", "Corre! Corre!", "Você caiu na nossa armadilha!"],
+  encontros: "Cavernas, acampamentos saqueadores e estradas abandonadas.",
+  imagem: "img/monstros/Goblin.jpg"
+},
+  {
+    id: "padrao-kobold",
+    origem: "padrao",
+    nome: "Kobold",
+    tipo: "Humanoide dracônico",
+    regiao: "Minas, túneis e covis de dragão",
+    hpMax: 5,
+    hpAtual: 5,
+    ca: 12,
+    status: { for: 7, des: 15, con: 9, int: 8, sab: 7, car: 8 },
+    lore: "Criatura pequena e astuta, geralmente serve dragões ou vive em comunidades subterrâneas cheias de armadilhas.",
+    habilidades: "Táticas de grupo: perigoso quando luta ao lado de aliados.",
+    dialogos: ["O mestre dragão vai saber disso!", "Armadilha! Armadilha!", "Pequeno, mas mortal!"],
+    encontros: "Minas abandonadas, túneis estreitos e covis subterrâneos.",
+    imagem: "img/monstros/Kobold.jpg"
+  },
+  {
+    id: "padrao-bandit",
+    origem: "padrao",
+    nome: "Bandido",
+    tipo: "Humanoide",
+    regiao: "Estradas, vilas e acampamentos",
+    hpMax: 11,
+    hpAtual: 11,
+    ca: 12,
+    status: { for: 11, des: 12, con: 12, int: 10, sab: 10, car: 10 },
+    lore: "Criminoso comum que vive de roubos, emboscadas e intimidação.",
+    habilidades: "Ataque coordenado quando está em grupo.",
+    dialogos: ["Passe a bolsa e ninguém se machuca.", "Isso aqui é nosso território.", "Peguem eles!"],
+    encontros: "Estradas perigosas, tavernas suspeitas e acampamentos de saqueadores.",
+    imagem: "img/monstros/Bandido.jpg"
+  },
+  {
+    id: "padrao-skeleton",
+    origem: "padrao",
+    nome: "Esqueleto",
+    tipo: "Morto-vivo",
+    regiao: "Criptas, ruínas e cemitérios",
+    hpMax: 13,
+    hpAtual: 13,
+    ca: 13,
+    status: { for: 10, des: 14, con: 15, int: 6, sab: 8, car: 5 },
+    lore: "Restos animados por magia necromântica, obedecem ordens simples sem questionar.",
+    habilidades: "Não sente medo, dor ou cansaço.",
+    dialogos: ["...", "Clac... clac...", "A morte... permanece..."],
+    encontros: "Tumbas antigas, catacumbas e templos abandonados.",
+    imagem: "img/monstros/Esqueleto.jpg"
+  },
+  {
+    id: "padrao-zombie",
+    origem: "padrao",
+    nome: "Zumbi",
+    tipo: "Morto-vivo",
+    regiao: "Cemitérios, pântanos e cidades destruídas",
+    hpMax: 22,
+    hpAtual: 22,
+    ca: 8,
+    status: { for: 13, des: 6, con: 16, int: 3, sab: 6, car: 5 },
+    lore: "Cadáver reanimado que avança lentamente, mas é difícil de derrubar.",
+    habilidades: "Resistência morta-viva: pode continuar de pé mesmo após golpes fatais.",
+    dialogos: ["Uuurgh...", "Carne...", "Aaah..."],
+    encontros: "Cemitérios profanados, vilas amaldiçoadas e campos de batalha antigos.",
+    imagem: "img/monstros/Zumbi.jpg"
+  },
+  {
+    id: "padrao-wolf",
+    origem: "padrao",
+    nome: "Lobo",
+    tipo: "Besta",
+    regiao: "Florestas e montanhas",
+    hpMax: 11,
+    hpAtual: 11,
+    ca: 13,
+    status: { for: 12, des: 15, con: 12, int: 3, sab: 12, car: 6 },
+    lore: "Predador de matilha, rápido e perigoso quando cerca sua presa.",
+    habilidades: "Tática de matilha: luta melhor ao lado de outros lobos.",
+    dialogos: ["Grrrr...", "Auuuu!", "Rosna mostrando os dentes."],
+    encontros: "Florestas escuras, trilhas nevadas e montanhas isoladas.",
+    imagem: "img/monstros/Lobo.jpg"
+  },
+  {
+    id: "padrao-giant-rat",
+    origem: "padrao",
+    nome: "Rato Gigante",
+    tipo: "Besta",
+    regiao: "Esgotos, porões e ruínas",
+    hpMax: 7,
+    hpAtual: 7,
+    ca: 12,
+    status: { for: 7, des: 15, con: 11, int: 2, sab: 10, car: 4 },
+    lore: "Rato enorme e agressivo, normalmente encontrado em bandos.",
+    habilidades: "Mordida infecciosa e movimentação rápida em locais apertados.",
+    dialogos: ["Squeak!", "Chiado agressivo.", "Fareja comida ou sangue."],
+    encontros: "Esgotos, depósitos abandonados e masmorras úmidas.",
+    imagem: "img/monstros/Rato-Gigante.jpg"
+  },
+  {
+    id: "padrao-orc",
+    origem: "padrao",
+    nome: "Orc",
+    tipo: "Humanoide",
+    regiao: "Montanhas, fortalezas e campos de guerra",
+    hpMax: 15,
+    hpAtual: 15,
+    ca: 13,
+    status: { for: 16, des: 12, con: 16, int: 7, sab: 11, car: 10 },
+    lore: "Guerreiro brutal e impulsivo, valoriza força, conquista e intimidação.",
+    habilidades: "Avanço agressivo: aproxima-se rapidamente do inimigo.",
+    dialogos: ["Vou quebrar seus ossos!", "Fraco!", "Pelo clã!"],
+    encontros: "Fortalezas tribais, campos de batalha e acampamentos de guerra.",
+    imagem: "img/monstros/Orc.jpg"
+  },
+  {
+    id: "padrao-gnoll",
+    origem: "padrao",
+    nome: "Gnoll",
+    tipo: "Humanoide monstruoso",
+    regiao: "Savanas, desertos e campos devastados",
+    hpMax: 22,
+    hpAtual: 22,
+    ca: 15,
+    status: { for: 14, des: 12, con: 11, int: 6, sab: 10, car: 7 },
+    lore: "Criatura feroz semelhante a uma hiena, movida por fome e violência.",
+    habilidades: "Frenesi: fica mais perigoso quando derruba uma presa.",
+    dialogos: ["Hahaha! Carne fresca!", "Rasgar! Morder!", "A caça começou!"],
+    encontros: "Campos de batalha, vilas saqueadas e regiões selvagens.",
+    imagem: "img/monstros/Gnoll.jpg"
+  },
+  {
+    id: "padrao-bugbear",
+    origem: "padrao",
+    nome: "Bugbear",
+    tipo: "Humanoide goblinoide",
+    regiao: "Florestas, cavernas e fortalezas goblinoides",
+    hpMax: 27,
+    hpAtual: 27,
+    ca: 16,
+    status: { for: 15, des: 14, con: 13, int: 8, sab: 11, car: 9 },
+    lore: "Grande, silencioso e cruel. Usa emboscadas para destruir inimigos desprevenidos.",
+    habilidades: "Ataque surpresa: causa grande dano quando pega o alvo desprevenido.",
+    dialogos: ["Silêncio... agora morra.", "Você não me viu chegando.", "Pequenos ossos quebram fácil."],
+    encontros: "Cavernas escuras, ruínas tomadas por goblins e fortalezas escondidas.",
+    imagem: "img/monstros/Bugbear.jpg"
+  },
+  {
+    id: "padrao-hobgoblin",
+    origem: "padrao",
+    nome: "Hobgoblin",
+    tipo: "Humanoide goblinoide",
+    regiao: "Fortes militares e territórios conquistados",
+    hpMax: 11,
+    hpAtual: 11,
+    ca: 18,
+    status: { for: 13, des: 12, con: 12, int: 10, sab: 10, car: 9 },
+    lore: "Soldado disciplinado e estratégico, luta melhor em formação.",
+    habilidades: "Vantagem marcial: aproveita aliados próximos para atacar melhor.",
+    dialogos: ["Formação!", "Sem recuar!", "Pelo comandante!"],
+    encontros: "Postos militares, fortalezas e patrulhas organizadas.",
+    imagem: "img/monstros/Hobgoblin.jpg"
+  },
+  {
+    id: "padrao-giant-spider",
+    origem: "padrao",
+    nome: "Aranha Gigante",
+    tipo: "Besta",
+    regiao: "Florestas densas, cavernas e ruínas",
+    hpMax: 26,
+    hpAtual: 26,
+    ca: 14,
+    status: { for: 14, des: 16, con: 12, int: 2, sab: 11, car: 4 },
+    lore: "Predadora silenciosa que prende vítimas em teias antes de atacar.",
+    habilidades: "Teia e veneno: pode imobilizar e envenenar suas presas.",
+    dialogos: ["Som de patas nas paredes.", "A criatura observa em silêncio.", "Teias se movem ao redor."],
+    encontros: "Cavernas, ruínas tomadas por teias e florestas antigas.",
+    imagem: "img/monstros/Aranha-Gigante.jpg"
+  },
+  {
+    id: "padrao-ogre",
+    origem: "padrao",
+    nome: "Ogro",
+    tipo: "Gigante",
+    regiao: "Colinas, cavernas e pântanos",
+    hpMax: 59,
+    hpAtual: 59,
+    ca: 11,
+    status: { for: 19, des: 8, con: 16, int: 5, sab: 7, car: 7 },
+    lore: "Criatura enorme, burra e brutal, resolve quase tudo esmagando.",
+    habilidades: "Golpes pesados capazes de derrubar aventureiros despreparados.",
+    dialogos: ["Eu esmagar!", "Pequeno demais!", "Comida?"],
+    encontros: "Cavernas grandes, pontes abandonadas e fortalezas destruídas.",
+    imagem: "img/monstros/Ogro.jpg"
+  },
+  {
+    id: "padrao-troll",
+    origem: "padrao",
+    nome: "Troll",
+    tipo: "Gigante",
+    regiao: "Pântanos, cavernas e florestas sombrias",
+    hpMax: 84,
+    hpAtual: 84,
+    ca: 15,
+    status: { for: 18, des: 13, con: 20, int: 7, sab: 9, car: 7 },
+    lore: "Monstro regenerativo e faminto, conhecido por voltar a lutar mesmo após ferimentos horríveis.",
+    habilidades: "Regeneração: recupera vida rapidamente, exceto contra fogo ou ácido.",
+    dialogos: ["Arrancar braços!", "Fome! Fome!", "Você queima... eu odeio fogo!"],
+    encontros: "Pontes antigas, pântanos, cavernas úmidas e florestas amaldiçoadas.",
+    imagem: "img/monstros/Troll.jpg"
+  }
+];
+
+window.monstrosMestre = JSON.parse(localStorage.getItem("monstrosMestre")) || [];
+let monstrosMestre = window.monstrosMestre;
+
+window.combatesMestre = JSON.parse(localStorage.getItem("combatesMestre")) || [];
+let combatesMestre = window.combatesMestre;
+
+let editandoMonstroMestre = -1;
+let imagemMonstroBase64 = "";
+let sheetMonstroIndexAtual = null;
+let listaSheetCompendio = [];
+let sheetDragInicioX = 0;
+let sheetDragInicioY = 0;
+let sheetArrastando = false;
+
+function abrirTelaModo() {
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("tela-inicial").style.display = "none";
+  document.getElementById("masterIgnea").style.display = "none";
+
+  const campanhas = document.getElementById("telaCampanhasMaster");
+  if (campanhas) campanhas.style.display = "none";
+
+  const tela = document.getElementById("tela-modo");
+  tela.style.display = "flex";
+
+  tela.style.opacity = "0";
+  tela.style.transform = "scale(1.06)";
+
+  requestAnimationFrame(() => {
+    tela.style.transition = "transform 0.45s ease, opacity 0.45s ease";
+    tela.style.opacity = "1";
+    tela.style.transform = "scale(1)";
+  });
+}
+
+function esconderTelasPrincipais() {
+  const ids = [
+    "loginBox",
+    "tela-modo",
+    "tela-inicial",
+    "ficha",
+    "masterIgnea"
+  ];
+
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = "none";
+  });
+}
+
+function entrarModoJogador() {
+  controlarHeader(true);
+
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("tela-modo").style.display = "none";
+  document.getElementById("masterIgnea").style.display = "none";
+  document.getElementById("ficha").style.display = "none";
+  document.getElementById("tela-inicial").style.display = "block";
+
+  if (typeof renderPersonagens === "function") {
+    renderPersonagens();
+  }
+}
+
+function entrarModoMestre() {
+  controlarHeader(false);
+
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("tela-modo").style.display = "none";
+  document.getElementById("tela-inicial").style.display = "none";
+  document.getElementById("ficha").style.display = "none";
+  document.getElementById("masterIgnea").style.display = "none";
+
+  const telaCampanhas = document.getElementById("telaCampanhasMaster");
+  if (telaCampanhas) {
+    telaCampanhas.style.display = "block";
+  }
+
+  renderCampanhasMaster();
+}
+
+function voltarTelaModo() {
+  abrirTelaModo();
+}
+
+function trocarAbaMaster(nomeAba, btn) {
+  document.querySelectorAll(".master-aba").forEach(aba => {
+    aba.style.display = "none";
+    aba.classList.remove("active");
+  });
+
+  document.querySelectorAll(".master-tab-btn").forEach(botao => {
+    botao.classList.remove("active");
+  });
+
+  const alvo = document.getElementById(`abaMaster-${nomeAba}`);
+  if (alvo) {
+    alvo.style.display = "block";
+    alvo.classList.add("active");
+  }
+
+  if (btn) btn.classList.add("active");
+
+  if (nomeAba === "compendio") renderMonstrosMestre();
+  if (nomeAba === "combateMaster") renderCombatesMestre();
+}
+
+function salvarMonstrosMestreStorage() {
+  localStorage.setItem("monstrosMestre", JSON.stringify(monstrosMestre));
+  window.monstrosMestre = monstrosMestre;
+
+  if (typeof window.salvarMonstrosNaNuvem === "function") {
+    window.salvarMonstrosNaNuvem();
+  }
+}
+
+function salvarCombatesMestreStorage() {
+  localStorage.setItem("combatesMestre", JSON.stringify(combatesMestre));
+  window.combatesMestre = combatesMestre;
+
+  if (typeof window.salvarMonstrosNaNuvem === "function") {
+    window.salvarMonstrosNaNuvem();
+  }
+}
+
+function previewImagemMonstro() {
+  const input = document.getElementById("monstroImagemInput");
+  const preview = document.getElementById("previewMonstro");
+
+  if (!input || !input.files || !input.files[0]) return;
+
+  const file = input.files[0];
+
+  const reader = new FileReader();
+
+  reader.onload = function (e) {
+    const img = new Image();
+
+    img.onload = function () {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      // 🔥 tamanho máximo
+      const maxWidth = 500;
+      const scale = maxWidth / img.width;
+
+      canvas.width = maxWidth;
+      canvas.height = img.height * scale;
+
+      // desenha comprimida
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      // 🔥 qualidade 0.65
+      imagemMonstroBase64 = canvas.toDataURL("image/jpeg", 0.65);
+
+      if (preview) {
+        preview.src = imagemMonstroBase64;
+        preview.style.display = "block";
+      }
+    };
+
+    img.src = e.target.result;
+  };
+
+  reader.readAsDataURL(file);
+}
+
+function salvarMonstroMestre() {
+  const nome = document.getElementById("monstroNome")?.value.trim();
+  const tipo = document.getElementById("monstroTipo")?.value.trim();
+  const regiao = document.getElementById("monstroRegiao")?.value.trim();
+
+  if (!nome) {
+    alert("Coloque o nome do monstro.");
+    return;
+  }
+
+  const hpMax = parseInt(document.getElementById("monstroHpMax")?.value) || 0;
+  let hpAtual = parseInt(document.getElementById("monstroHpAtual")?.value);
+
+  if (isNaN(hpAtual)) hpAtual = hpMax;
+
+  const monstroAntigo = editandoMonstroMestre >= 0
+    ? monstrosMestre[editandoMonstroMestre]
+    : null;
+
+  const monstro = {
+    id: monstroAntigo ? monstroAntigo.id : Date.now(),
+
+    nome,
+    tipo,
+    regiao,
+    hpMax,
+    hpAtual,
+    ca: parseInt(document.getElementById("monstroCa")?.value) || 0,
+
+    status: {
+      for: parseInt(document.getElementById("monstroFor")?.value) || 10,
+      des: parseInt(document.getElementById("monstroDes")?.value) || 10,
+      con: parseInt(document.getElementById("monstroCon")?.value) || 10,
+      int: parseInt(document.getElementById("monstroInt")?.value) || 10,
+      sab: parseInt(document.getElementById("monstroSab")?.value) || 10,
+      car: parseInt(document.getElementById("monstroCar")?.value) || 10
+    },
+
+    lore: document.getElementById("monstroLore")?.value.trim() || "",
+    habilidades: document.getElementById("monstroHabilidades")?.value.trim() || "",
+
+    dialogos: (document.getElementById("monstroDialogos")?.value || "")
+      .split("\n")
+      .map(fala => fala.trim())
+      .filter(fala => fala.length > 0),
+
+    encontros: document.getElementById("monstroEncontros")?.value.trim() || "",
+    imagem: imagemMonstroBase64 || monstroAntigo?.imagem || ""
+  };
+
+  if (editandoMonstroMestre >= 0) {
+    monstrosMestre[editandoMonstroMestre] = monstro;
+  } else {
+    monstrosMestre.push(monstro);
+  }
+
+  salvarMonstrosMestreStorage();
+  renderMonstrosMestre();
+  limparFormMonstro();
+  atualizarModsMonstro();
+  const btnCompendio = document.querySelector(".master-tab-btn");
+  trocarAbaMaster("compendio", btnCompendio);
+}
+
+function limparFormMonstro() {
+  editandoMonstroMestre = -1;
+  imagemMonstroBase64 = "";
+
+  const campos = [
+    "monstroNome",
+    "monstroTipo",
+    "monstroRegiao",
+    "monstroHpMax",
+    "monstroHpAtual",
+    "monstroCa",
+    "monstroLore",
+    "monstroHabilidades",
+    "monstroDialogos",
+    "monstroEncontros"
+  ];
+
+  campos.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+
+  const statusPadrao = {
+    monstroFor: 10,
+    monstroDes: 10,
+    monstroCon: 10,
+    monstroInt: 10,
+    monstroSab: 10,
+    monstroCar: 10
+  };
+
+  Object.keys(statusPadrao).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = statusPadrao[id];
+  });
+
+  const inputImagem = document.getElementById("monstroImagemInput");
+  if (inputImagem) inputImagem.value = "";
+
+  const preview = document.getElementById("previewMonstro");
+  if (preview) {
+    preview.src = "";
+    preview.style.display = "none";
+  }
+
+  const titulo = document.getElementById("tituloFormMonstro");
+  if (titulo) titulo.textContent = "Criar Monstro";
+}
+
+function renderMonstrosMestre() {
+  const lista = document.getElementById("listaMonstrosMestre");
+  if (!lista) return;
+
+  lista.innerHTML = "";
+
+ const listaCompleta = [
+  ...compendioPadrao,
+  ...monstrosMestre
+];
+
+let listaFiltrada = [...listaCompleta];
+
+const pesquisa = document.getElementById("pesquisaMonstro")?.value
+  ?.toLowerCase()
+  .trim() || "";
+
+if (pesquisa) {
+  listaFiltrada = listaFiltrada.filter(monstro =>
+    (monstro.nome || "").toLowerCase().includes(pesquisa) ||
+    (monstro.tipo || "").toLowerCase().includes(pesquisa) ||
+    (monstro.regiao || "").toLowerCase().includes(pesquisa)
+  );
+}
+
+const ordenacao = document.getElementById("ordenarMonstros")?.value || "az";
+
+listaFiltrada.sort((a, b) => {
+  if (ordenacao === "az") {
+    return (a.nome || "").localeCompare(b.nome || "");
+  }
+
+  if (ordenacao === "za") {
+    return (b.nome || "").localeCompare(a.nome || "");
+  }
+
+  if (ordenacao === "hpMaior") {
+    return (b.hpMax || 0) - (a.hpMax || 0);
+  }
+
+  if (ordenacao === "hpMenor") {
+    return (a.hpMax || 0) - (b.hpMax || 0);
+  }
+
+  if (ordenacao === "caMaior") {
+    return (b.ca || 0) - (a.ca || 0);
+  }
+
+  if (ordenacao === "caMenor") {
+    return (a.ca || 0) - (b.ca || 0);
+  }
+
+  return 0;
+});
+
+listaSheetCompendio = listaFiltrada;
+
+
+if (!listaFiltrada.length) {
+  lista.innerHTML = `
+    <p style="text-align:center; color:#cdb791; grid-column:1/-1;">
+      Nenhum monstro disponível.
+    </p>
+  `;
+  return;
+}
+
+    listaFiltrada.forEach((monstro, index) => {
+    const card = document.createElement("div");
+    card.className = "compendio-card";
+
+    const imagem = monstro.imagem || "icon-512.png";
+    card.style.backgroundImage = `url("${imagem}")`;
+
+    card.onclick = () => abrirSheetMonstroPorObjeto(monstro, index, listaFiltrada);
+
+    card.innerHTML = `
+      <div class="compendio-info">
+        <strong>${escapeHtml(monstro.nome)}</strong>
+        <small>${escapeHtml(monstro.tipo || "Tipo não definido")}</small>
+        <span>HP ${monstro.hpAtual}/${monstro.hpMax} • CA ${monstro.ca || 0}</span>
+      </div>
+    `;
+
+    lista.appendChild(card);
+  });
+}
+
+
+function criarCopiaEditavelMonstroPadrao(monstro) {
+  const copia = JSON.parse(JSON.stringify(monstro));
+
+  copia.id = Date.now();
+  copia.origem = "usuario";
+  copia.nome = `${monstro.nome} personalizado`;
+
+  monstrosMestre.push(copia);
+  salvarMonstrosMestreStorage();
+  renderMonstrosMestre();
+
+  const indexNovo = monstrosMestre.length - 1;
+  editarMonstroMestre(indexNovo);
+}
+
+function abrirSheetMonstro(index) {
+  const monstro = monstrosMestre[index];
+  if (!monstro) return;
+
+  sheetMonstroIndexAtual = index;
+
+  const overlay = document.getElementById("sheetMonstroOverlay");
+  const sheet = document.getElementById("sheetMonstro");
+  const conteudo = document.getElementById("conteudoSheetMonstro");
+
+  if (!overlay || !sheet || !conteudo) return;
+
+  const imagem = monstro.imagem || "icon-512.png";
+
+  conteudo.innerHTML = `
+    <img class="sheet-img" src="${imagem}" alt="${escapeHtml(monstro.nome)}">
+
+    <h2 class="sheet-titulo">${escapeHtml(monstro.nome)}</h2>
+
+    <div class="sheet-meta">
+      ${escapeHtml(monstro.tipo || "Tipo não definido")} • 
+      ${escapeHtml(monstro.regiao || "Região não definida")}
+    </div>
+
+    <div class="sheet-hp-ca">
+      HP ${monstro.hpAtual}/${monstro.hpMax} • CA ${monstro.ca || 0}
+    </div>
+
+    <div class="sheet-status-grid">
+  <div>FOR<br>${monstro.status?.for || 10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.for || 10))}</small></div>
+  <div>DES<br>${monstro.status?.des || 10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.des || 10))}</small></div>
+  <div>CON<br>${monstro.status?.con || 10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.con || 10))}</small></div>
+  <div>INT<br>${monstro.status?.int || 10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.int || 10))}</small></div>
+  <div>SAB<br>${monstro.status?.sab || 10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.sab || 10))}</small></div>
+  <div>CAR<br>${monstro.status?.car || 10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.car || 10))}</small></div>
+    </div>
+
+    <div class="sheet-acoes">
+      <button class="btn-master-principal" onclick="enviarMonstroParaCombate(${index})">
+        ⚔️ Enviar para combate
+      </button>
+
+      <button class="btn-master-secundario" onclick="editarMonstroMestre(${index})">
+        ✏️ Editar
+      </button>
+
+      <button class="btn-master-perigo" onclick="excluirMonstroMestre(${index})">
+        🗑️ Excluir
+      </button>
+    </div>
+
+    <div class="sheet-bloco">
+      <strong>Lore</strong>
+      <p>${formatarTexto(monstro.lore || "Sem lore cadastrada.")}</p>
+    </div>
+
+    <div class="sheet-bloco">
+      <strong>Habilidades especiais</strong>
+      <p>${formatarTexto(monstro.habilidades || "Sem habilidades cadastradas.")}</p>
+    </div>
+
+    <div class="sheet-bloco">
+      <strong>Diálogos</strong>
+      <p>${monstro.dialogos?.length ? monstro.dialogos.map(f => `“${escapeHtml(f)}”`).join("<br>") : "Sem falas cadastradas."}</p>
+      <button class="btn-master-principal" onclick="sortearFalaMonstro(${index})">🎲 Fala aleatória</button>
+      <div id="falaAleatoriaTexto"></div>
+    </div>
+
+    <div class="sheet-bloco">
+      <strong>Pontos de encontro</strong>
+      <p>${formatarTexto(monstro.encontros || "Sem pontos de encontro cadastrados.")}</p>
+    </div>
+  `;
+
+  overlay.style.display = "block";
+sheet.style.display = "block";
+
+sheet.classList.remove("full");
+sheet.classList.remove("aberto");
+
+requestAnimationFrame(() => {
+  sheet.classList.add("aberto");
+});
+
+document.body.classList.add("master-sheet-aberto");
+}
+
+
+
+function abrirSheetMonstroPorObjeto(monstro, index, lista = null) {
+  if (lista) listaSheetCompendio = lista;
+
+  sheetMonstroIndexAtual = index;
+
+  abrirSheetMonstroPadrao(monstro);
+}
+
+function abrirSheetMonstroPadrao(monstro) {
+  const overlay = document.getElementById("sheetMonstroOverlay");
+  const sheet = document.getElementById("sheetMonstro");
+  const conteudo = document.getElementById("conteudoSheetMonstro");
+  const estavaAberto = sheet.classList.contains("aberto");
+  const estavaFull = sheet.classList.contains("full");  
+
+  if (!overlay || !sheet || !conteudo) return;
+
+  const imagem = monstro.imagem || "icon-512.png";
+
+  conteudo.innerHTML = `
+    <img class="sheet-img" src="${imagem}" alt="${escapeHtml(monstro.nome)}">
+
+    <h2 class="sheet-titulo">${escapeHtml(monstro.nome)}</h2>
+
+    <div class="sheet-meta">
+      ${escapeHtml(monstro.tipo || "Tipo não definido")} • 
+      ${escapeHtml(monstro.regiao || "Região não definida")}
+    </div>
+
+    <div class="sheet-hp-ca">
+      HP ${monstro.hpAtual}/${monstro.hpMax} • CA ${monstro.ca || 0}
+    </div>
+
+    <div class="sheet-status-grid">
+      <div>FOR<br>${monstro.status?.for || 10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.for || 10))}</small></div>
+      <div>DES<br>${monstro.status?.des || 10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.des || 10))}</small></div>
+      <div>CON<br>${monstro.status?.con || 10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.con || 10))}</small></div>
+      <div>INT<br>${monstro.status?.int || 10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.int || 10))}</small></div>
+      <div>SAB<br>${monstro.status?.sab || 10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.sab || 10))}</small></div>
+      <div>CAR<br>${monstro.status?.car || 10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.car || 10))}</small></div>
+    </div>
+
+    <div class="sheet-acoes">
+  <button class="btn-master-principal" onclick='enviarMonstroPadraoParaCombate(${JSON.stringify(monstro)})'>
+    ⚔️ Enviar para combate
+  </button>
+
+  <button class="btn-master-secundario" onclick='criarCopiaEditavelMonstroPadrao(${JSON.stringify(monstro)})'>
+    ✏️ Criar cópia editável
+  </button>
+</div>
+
+    <div class="sheet-bloco">
+      <strong>Lore</strong>
+      <p>${formatarTexto(monstro.lore || "Sem lore cadastrada.")}</p>
+    </div>
+
+    <div class="sheet-bloco">
+      <strong>Habilidades especiais</strong>
+      <p>${formatarTexto(monstro.habilidades || "Sem habilidades cadastradas.")}</p>
+    </div>
+
+    <div class="sheet-bloco">
+      <strong>Diálogos</strong>
+      <p>${monstro.dialogos?.length ? monstro.dialogos.map(f => `“${escapeHtml(f)}”`).join("<br>") : "Sem falas cadastradas."}</p>
+    </div>
+
+    <div class="sheet-bloco">
+      <strong>Pontos de encontro</strong>
+      <p>${formatarTexto(monstro.encontros || "Sem pontos de encontro cadastrados.")}</p>
+    </div>
+  `;
+
+sheet.style.transition = "";
+sheet.style.transform = "";
+sheet.style.opacity = "";
+sheet.style.height = "";
+
+overlay.style.display = "block";
+sheet.style.display = "block";
+
+if (!estavaAberto) {
+  sheet.classList.remove("full");
+  sheet.classList.remove("aberto");
+}
+
+if (estavaFull) {
+  sheet.classList.add("full");
+}
+
+setTimeout(() => {
+  sheet.classList.add("aberto");
+}, 10);
+
+document.body.classList.add("master-sheet-aberto");
+ativarGestosSheetMonstro();
+}
+
+
+function ativarGestosSheetMonstro() {
+  const sheet = document.getElementById("sheetMonstro");
+  if (!sheet) return;
+
+  if (sheet.dataset.gestosAtivos === "1") return;
+  sheet.dataset.gestosAtivos = "1";
+
+  sheet.addEventListener("touchstart", iniciarDragSheet, { passive: true });
+  sheet.addEventListener("touchmove", moverDragSheet, { passive: false });
+  sheet.addEventListener("touchend", finalizarDragSheet);
+
+  sheet.addEventListener("mousedown", iniciarDragSheet);
+  window.addEventListener("mousemove", moverDragSheet);
+  window.addEventListener("mouseup", finalizarDragSheet);
+}
+
+function pegarPontoEvento(e) {
+  if (e.touches && e.touches.length > 0) {
+    return e.touches[0];
+  }
+
+  return e;
+}
+
+function iniciarDragSheet(e) {
+  const sheet = document.getElementById("sheetMonstro");
+  if (!sheet) return;
+
+  const ponto = pegarPontoEvento(e);
+
+  sheetDragInicioX = ponto.clientX;
+  sheetDragInicioY = ponto.clientY;
+  sheetArrastando = true;
+
+  sheet.style.transition = "none";
+}
+
+function moverDragSheet(e) {
+  if (!sheetArrastando) return;
+
+  const sheet = document.getElementById("sheetMonstro");
+  if (!sheet) return;
+
+  const ponto = pegarPontoEvento(e);
+
+  const diffX = ponto.clientX - sheetDragInicioX;
+  const diffY = ponto.clientY - sheetDragInicioY;
+
+  const movimentoHorizontal = Math.abs(diffX) > Math.abs(diffY);
+
+  if (movimentoHorizontal) {
+    if (e.cancelable) e.preventDefault();
+
+    sheet.style.transform = `translateX(${diffX}px)`;
+    sheet.style.opacity = String(1 - Math.min(Math.abs(diffX) / 500, 0.45));
+    return;
+  }
+
+  // 🔥 movimento vertical fluido
+  if (e.cancelable) e.preventDefault();
+
+  if (diffY < 0 && !sheet.classList.contains("full")) {
+    const aumento = Math.min(Math.abs(diffY), window.innerHeight * 0.28);
+    sheet.style.height = `calc(72vh + ${aumento}px)`;
+  }
+
+  if (diffY > 0) {
+    sheet.style.transform = `translateY(${Math.min(diffY, 220)}px)`;
+    sheet.style.opacity = String(1 - Math.min(diffY / 450, 0.45));
+  }
+}
+
+function finalizarDragSheet(e) {
+  if (!sheetArrastando) return;
+
+  const sheet = document.getElementById("sheetMonstro");
+  if (!sheet) return;
+
+  const ponto = pegarPontoEvento(e.changedTouches ? e.changedTouches[0] : e);
+
+  const diffX = ponto.clientX - sheetDragInicioX;
+  const diffY = ponto.clientY - sheetDragInicioY;
+
+  sheetArrastando = false;
+
+  sheet.style.transition =
+    "transform 0.28s ease, opacity 0.22s ease, height 0.25s ease";
+
+  if (Math.abs(diffX) > 90 && Math.abs(diffX) > Math.abs(diffY)) {
+    if (diffX < 0) {
+      trocarMonstroSheet(1);
+    } else {
+      trocarMonstroSheet(-1);
+    }
+    return;
+  }
+
+  if (diffY < -80) {
+    sheet.classList.add("full");
+  }
+
+  if (diffY > 120 && sheet.classList.contains("full")) {
+    sheet.classList.remove("full");
+  } else if (diffY > 170 && !sheet.classList.contains("full")) {
+    fecharSheetMonstro();
+    return;
+  }
+
+  sheet.style.transform = "";
+  sheet.style.opacity = "";
+  sheet.style.height = "";
+}
+
+function trocarMonstroSheet(direcao) {
+  if (!listaSheetCompendio.length) return;
+
+  let novoIndex = sheetMonstroIndexAtual + direcao;
+
+  if (novoIndex < 0) novoIndex = listaSheetCompendio.length - 1;
+  if (novoIndex >= listaSheetCompendio.length) novoIndex = 0;
+
+  const sheet = document.getElementById("sheetMonstro");
+  if (!sheet) return;
+
+  const estavaFull = sheet.classList.contains("full");
+
+  sheet.style.transition =
+    "transform 0.22s ease, opacity 0.18s ease, height 0.25s ease";
+
+  sheet.style.transform =
+    direcao > 0 ? "translateX(-100%)" : "translateX(100%)";
+
+  sheet.style.opacity = "0";
+
+  setTimeout(() => {
+    sheetMonstroIndexAtual = novoIndex;
+
+    // troca só o conteúdo, sem fechar/reabrir a sheet
+    abrirSheetMonstroPadrao(listaSheetCompendio[novoIndex]);
+
+    if (estavaFull) {
+      sheet.classList.add("full");
+    }
+
+    sheet.classList.add("aberto");
+
+    sheet.style.transition = "none";
+    sheet.style.transform =
+      direcao > 0 ? "translateX(100%)" : "translateX(-100%)";
+    sheet.style.opacity = "0";
+
+    requestAnimationFrame(() => {
+      sheet.style.transition =
+        "transform 0.28s ease, opacity 0.22s ease, height 0.25s ease";
+
+      sheet.style.transform = "";
+      sheet.style.opacity = "";
+      sheet.style.height = "";
+    });
+  }, 180);
+}
+
+function enviarMonstroPadraoParaCombate(monstro) {
+  const copia = JSON.parse(JSON.stringify(monstro));
+
+  copia.instanciaId = Date.now() + Math.floor(Math.random() * 9999);
+  copia.monstroBaseId = monstro.id;
+  copia.origem = "combate";
+  copia.nome = gerarNomeInstanciaCombate(monstro.nome);
+
+  combatesMestre.push(copia);
+
+  salvarCombatesMestreStorage();
+  renderCombatesMestre();
+
+  alert(`${monstro.nome} foi enviado para o combate.`);
+}
+
+function fecharSheetMonstro() {
+  const overlay = document.getElementById("sheetMonstroOverlay");
+  const sheet = document.getElementById("sheetMonstro");
+
+  if (sheet) {
+    sheet.classList.remove("aberto");
+
+    setTimeout(() => {
+  sheet.style.display = "none";
+
+  sheet.style.transition = "";
+  sheet.style.transform = "";
+  sheet.style.opacity = "";
+  sheet.style.height = "";
+  sheet.classList.remove("full");
+  sheet.classList.remove("aberto");
+
+  if (overlay) overlay.style.display = "none";
+}, 380);
+  }
+
+  document.body.classList.remove("master-sheet-aberto");
+
+  sheetMonstroIndexAtual = null;
+}
+
+function alternarSheetFull() {
+  const sheet = document.getElementById("sheetMonstro");
+  if (sheet) sheet.classList.toggle("full");
+}
+
+function editarMonstroMestre(index) {
+  const monstro = monstrosMestre[index];
+  if (!monstro) return;
+
+  fecharSheetMonstro();
+
+  editandoMonstroMestre = index;
+  imagemMonstroBase64 = monstro.imagem || "";
+
+  document.getElementById("monstroNome").value = monstro.nome || "";
+  document.getElementById("monstroTipo").value = monstro.tipo || "";
+  document.getElementById("monstroRegiao").value = monstro.regiao || "";
+  document.getElementById("monstroHpMax").value = monstro.hpMax || 0;
+  document.getElementById("monstroHpAtual").value = monstro.hpAtual || 0;
+  document.getElementById("monstroCa").value = monstro.ca || 0;
+
+  document.getElementById("monstroFor").value = monstro.status?.for || 10;
+  document.getElementById("monstroDes").value = monstro.status?.des || 10;
+  document.getElementById("monstroCon").value = monstro.status?.con || 10;
+  document.getElementById("monstroInt").value = monstro.status?.int || 10;
+  document.getElementById("monstroSab").value = monstro.status?.sab || 10;
+  document.getElementById("monstroCar").value = monstro.status?.car || 10;
+
+  document.getElementById("monstroLore").value = monstro.lore || "";
+  document.getElementById("monstroHabilidades").value = monstro.habilidades || "";
+  document.getElementById("monstroDialogos").value = Array.isArray(monstro.dialogos)
+    ? monstro.dialogos.join("\n")
+    : "";
+  document.getElementById("monstroEncontros").value = monstro.encontros || "";
+
+  const preview = document.getElementById("previewMonstro");
+  if (preview && monstro.imagem) {
+    preview.src = monstro.imagem;
+    preview.style.display = "block";
+  }
+
+  const titulo = document.getElementById("tituloFormMonstro");
+  if (titulo) titulo.textContent = "Editar Monstro";
+
+  const btnCriar = document.querySelectorAll(".master-tab-btn")[1];
+  trocarAbaMaster("criar", btnCriar);
+  atualizarModsMonstro();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function excluirMonstroMestre(index) {
+  const monstro = monstrosMestre[index];
+  if (!monstro) return;
+
+  const confirmar = confirm(`Deseja excluir "${monstro.nome}"?`);
+  if (!confirmar) return;
+
+  monstrosMestre.splice(index, 1);
+
+  salvarMonstrosMestreStorage();
+  renderMonstrosMestre();
+  fecharSheetMonstro();
+}
+
+function enviarMonstroParaCombate(index) {
+  const monstro = monstrosMestre[index];
+  if (!monstro) return;
+
+  const copia = JSON.parse(JSON.stringify(monstro));
+
+  copia.instanciaId = Date.now() + Math.floor(Math.random() * 9999);
+  copia.monstroBaseId = monstro.id;
+  copia.nome = gerarNomeInstanciaCombate(monstro.nome);
+
+  combatesMestre.push(copia);
+
+  salvarCombatesMestreStorage();
+  renderCombatesMestre();
+
+  alert(`${monstro.nome} foi enviado para o combate.`);
+}
+
+function gerarNomeInstanciaCombate(nomeBase) {
+  const quantidade = combatesMestre.filter(m =>
+    (m.nome || "").startsWith(nomeBase)
+  ).length + 1;
+
+  return `${nomeBase} ${quantidade}`;
+}
+
+function toggleMinimizarCombate(index) {
+  const monstro = combatesMestre[index];
+  if (!monstro) return;
+
+  monstro.minimizado = !monstro.minimizado;
+
+  salvarCombatesMestreStorage();
+  renderCombatesMestre();
+}
+
+function renderCombatesMestre() {
+  const lista = document.getElementById("listaCombateMestre");
+  if (!lista) return;
+
+  lista.innerHTML = "";
+
+  if (!combatesMestre.length) {
+    lista.innerHTML = `
+      <p style="text-align:center; color:#cdb791;">
+        Nenhum monstro no combate ainda.
+      </p>
+    `;
+    return;
+  }
+
+  combatesMestre.forEach((monstro, index) => {
+
+    const card = document.createElement("div");
+
+    const minimizado = monstro.minimizado ? "minimizado" : "";
+    card.className = `combate-card ${minimizado}`;
+
+    const imagem = monstro.imagem || "icon-512.png";
+
+    card.innerHTML = `
+
+      <!-- TOPO -->
+      <div class="combate-topo">
+
+        <img
+          class="combate-img"
+          src="${imagem}"
+          alt="${escapeHtml(monstro.nome)}"
+        >
+
+        <div class="combate-info">
+
+          <strong>${escapeHtml(monstro.nome)}</strong>
+
+          <small>
+            ${escapeHtml(monstro.tipo || "Tipo não definido")}
+            • CA ${monstro.ca || 0}
+          </small>
+
+          <div class="combate-hp">
+            ❤️ HP ${monstro.hpAtual}/${monstro.hpMax}
+          </div>
+
+        </div>
+
+        <button
+          class="btn-minimizar-combate"
+          onclick="toggleMinimizarCombate(${index})"
+        >
+          ${monstro.minimizado ? "▼" : "▲"}
+        </button>
+
+      </div>
+
+      <!-- DETALHES -->
+      <div class="combate-detalhes">
+
+        <!-- STATUS -->
+        <div class="sheet-status-grid" style="margin-top:12px;">
+
+          <div>
+            FOR<br>
+            ${monstro.status?.for || 10}
+            <small>
+              ${formatarModMonstro(
+                calcularModMonstro(monstro.status?.for || 10)
+              )}
+            </small>
+          </div>
+
+          <div>
+            DES<br>
+            ${monstro.status?.des || 10}
+            <small>
+              ${formatarModMonstro(
+                calcularModMonstro(monstro.status?.des || 10)
+              )}
+            </small>
+          </div>
+
+          <div>
+            CON<br>
+            ${monstro.status?.con || 10}
+            <small>
+              ${formatarModMonstro(
+                calcularModMonstro(monstro.status?.con || 10)
+              )}
+            </small>
+          </div>
+
+          <div>
+            INT<br>
+            ${monstro.status?.int || 10}
+            <small>
+              ${formatarModMonstro(
+                calcularModMonstro(monstro.status?.int || 10)
+              )}
+            </small>
+          </div>
+
+          <div>
+            SAB<br>
+            ${monstro.status?.sab || 10}
+            <small>
+              ${formatarModMonstro(
+                calcularModMonstro(monstro.status?.sab || 10)
+              )}
+            </small>
+          </div>
+
+          <div>
+            CAR<br>
+            ${monstro.status?.car || 10}
+            <small>
+              ${formatarModMonstro(
+                calcularModMonstro(monstro.status?.car || 10)
+              )}
+            </small>
+          </div>
+
+        </div>
+
+        <!-- BOTÕES RÁPIDOS -->
+        <div class="combate-botoes">
+
+  <button class="btn-hp-dano" onclick="alterarHpCombate(${index}, -1)"> Dano -1</button>
+<button class="btn-hp-dano" onclick="alterarHpCombate(${index}, -5)"> Dano -5</button>
+<button class="btn-hp-dano" onclick="alterarHpCombate(${index}, -10)"> Dano -10</button>
+
+<button class="btn-hp-cura" onclick="alterarHpCombate(${index}, 1)"> Cura +1</button>
+<button class="btn-hp-cura" onclick="alterarHpCombate(${index}, 5)"> Cura +5</button>
+<button class="btn-hp-cura" onclick="alterarHpCombate(${index}, 10)"> Cura +10</button>
+
+        </div>
+
+        <!-- MANUAL -->
+        <div class="combate-manual">
+
+          <input
+            id="danoCombate${index}"
+            type="number"
+            placeholder="Dano recebido"
+          >
+
+          <input
+            id="curaCombate${index}"
+            type="number"
+            placeholder="Cura recebida"
+          >
+
+        </div>
+
+        <!-- AÇÕES -->
+        <div class="combate-acoes">
+
+          <button
+            class="btn-master-perigo"
+            onclick="aplicarDanoCombate(${index})"
+          >
+            Aplicar dano
+          </button>
+
+          <button
+            class="btn-master-principal"
+            onclick="aplicarCuraCombate(${index})"
+          >
+            Aplicar cura
+          </button>
+
+        </div>
+
+        <!-- LORE -->
+        ${monstro.lore ? `
+          <div class="sheet-bloco">
+            <strong>Lore</strong>
+            <p>${formatarTexto(monstro.lore)}</p>
+          </div>
+        ` : ""}
+
+        <!-- HABILIDADES -->
+        ${monstro.habilidades ? `
+          <div class="sheet-bloco">
+            <strong>Habilidades especiais</strong>
+            <p>${formatarTexto(monstro.habilidades)}</p>
+          </div>
+        ` : ""}
+
+        <!-- ENCONTROS -->
+        ${monstro.encontros ? `
+          <div class="sheet-bloco">
+            <strong>Pontos de encontro</strong>
+            <p>${formatarTexto(monstro.encontros)}</p>
+          </div>
+        ` : ""}
+
+        <!-- REMOVER -->
+        <button
+          class="btn-master-secundario"
+          style="width:100%; margin-top:10px;"
+          onclick="removerDoCombate(${index})"
+        >
+          Remover do combate
+        </button>
+
+      </div>
+    `;
+
+    lista.appendChild(card);
+  });
+}
+
+function alterarHpCombate(index, valor) {
+  const monstro = combatesMestre[index];
+  if (!monstro) return;
+
+  monstro.hpAtual += valor;
+
+  if (monstro.hpAtual < 0) monstro.hpAtual = 0;
+  if (monstro.hpAtual > monstro.hpMax) monstro.hpAtual = monstro.hpMax;
+
+  salvarCombatesMestreStorage();
+  renderCombatesMestre();
+}
+
+function aplicarDanoCombate(index) {
+  const input = document.getElementById(`danoCombate${index}`);
+  const dano = parseInt(input?.value) || 0;
+
+  if (dano <= 0) return;
+
+  alterarHpCombate(index, -dano);
+}
+
+function aplicarCuraCombate(index) {
+  const input = document.getElementById(`curaCombate${index}`);
+  const cura = parseInt(input?.value) || 0;
+
+  if (cura <= 0) return;
+
+  alterarHpCombate(index, cura);
+}
+
+function removerDoCombate(index) {
+  const monstro = combatesMestre[index];
+  if (!monstro) return;
+
+  const confirmar = confirm(`Remover "${monstro.nome}" do combate?`);
+  if (!confirmar) return;
+
+  combatesMestre.splice(index, 1);
+  salvarCombatesMestreStorage();
+  renderCombatesMestre();
+}
+
+function sortearFalaMonstro(index) {
+  const monstro = monstrosMestre[index];
+  const alvo = document.getElementById("falaAleatoriaTexto");
+
+  if (!monstro || !alvo) return;
+
+  if (!monstro.dialogos || monstro.dialogos.length === 0) {
+    alvo.textContent = "Esse monstro ainda não tem falas cadastradas.";
+    return;
+  }
+
+  const fala = monstro.dialogos[Math.floor(Math.random() * monstro.dialogos.length)];
+  alvo.textContent = `“${fala}”`;
+}
+
+function calcularModMonstro(valor) {
+  return Math.floor((valor - 10) / 2);
+}
+
+function formatarModMonstro(mod) {
+  return mod >= 0 ? `+${mod}` : `${mod}`;
+}
+
+function atualizarModsMonstro() {
+
+  const atributos = [
+    ["For", "monstroFor"],
+    ["Des", "monstroDes"],
+    ["Con", "monstroCon"],
+    ["Int", "monstroInt"],
+    ["Sab", "monstroSab"],
+    ["Car", "monstroCar"]
+  ];
+
+  atributos.forEach(([sigla, id]) => {
+
+    const valor =
+      parseInt(document.getElementById(id)?.value) || 10;
+
+    const mod = calcularModMonstro(valor);
+
+    const el = document.getElementById(`modMonstro${sigla}`);
+
+    if (el) {
+      el.textContent = formatarModMonstro(mod);
+    }
+  });
+}
+
+function escapeHtml(texto) {
+  return String(texto)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function formatarTexto(texto) {
+  return escapeHtml(texto).replace(/\n/g, "<br>");
+}
+
 /* ================= INIT ================= */
 
 function init() {
@@ -3489,7 +5133,7 @@ window.onload = function () {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-  ativarDragImagemPreview();
+  ativarDragEditorImagem();
 });
 
 atualizarDropdownRacas();
