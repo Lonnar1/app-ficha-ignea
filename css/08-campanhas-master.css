@@ -1,0 +1,640 @@
+/* TÍTULO */
+
+.titulo-campanhas-master {
+  margin: 28px 0 10px;
+
+  text-align: center;
+
+  font-family: "Cinzel Decorative", serif;
+  font-size: 52px;
+  font-weight: 700;
+  letter-spacing: 2px;
+
+  color: #d8b36a;
+
+  text-shadow:
+    0 0 10px rgba(120, 20, 20, 0.35),
+    0 2px 10px rgba(0,0,0,0.9);
+}
+
+
+
+/* TOGGLE */
+
+.campanha-toggle {
+  margin-bottom: 20px;
+}
+
+/* CONTEÚDO */
+
+.campanha-toggle-conteudo {
+  margin-top: 12px;
+}
+
+.campanha-info {
+  cursor: pointer;
+}
+
+
+.campanha-info h3 {
+  margin: 0 0 10px;
+
+  font-family: "Cinzel Decorative", serif;
+  font-size: 28px;
+  letter-spacing: 1px;
+
+  color: #e0bf7a;
+}
+
+
+.campanha-info p {
+  margin: 0 0 10px;
+
+  color: #b89b87;
+
+  line-height: 1.5;
+
+  font-size: 14px;
+}
+
+.campanha-info span {
+  display: inline-block;
+
+  padding: 6px 10px;
+
+  border-radius: 999px;
+
+  background: rgba(255,255,255,0.04);
+
+  font-size: 12px;
+  letter-spacing: 1px;
+
+  color: #8d7466;
+}
+
+
+.campanha-deletar {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+
+  width: 30px;
+  height: 30px;
+
+  border: none;
+  border-radius: 10px;
+
+  background: rgba(90, 18, 18, 0.55);
+
+  color: #f3dfc0;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.campanha-deletar:hover {
+  background: rgba(140, 28, 28, 0.85);
+}
+
+
+/* TÍTULO */
+
+.titulo-campanhas-master {
+  text-align: center;
+
+  margin: 14px 0 6px;
+
+  font-family: "Cinzel Decorative", serif;
+  font-size: 42px;
+  letter-spacing: 2px;
+
+  color: #d8bc84;
+
+  text-shadow:
+    0 0 10px rgba(80, 12, 12, 0.45),
+    0 2px 8px rgba(0,0,0,0.9);
+}
+
+
+.campanha-toggle {
+  margin-bottom: 18px;
+}
+
+.campanha-toggle-conteudo {
+  margin-top: 10px;
+}
+
+
+
+
+
+/* CARDS */
+
+#listaCampanhasMaster .monstro-card {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(28, 14, 14, 0.96),
+      rgba(16, 8, 8, 0.98)
+    );
+
+  border: 1px solid rgba(120, 28, 28, 0.4);
+
+  box-shadow:
+    0 10px 20px rgba(0,0,0,0.38),
+    inset 0 1px 0 rgba(255,255,255,0.02);
+}
+
+#listaCampanhasMaster .monstro-card:hover {
+  border-color: rgba(170, 45, 45, 0.55);
+}
+
+/* NOME */
+
+#listaCampanhasMaster .monstro-nome {
+  color: #e1c187;
+}
+
+/* SISTEMA */
+
+#listaCampanhasMaster .monstro-tipo {
+  color: #a68774;
+}
+
+/* DESCRIÇÃO */
+
+#listaCampanhasMaster .monstro-lore-preview {
+  color: #c8b39e;
+}
+
+/* DELETE */
+
+#listaCampanhasMaster .monstro-delete {
+  background: rgba(80, 18, 18, 0.6);
+  color: #f1e6cf;
+}
+
+#listaCampanhasMaster .monstro-delete:hover {
+  background: rgba(130, 24, 24, 0.85);
+}
+
+
+/* ================= TELA CAMPANHAS MASTER ================= */
+
+.tela-campanhas-master {
+  position: relative;
+
+  min-height: 100vh;
+
+  padding: 14px;
+
+  background:
+    radial-gradient(
+      circle at top,
+      rgba(70, 16, 16, 0.18),
+      transparent 40%
+    ),
+    linear-gradient(
+      180deg,
+      #140909 0%,
+      #0d0606 100%
+    );
+
+  overflow: hidden;
+}
+
+/* MESMA ATMOSFERA DO GRIMÓRIO */
+
+.tela-campanhas-master::before {
+  content: "";
+
+  position: absolute;
+  inset: 0;
+
+  background-image:
+    url("img/simbolos-bg.png");
+
+  background-size: cover;
+  background-position: center;
+
+  opacity: 0.06;
+
+  pointer-events: none;
+}
+
+
+/* TÍTULO */
+
+.titulo-campanhas-master {
+  margin-top: 28px;
+
+  text-align: center;
+
+  font-family: "Cinzel Decorative", serif;
+  font-size: 48px;
+  letter-spacing: 2px;
+
+  color: #d6b273;
+
+  text-shadow:
+    0 0 12px rgba(120, 20, 20, 0.35),
+    0 2px 8px rgba(0,0,0,0.9);
+}
+
+/* ================= CAMPANHAS MASTER - IGUAL GRIMÓRIO ================= */
+
+#telaCampanhasMaster {
+  position: relative !important;
+  isolation: isolate;
+  min-height: 100vh;
+  padding: 14px 12px 96px !important;
+  overflow-x: hidden;
+
+  --grim-preto: #080807;
+  --grim-carvao: #12100e;
+  --grim-carvao-2: #1a1714;
+  --grim-bege: #d8c8aa;
+  --grim-bege-2: #b9a98c;
+  --grim-vermelho: #5f1717;
+  --grim-vermelho-2: #3f1010;
+  --grim-borda: rgba(216, 200, 170, 0.16);
+  --grim-borda-vermelha: rgba(95, 23, 23, 0.42);
+
+  color: var(--grim-bege) !important;
+
+  background:
+    radial-gradient(circle at top right, rgba(95, 23, 23, 0.16), transparent 30%),
+    radial-gradient(circle at bottom left, rgba(95, 23, 23, 0.10), transparent 35%),
+    linear-gradient(180deg, var(--grim-preto) 0%, var(--grim-carvao) 55%, #050505 100%) !important;
+}
+
+#telaCampanhasMaster > *:not(.simbolos-bg) {
+  position: relative;
+  z-index: 2;
+}
+
+#telaCampanhasMaster .master-header {
+  display: block !important;
+  text-align: center;
+  margin: 10px 0 22px;
+}
+
+#telaCampanhasMaster .master-logo-img {
+  display: none !important;
+}
+
+#telaCampanhasMaster .master-header h2 {
+  font-family: "Cinzel Decorative", serif !important;
+  font-size: 38px;
+  letter-spacing: 2px;
+  color: var(--grim-bege) !important;
+  text-shadow: 0 2px 4px #000;
+  margin: 8px 0;
+}
+
+#telaCampanhasMaster .master-header p {
+  color: var(--grim-bege-2) !important;
+  font-size: 14px;
+}
+
+#telaCampanhasMaster .voltar {
+  background: linear-gradient(180deg, var(--grim-vermelho-2), #160707) !important;
+  color: var(--grim-bege) !important;
+  border: 1px solid var(--grim-borda-vermelha) !important;
+}
+
+#telaCampanhasMaster .master-form-box,
+#telaCampanhasMaster .monstro-card {
+  background: linear-gradient(180deg, var(--grim-carvao-2), var(--grim-carvao)) !important;
+  border: 1px solid var(--grim-borda-vermelha) !important;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.45) !important;
+  border-radius: 16px !important;
+}
+
+#telaCampanhasMaster .campanha-toggle h3,
+#telaCampanhasMaster .monstro-nome {
+  color: var(--grim-bege) !important;
+  font-family: "Cinzel", serif !important;
+}
+
+#telaCampanhasMaster input,
+#telaCampanhasMaster textarea {
+  background: #1f1815 !important;
+  color: var(--grim-bege) !important;
+  border: 1px solid var(--grim-borda) !important;
+}
+
+#telaCampanhasMaster input::placeholder,
+#telaCampanhasMaster textarea::placeholder {
+  color: rgba(216, 200, 170, 0.55) !important;
+}
+
+#telaCampanhasMaster .btn-master-principal {
+  background: linear-gradient(180deg, var(--grim-vermelho), var(--grim-vermelho-2)) !important;
+  color: var(--grim-bege) !important;
+  border: 1px solid var(--grim-borda-vermelha) !important;
+}
+
+#telaCampanhasMaster .monstro-tipo,
+#telaCampanhasMaster .monstro-lore-preview {
+  color: var(--grim-bege-2) !important;
+}
+
+#telaCampanhasMaster .monstro-delete {
+  background: #2a0b0b !important;
+  color: var(--grim-bege) !important;
+  border: 1px solid var(--grim-borda-vermelha) !important;
+}
+
+/* campanhas sem caixa, estilo Idiomas/Aliados */
+
+#telaCampanhasMaster .master-header {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  margin: 18px 0 22px !important;
+  padding: 0 !important;
+}
+
+#telaCampanhasMaster .master-header h2 {
+  border-bottom: 1px solid rgba(216, 200, 170, 0.22);
+  padding-bottom: 8px;
+}
+
+#telaCampanhasMaster .campanha-toggle {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+#telaCampanhasMaster .campanha-toggle h3 {
+  margin: 0 0 16px !important;
+  padding: 10px 0 !important;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  border-top: 1px solid rgba(216, 200, 170, 0.18);
+  border-bottom: 1px solid rgba(216, 200, 170, 0.18);
+
+  background: transparent !important;
+  box-shadow: none !important;
+
+  font-family: "Cinzel", serif !important;
+  font-size: 24px;
+  letter-spacing: 1px;
+  color: #d8c8aa !important;
+}
+
+/* CARD GRANDE DE CAMPANHA */
+
+#listaCampanhasMaster {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+}
+
+#listaCampanhasMaster .monstro-card {
+  position: relative;
+  padding: 0 !important;
+  overflow: hidden;
+  border-radius: 14px !important;
+  background: #1c120f !important;
+  border: 1px solid rgba(216, 200, 170, 0.18) !important;
+}
+
+.campanha-card-bg {
+  min-height: 135px;
+  padding: 16px;
+  cursor: pointer;
+
+  background:
+    linear-gradient(rgba(8,5,5,0.55), rgba(8,5,5,0.9));
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.campanha-card-conteudo h3 {
+  margin: 0 0 8px;
+  font-family: "Cinzel", serif;
+  font-size: 22px;
+  color: #f1e6cf;
+}
+
+.campanha-card-conteudo span {
+  display: block;
+  margin-bottom: 10px;
+  color: #c9a96f;
+  font-size: 13px;
+}
+
+.campanha-card-conteudo p {
+  margin: 0;
+  color: #d8c8aa;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.campanha-delete {
+  top: 10px !important;
+  right: 10px !important;
+}
+
+/* ========================================================================== */
+/* CAMPANHAS MASTER — ISOLAMENTO FINAL                                        */
+/* Este bloco separa os cards de campanha dos cards de monstro.               */
+/* ========================================================================== */
+
+#listaCampanhasMaster.lista-campanhas,
+#listaCampanhasMaster {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 18px !important;
+  margin-top: 24px !important;
+}
+
+#listaCampanhasMaster .campanha-card {
+  position: relative !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  min-height: 180px !important;
+  border-radius: 18px !important;
+  background: linear-gradient(180deg, #1a1411, #0d0908) !important;
+  border: 1px solid rgba(216, 200, 170, 0.18) !important;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.45) !important;
+}
+
+#listaCampanhasMaster .campanha-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(95, 23, 23, 0.55) !important;
+}
+
+#listaCampanhasMaster .campanha-card-bg {
+  position: relative !important;
+  width: 100% !important;
+  min-height: 180px !important;
+  padding: 20px !important;
+  cursor: pointer !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
+#listaCampanhasMaster .campanha-card-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(8,5,5,0.25), rgba(8,5,5,0.92));
+  pointer-events: none;
+}
+
+#listaCampanhasMaster .campanha-card-conteudo {
+  position: relative !important;
+  z-index: 2 !important;
+  max-width: calc(100% - 34px);
+}
+
+#listaCampanhasMaster .campanha-card-conteudo h3 {
+  margin: 0 0 8px !important;
+  font-family: "Cinzel", serif !important;
+  font-size: 26px !important;
+  line-height: 1.1 !important;
+  color: #f1e6cf !important;
+}
+
+#listaCampanhasMaster .campanha-card-conteudo span {
+  display: inline-block !important;
+  margin: 0 0 12px !important;
+  color: #b9a98c !important;
+  font-size: 12px !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase !important;
+}
+
+#listaCampanhasMaster .campanha-card-conteudo p {
+  margin: 0 !important;
+  color: #d8c8aa !important;
+  font-size: 14px !important;
+  line-height: 1.45 !important;
+}
+
+#listaCampanhasMaster .campanha-delete {
+  position: absolute !important;
+  top: 10px !important;
+  right: 10px !important;
+  z-index: 20 !important;
+  width: 30px !important;
+  height: 30px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  border-radius: 9px !important;
+  background: rgba(42, 11, 11, 0.92) !important;
+  color: #f1e6cf !important;
+  border: 1px solid rgba(95, 23, 23, 0.62) !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+#telaCampanhasMaster .master-form-box.campanha-toggle {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+#telaCampanhasMaster .campanha-toggle .conteudo-toggle {
+  background: linear-gradient(180deg, rgba(26, 20, 17, 0.96), rgba(13, 9, 8, 0.96)) !important;
+  border: 1px solid rgba(216, 200, 170, 0.14) !important;
+  border-radius: 16px !important;
+  padding: 14px !important;
+}
+
+
+/* ================================
+   FORÇAR MASTER NAVBAR LISA FINAL
+================================ */
+
+#masterIgnea .master-tabs {
+  position: fixed !important;
+  left: 50% !important;
+  bottom: 0 !important;
+  transform: translateX(-50%) !important;
+
+  width: min(430px, 100%) !important;
+  height: 46px !important;
+
+  display: flex !important;
+  align-items: stretch !important;
+  justify-content: stretch !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+  gap: 0 !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(14, 10, 10, 0.96),
+      rgba(8, 6, 6, 0.98)
+    );
+
+  border-top:
+    1px solid rgba(140, 95, 85, 0.18);
+  border-radius: 0 !important;
+
+  overflow: hidden !important;
+  box-shadow: none !important;
+}
+
+#masterIgnea .master-tabs .master-tab-btn {
+  flex: 1 !important;
+
+  width: auto !important;
+  height: 100% !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  border: none !important;
+  border-radius: 0 !important;
+  border-right: 1px solid rgba(241, 230, 207, 0.08) !important;
+
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+
+  transform: none !important;
+}
+
+#masterIgnea .master-tabs .master-tab-btn:last-child {
+  border-right: none !important;
+}
+
+#masterIgnea .master-tabs .master-tab-btn.active {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(120, 22, 22, 0.92),
+      rgba(70, 10, 10, 0.96)
+    ) !important;
+
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+#masterIgnea .master-tabs .tab-icone {
+  font-size: 18px !important;
+  filter: none !important;
+}
+

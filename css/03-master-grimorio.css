@@ -1,0 +1,1169 @@
+/* ================= PALETA MEDIEVAL BLACK =================
+   Base: #2a2a2b | #373838 | #444548 | #45494d | #414141
+   Acentos: vermelho escuro #5b1515 / #7a2323 + dourado envelhecido #c8a85a
+   Arquivo reorganizado: duplicatas da barra inferior foram consolidadas no final.
+========================================================= */
+
+:root {
+  --mb-bg: #2a2a2b;
+  --mb-bg-2: #373838;
+  --mb-card: #414141;
+  --mb-card-2: #444548;
+  --mb-border: #45494d;
+  --mb-red: #5b1515;
+  --mb-red-2: #7a2323;
+  --mb-gold: #c8a85a;
+  --mb-text: #f1e7d0;
+  --mb-muted: #b8aa8a;
+}
+
+/* ================= MASTER ÍGNEA ================= */
+
+.tela-modo {
+  text-align: center;
+}
+
+.modo-subtitulo {
+  color: #b8aa8a;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+.modo-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.modo-card {
+  min-height: 130px;
+  border: 1px solid rgba(200, 168, 90, 0.22);
+  border-radius: 18px;
+  background: linear-gradient(180deg, #373838, #2a2a2b);
+  color: #f1e7d0;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.35);
+  padding: 18px;
+  cursor: pointer;
+}
+
+.modo-card strong {
+  display: block;
+  font-family: "Cinzel", serif;
+  font-size: 22px;
+  margin: 8px 0;
+}
+
+.modo-card small {
+  color: #b8aa8a;
+  font-size: 13px;
+}
+
+.modo-icone {
+  font-size: 38px;
+}
+
+.modo-master {
+  border-color: rgba(200,168,90,0.42);
+  box-shadow: 0 0 18px rgba(122,35,35,0.24);
+}
+
+.modo-sair {
+  margin-top: 18px;
+}
+
+.master-page {
+  padding-bottom: 90px;
+}
+
+.master-header {
+  text-align: center;
+  padding: 18px 10px;
+  margin-bottom: 14px;
+  border-radius: 18px;
+  background: radial-gradient(circle at top, #373838, #211813 70%);
+  border: 1px solid rgba(200, 168, 90, 0.22);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+}
+
+.master-logo {
+  font-size: 46px;
+  margin-bottom: 6px;
+}
+
+.master-header h2 {
+  font-family: "Cinzel", serif;
+  margin: 0;
+  color: #c8a85a;
+}
+
+.master-header p {
+  margin: 8px 0 0;
+  color: #b8aa8a;
+  font-size: 14px;
+}
+
+.master-form-box,
+.bestiario-box {
+  background: #2a2a2b;
+  border-radius: 18px;
+  padding: 14px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(200, 168, 90, 0.13);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.28);
+}
+
+.master-form-box h3,
+.bestiario-box h3,
+.master-form-box h4 {
+  font-family: "Cinzel", serif;
+  color: #c8a85a;
+  margin: 8px 0 12px;
+}
+
+.master-linha-3,
+.master-status-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.master-status-grid input,
+.master-linha-3 input {
+  text-align: center;
+}
+
+.master-upload {
+  display: block;
+  text-align: center;
+  background: #7a2323;
+  color: #f1e7d0;
+  font-weight: bold;
+  padding: 12px;
+  border-radius: 12px;
+  margin: 10px 0;
+  cursor: pointer;
+}
+
+.master-upload input {
+  display: none;
+}
+
+.preview-monstro {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 14px;
+  margin: 10px 0;
+  border: 1px solid rgba(200,168,90,0.22);
+}
+
+.master-form-acoes {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.btn-master-principal,
+.btn-master-secundario,
+.btn-master-perigo {
+  flex: 1;
+  border: none;
+  border-radius: 12px;
+  padding: 12px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.btn-master-principal {
+  background: #7a2323;
+  color: #f1e7d0;
+}
+
+.btn-master-secundario {
+  background: #444548;
+  color: #f1e7d0;
+}
+
+.btn-master-perigo {
+  background: #5b1515;
+  color: #f1e7d0;
+}
+
+.bestiario-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.monstro-card {
+  overflow: hidden;
+  border-radius: 16px;
+  background: #373838;
+  border: 1px solid rgba(200,168,90,0.12);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+}
+
+.monstro-card-img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  background: #1f2021;
+}
+
+.monstro-card-body {
+  padding: 12px;
+}
+
+.monstro-card-body h4 {
+  margin: 0 0 5px;
+  font-family: "Cinzel", serif;
+  color: #f1e7d0;
+}
+
+.monstro-meta {
+  font-size: 13px;
+  color: #b8aa8a;
+  margin-bottom: 8px;
+}
+
+.monstro-hp {
+  font-weight: bold;
+  color: #c8a85a;
+  margin: 6px 0;
+}
+
+.monstro-lore-preview {
+  font-size: 13px;
+  color: #d6d0c2;
+  line-height: 1.4;
+}
+
+.monstro-acoes {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.monstro-acoes button {
+  border: none;
+  border-radius: 10px;
+  padding: 9px 6px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.hp-controle {
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 14px;
+  background: rgba(0,0,0,0.2);
+}
+
+.hp-botoes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  margin: 8px 0;
+}
+
+.hp-botoes button {
+  border: none;
+  border-radius: 10px;
+  padding: 10px;
+  background: #444548;
+  color: #f1e7d0;
+  font-weight: bold;
+}
+
+.hp-manual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.master-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 99999;
+}
+
+.master-modal-content {
+  width: min(430px, 100%);
+  max-height: 85vh;
+  overflow-y: auto;
+  background: #2a2a2b;
+  color: #f1e7d0;
+  border-radius: 18px;
+  padding: 18px;
+  position: relative;
+  border: 1px solid rgba(200,168,90,0.22);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.5);
+}
+
+.modal-monstro-img {
+  width: 100%;
+  max-height: 260px;
+  object-fit: cover;
+  border-radius: 14px;
+  margin-bottom: 12px;
+}
+
+.modal-status-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.modal-status-grid div {
+  background: #373838;
+  border-radius: 10px;
+  padding: 8px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.modal-bloco {
+  background: #373838;
+  border-radius: 12px;
+  padding: 10px;
+  margin: 10px 0;
+}
+
+.modal-bloco strong {
+  color: #c8a85a;
+}
+
+#falaAleatoriaTexto {
+  color: #c8a85a;
+  font-style: italic;
+  margin-top: 8px;
+}
+
+.btn-voltar-modos {
+  background: #444548;
+  color: #f1e7d0;
+  border: 1px solid rgba(200,168,90,0.18);
+
+  padding: 10px 14px;
+  border-radius: 12px;
+
+  font-weight: bold;
+  margin-bottom: 14px;
+
+  cursor: pointer;
+
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.btn-voltar-modos:hover {
+  background: #45494d;
+}
+
+.logo-modo{
+  width: 220px;
+  height: 120px;
+
+  object-fit: contain;
+
+  transform: scale(2.2);
+
+  margin-top: -10px;
+  margin-bottom: -10px;
+
+  filter:
+    drop-shadow(0 0 8px rgba(122,35,35,0.28));
+}
+
+/* ================= GRIMÓRIO ÍGNEO - ABAS ================= */
+
+.master-logo-img {
+  width: 160px;
+  height: 90px;
+  object-fit: contain;
+  margin: -10px auto 0;
+  display: block;
+  filter: drop-shadow(0 0 10px rgba(122,35,35,0.28));
+}
+
+/* Barra inferior consolidada no final do arquivo para evitar regras duplicadas. */
+
+.master-aba {
+  animation: masterFade 0.18s ease;
+}
+
+@keyframes masterFade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.master-desc {
+  color: #b8aa8a;
+  font-size: 13px;
+  text-align: center;
+  margin-top: -6px;
+  margin-bottom: 14px;
+}
+
+/* ================= COMPÊNDIO ================= */
+
+.compendio-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.compendio-card {
+  height: 190px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+
+  background-color: #414141;
+
+  background-size: cover;
+  background-position: center 10%;
+  background-repeat: no-repeat;
+
+  border: 1px solid rgba(200,168,90,0.14);
+
+  box-shadow:
+    0 8px 18px rgba(0,0,0,0.35);
+
+  cursor: pointer;
+}
+
+.compendio-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(10,5,4,0.92),
+    rgba(10,5,4,0.35),
+    rgba(10,5,4,0.1)
+  );
+}
+
+.compendio-info {
+  position: absolute;
+  z-index: 2;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  text-align: center;
+}
+
+.compendio-info strong {
+  display: block;
+  font-family: "Cinzel", serif;
+  color: #f1e7d0;
+  font-size: 14px;
+  line-height: 1.1;
+}
+
+.compendio-info small {
+  display: block;
+  color: #b8aa8a;
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+.compendio-info span {
+  display: block;
+  color: #c8a85a;
+  font-size: 12px;
+  margin-top: 3px;
+}
+
+/* ================= SHEET MONSTRO ================= */
+
+.sheet-monstro-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 99990;
+}
+
+.sheet-monstro {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 72vh;
+  background: #2a2a2b;
+  border-radius: 24px 24px 0 0;
+  border: 1px solid rgba(200,168,90,0.18);
+  z-index: 99999;
+  padding: 12px;
+  overflow-y: auto;
+  box-shadow: 0 -12px 30px rgba(0,0,0,0.65);
+
+  will-change: transform, height, opacity;
+
+  touch-action: none;
+
+  transform: translateY(110%);
+  opacity: 0;
+
+  transition:
+    transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.25s ease,
+    height 0.25s ease;
+}
+
+.sheet-handle {
+  height: 7px;
+  width: 70px;
+  cursor: grab;
+  touch-action: none;
+}
+
+.sheet-monstro.aberto {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.sheet-monstro.full {
+  height: 96vh;
+}
+
+.sheet-handle {
+  width: 56px;
+  height: 5px;
+  border-radius: 999px;
+  background: #6d5a33;
+  margin: 0 auto 12px;
+}
+
+.sheet-img {
+  width: 100%;
+  max-height: 240px;
+  object-fit: cover;
+  border-radius: 18px;
+  border: 1px solid rgba(200,168,90,0.16);
+  margin-bottom: 12px;
+}
+
+.sheet-titulo {
+  font-family: "Cinzel", serif;
+  color: #c8a85a;
+  text-align: center;
+  margin: 4px 0;
+}
+
+.sheet-meta {
+  text-align: center;
+  color: #b8aa8a;
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+
+.sheet-hp-ca {
+  text-align: center;
+  font-weight: bold;
+  color: #f1e7d0;
+  margin-bottom: 12px;
+}
+
+.sheet-acoes {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.sheet-bloco {
+  background: #373838;
+  border-radius: 14px;
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid rgba(200,168,90,0.08);
+}
+
+.sheet-bloco strong {
+  color: #c8a85a;
+}
+
+.sheet-status-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.sheet-status-grid div {
+  background: #373838;
+  border-radius: 12px;
+  padding: 8px;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* ================= COMBATE MASTER ================= */
+
+.combate-master-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.combate-card {
+  background: #373838;
+  border-radius: 16px;
+  padding: 12px;
+  border: 1px solid rgba(200,168,90,0.13);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.32);
+}
+
+.combate-topo {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.combate-img {
+  width: 68px;
+  height: 68px;
+  object-fit: cover;
+  border-radius: 12px;
+  background: #1f2021;
+}
+
+.combate-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.combate-info strong {
+  display: block;
+  font-family: "Cinzel", serif;
+  color: #f1e7d0;
+}
+
+.combate-info small {
+  color: #b8aa8a;
+  font-size: 12px;
+}
+
+.combate-hp {
+  margin-top: 5px;
+  color: #c8a85a;
+  font-weight: bold;
+}
+
+.combate-botoes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.combate-botoes button,
+.combate-card button {
+  border: none;
+  border-radius: 10px;
+  padding: 9px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.combate-botoes button {
+  background: #444548;
+  color: #f1e7d0;
+}
+
+.combate-manual {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.combate-acoes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* ================= STATUS MONSTRO ================= */
+
+.status-monstro-box {
+  background: #373838;
+  border-radius: 14px;
+  padding: 10px 6px;
+  border: 1px solid rgba(200,168,90,0.11);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-monstro-box span {
+  font-family: "Cinzel", serif;
+  color: #c8a85a;
+  font-size: 13px;
+}
+
+.status-monstro-box input {
+  width: 58px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  background: #f1e7d0;
+  border: 1px solid rgba(200,168,90,0.16);
+  color: #f1e7d0;
+  border-radius: 10px;
+  padding: 6px;
+}
+
+.mod-monstro {
+  color: #b8aa8a;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.sheet-status-grid small {
+  display: block;
+  margin-top: 4px;
+  color: #b8aa8a;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.btn-minimizar-combate {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 10px;
+  background: #444548;
+  color: #f1e7d0;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.combate-detalhes {
+  display: block;
+}
+
+.combate-card.minimizado .combate-detalhes {
+  display: none;
+}
+
+.combate-card.minimizado {
+  padding: 10px;
+}
+
+.combate-card.minimizado .combate-img {
+  width: 52px;
+  height: 52px;
+}
+
+.combate-card.minimizado .combate-info strong {
+  font-size: 15px;
+}
+
+.combate-card.minimizado .combate-info small {
+  display: none;
+}
+
+.combate-hp {
+  color: #9b2c2c !important;
+  font-weight: 900;
+  text-shadow: 0 0 8px rgba(239, 68, 68, 0.25);
+}
+
+.btn-hp-dano {
+  background:
+    linear-gradient(
+      180deg,
+      #5a1515 0%,
+      #3a0f0f 100%
+    ) !important;
+
+  color: #f8eaea !important;
+
+  border: 1px solid rgba(255,80,80,0.12);
+
+  box-shadow:
+    0 4px 10px rgba(80,0,0,0.22);
+
+  font-weight: bold;
+}
+
+.btn-hp-cura {
+  background:
+    linear-gradient(
+      180deg,
+      #2f3438 0%,
+      #25282b 100%
+    ) !important;
+
+  color: #e7f1ff !important;
+
+  border: 1px solid rgba(100,160,255,0.12);
+
+  box-shadow:
+    0 4px 10px rgba(0,20,60,0.22);
+
+  font-weight: bold;
+}
+
+.compendio-controles {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.compendio-controles input,
+.compendio-controles select {
+  width: 100%;
+  padding: 11px;
+  border-radius: 12px;
+  border: 1px solid rgba(200,168,90,0.16);
+  background: #373838;
+  color: #f1e7d0;
+  font-weight: bold;
+}
+
+.compendio-controles input::placeholder {
+  color: #b8aa8a;
+}
+
+/* ================= MASTER ÍGNEA - MENU INFERIOR SIMPLES ================= */
+
+#masterIgnea {
+  padding-bottom: 72px !important;
+}
+
+
+.master-tab-btn {
+  flex: 1 !important;
+  height: 64px !important;
+
+  border: none !important;
+  border-right: 1px solid rgba(196, 128, 49, 0.35) !important;
+  border-radius: 0 !important;
+
+  background: linear-gradient(180deg, #444548, #2a2a2b) !important;
+
+  color: #c8a85a !important;
+  font-family: "Cinzel", serif !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.4px !important;
+  text-transform: uppercase !important;
+
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.master-tab-btn:last-child {
+  border-right: none !important;
+}
+
+.master-tab-btn.active {
+  background: linear-gradient(180deg, #7a2323, #5b1515) !important;
+  color: #f1e7d0 !important;
+
+  box-shadow:
+    inset 0 3px 0 #c8a85a,
+    0 0 12px rgba(122, 35, 35, 0.42) !important;
+}
+
+
+/* ===============================
+   MASTER - NAVBAR LISA
+================================ */
+
+.master-tabs {
+  position: fixed;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+
+  width: min(360px, calc(100% - 34px));
+  height: 44px;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0;
+
+  background: rgba(28, 20, 16, 0.94);
+  border: 1px solid rgba(150, 115, 82, 0.22);
+  border-radius: 4px;
+
+  overflow: hidden;
+  box-shadow: 0 8px 22px rgba(0,0,0,0.45);
+  z-index: 9999;
+}
+
+.master-tab-btn {
+  flex: 1;
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+  border-right: 1px solid rgba(150, 115, 82, 0.18);
+  border-radius: 0;
+
+  background: transparent;
+  color: #cbb99c;
+
+  cursor: pointer;
+  transition: 0.18s ease;
+}
+
+.master-tab-btn:last-child {
+  border-right: none;
+}
+
+.master-tab-btn .tab-icone {
+  font-size: 18px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.7));
+}
+
+.master-tab-btn:hover {
+  background: rgba(190, 145, 92, 0.08);
+}
+
+.master-tab-btn.active {
+  background: rgba(164, 122, 66, 0.82);
+  box-shadow: inset 0 2px 0 rgba(235, 205, 150, 0.18);
+}
+
+.master-tab-btn.active .tab-icone {
+  transform: translateY(-1px);
+}
+
+.master-page {
+  padding-bottom: 70px;
+}
+
+/* ================= AJUSTE DARK FANTASY / MEDIEVAL BLACK ================= */
+
+:root {
+  --black-1: #2a2a2b;
+  --black-2: #373838;
+  --black-3: #444548;
+  --black-4: #45494d;
+  --black-5: #414141;
+
+  --gold-soft: #caa85a;
+  --gold-muted: #9f8347;
+  --text-main: #f1e6c8;
+  --text-muted: #b9ad94;
+
+  --red-dark: #4b1111;
+  --red-deep: #2a0808;
+}
+
+/* fundo geral da aba master */
+#masterIgnea,
+.master-page,
+.master-aba {
+  background: linear-gradient(180deg, #2a2a2b, #373838) !important;
+  color: var(--text-main) !important;
+}
+
+/* caixas principais */
+.master-form-box,
+.bestiario-box,
+.combate-card,
+.monstro-card,
+.sheet-monstro,
+.master-modal-content,
+.sheet-bloco,
+.status-monstro-box,
+.modal-bloco,
+.modal-status-grid div,
+.sheet-status-grid div {
+  background: linear-gradient(180deg, #373838, #2a2a2b) !important;
+  border: 1px solid rgba(202, 168, 90, 0.22) !important;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.45) !important;
+}
+
+/* títulos */
+.master-form-box h3,
+.bestiario-box h3,
+.master-form-box h4,
+.sheet-titulo,
+.status-monstro-box span {
+  color: var(--gold-soft) !important;
+}
+
+/* inputs e textareas */
+#masterIgnea input,
+#masterIgnea textarea,
+#masterIgnea select,
+.compendio-controles input,
+.compendio-controles select {
+  background: #45494d !important;
+  color: var(--text-main) !important;
+  border: 1px solid rgba(202, 168, 90, 0.25) !important;
+}
+
+#masterIgnea input::placeholder,
+#masterIgnea textarea::placeholder {
+  color: #c8b98f !important;
+}
+
+/* quadradinhos dos status */
+.status-monstro-box input {
+  background: #f1e6c8 !important;
+  color: #2a2a2b !important;
+  border: 1px solid rgba(202, 168, 90, 0.45) !important;
+}
+
+/* textos secundários */
+.master-desc,
+.master-header p,
+.monstro-meta,
+.sheet-meta,
+.mod-monstro,
+.compendio-info small {
+  color: var(--text-muted) !important;
+}
+
+/* botões principais */
+.btn-master-principal,
+.master-upload {
+  background: linear-gradient(180deg, #caa85a, #8f7136) !important;
+  color: #1d1d1e !important;
+}
+
+/* botões secundários */
+.btn-master-secundario,
+.btn-voltar-modos,
+.hp-botoes button,
+.combate-botoes button,
+.btn-minimizar-combate {
+  background: linear-gradient(180deg, #45494d, #373838) !important;
+  color: var(--text-main) !important;
+  border: 1px solid rgba(202, 168, 90, 0.22) !important;
+}
+
+/* botão perigo menos gritante */
+.btn-master-perigo,
+.btn-hp-dano {
+  background: linear-gradient(180deg, #4b1111, #2a0808) !important;
+  color: #f1d6c8 !important;
+  border: 1px solid rgba(150, 50, 50, 0.35) !important;
+  box-shadow: none !important;
+}
+
+/* cura mais escura também */
+.btn-hp-cura {
+  background: linear-gradient(180deg, #263947, #1a252e) !important;
+  color: #dce8ef !important;
+  box-shadow: none !important;
+}
+
+/* botões da barra */
+.master-tab-btn {
+  background: linear-gradient(180deg, #414141, #2a2a2b) !important;
+  color: #caa85a !important;
+  border-right: 1px solid rgba(202, 168, 90, 0.22) !important;
+}
+
+/* ativo sem vermelho aceso */
+.master-tab-btn.active {
+  background: linear-gradient(180deg, #4b1111, #2a0808) !important;
+  color: #f1e6c8 !important;
+  box-shadow:
+    inset 0 3px 0 rgba(202, 168, 90, 0.75),
+    0 0 10px rgba(75, 17, 17, 0.35) !important;
+}
+
+/* cards do compêndio */
+.compendio-card {
+  background-color: #373838 !important;
+  border: 1px solid rgba(202, 168, 90, 0.22) !important;
+}
+
+.compendio-card::before {
+  background: linear-gradient(
+    to top,
+    rgba(20,20,21,0.95),
+    rgba(42,42,43,0.55),
+    rgba(42,42,43,0.15)
+  ) !important;
+}
+
+.master-logo-img {
+  display: none !important;
+}
+
+/* ================= SEPARAÇÃO VISUAL: JOGADOR X MESTRE ================= */
+
+/* Esconde o header global da Ficha Ígnea quando estiver no Master */
+body.modo-mestre-ativo .header-rpg {
+  display: none !important;
+}
+
+/* Remove o card Grimório Ígneo de dentro do Master */
+#masterIgnea .master-header {
+  display: none !important;
+}
+
+/* Master com visual próprio dark fantasy */
+#masterIgnea {
+  background: linear-gradient(180deg, #2a2a2b, #373838) !important;
+  color: #f1e6c8 !important;
+  min-height: 100vh;
+}
+
+/* Caixas do mestre */
+#masterIgnea .master-form-box,
+#masterIgnea .bestiario-box,
+#masterIgnea .combate-card,
+#masterIgnea .monstro-card {
+  background: linear-gradient(180deg, #373838, #2a2a2b) !important;
+  border: 1px solid rgba(202, 168, 90, 0.22) !important;
+}
+
+/* Inputs do mestre */
+#masterIgnea input,
+#masterIgnea textarea,
+#masterIgnea select {
+  background: #45494d !important;
+  color: #f1e6c8 !important;
+  border: 1px solid rgba(202, 168, 90, 0.22) !important;
+}
+
+#masterIgnea .master-tab-btn {
+  background: linear-gradient(180deg, #414141, #2a2a2b) !important;
+  color: #caa85a !important;
+}
+
+#masterIgnea .master-tab-btn.active {
+  background: linear-gradient(180deg, #3a0d0d, #1f0707) !important;
+  color: #f1e6c8 !important;
+  box-shadow: inset 0 3px 0 rgba(202, 168, 90, 0.75) !important;
+}
+
+body.hide-header .header-rpg {
+  display: none !important;
+}
+
