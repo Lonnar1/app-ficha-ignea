@@ -11,18 +11,27 @@
       content="width=device-width, initial-scale=1.0, user-scalable=no"
     />
     <title>Ficha Ígnea</title>
-    <link rel="stylesheet" href="style.css" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600&family=MedievalSharp&display=swap"
-      rel="stylesheet"
-    />
+    <link rel="stylesheet" href="css/00-base.css" />
+    <link rel="stylesheet" href="css/01-player-ficha.css" />
+    <link rel="stylesheet" href="css/02-login.css" />
+    <link rel="stylesheet" href="css/03-master-grimorio.css" />
+    <link rel="stylesheet" href="css/04-jornada-modo.css" />
+    <link rel="stylesheet" href="css/05-grimorio-componentes.css" />
+    <link rel="stylesheet" href="css/06-final-overrides.css" />
+    <link rel="stylesheet" href="css/07-paleta-master.css" />
+    <link rel="stylesheet" href="css/08-campanhas-master.css" />
+   <link
+  href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Cinzel+Decorative:wght@700&family=MedievalSharp&display=swap"
+  rel="stylesheet"
+/>
 
   </head>
 
   <body>
+    <div class="folhas-bg"></div>
     <div class="header-rpg">
       <h1 class="titulo-rpg">
-        <img src="icon-192.png" class="espada-titulo" />
+        <img src="logo-ficha-ignea.png" class="espada-titulo" />
         <span>FICHA ÍGNEA</span>
       </h1>
     </div>
@@ -43,28 +52,273 @@
   </div>
 </div>
 
+<!-- ================= ESCOLHA DE MODO ================= -->
+<div id="tela-modo" class="tela-modo-img" style="display:none;">
+
+  <div
+    class="area-click area-jornada"
+    onclick="entrarModoJogadorAnimado()"
+  ></div>
+
+  <div
+    class="area-click area-grimorio"
+    onclick="entrarModoMestreAnimado()"
+  ></div>
+
+  <button class="btn-sair-img" onclick="sairConta()">
+    Sair
+  </button>
+
+</div>
+
+<div id="telaCampanhasMaster" class="master-page tela-campanhas-master" style="display:none;">
+  <div class="simbolos-bg"></div>
+
+  <button class="voltar" onclick="voltarTelaModo()">← Voltar</button>
+
+  <header class="master-header">
+    <img src="img/logo-grimorio.png" class="master-logo-img">
+    <h2>Campanhas</h2>
+    <p>Organize suas mesas separadamente.</p>
+  </header>
+
+  <section class="master-form-box campanha-toggle">
+    <h3 onclick="toggleSecao('boxCriarCampanha', this)">
+      Criar campanha <span class="setinha">▼</span>
+    </h3>
+
+    <div id="boxCriarCampanha" class="conteudo-toggle aberto">
+      <input id="novaCampanhaNome" placeholder="Nome da campanha">
+      <input id="novaCampanhaSistema" placeholder="Sistema usado">
+
+      <textarea
+        id="novaCampanhaDescricao"
+        placeholder="Descrição breve da campanha"
+      ></textarea>
+
+      <label class="master-upload">
+  Escolher imagem da campanha
+  <input
+    id="campanhaImagemInput"
+    type="file"
+    accept="image/*"
+    onchange="previewImagemCampanha()"
+  >
+</label>
+
+<img
+  id="previewCampanha"
+  class="preview-monstro"
+  src=""
+  alt="Preview da campanha"
+  style="display:none;"
+>
 
 
-    <div id="tela-inicial" class="container" style="display:none;">
-      <h2 class="titulo-secao">Selecionar Personagem</h2>
-      <div class="grid-personagens" id="listaPersonagens"></div>
+      <button class="btn-master-principal" onclick="criarCampanhaMaster()">
+        + Criar campanha
+      </button>
+    </div>
+  </section>
 
-      <div class="acoes-ficha-fixas">
-        <button class="btn-sair-conta" onclick="sairConta()">Sair</button>
-        <button class="btn-acao-ficha" onclick="ativarModoExportacao()">
-          📤 Exportar
-        </button>
-        <button class="btn-acao-ficha" onclick="abrirImportacao()">
-          📂 Importar
-        </button>
-        <input
-          type="file"
-          id="importarFicha"
-          accept=".json"
-          style="display: none"
-        />
+  <div id="listaCampanhasMaster" class="lista-campanhas"></div>
+</div>
+
+<!-- ================= GRIMÓRIO ÍGNEO ================= -->
+<div id="masterIgnea" class="container master-page" style="display:none;">
+    <div class="simbolos-bg"></div>
+    <header class="master-header">
+      <h3 id="tituloCampanhaAtual" class="titulo-campanha-atual"></h3>
+      <button class="voltar" onclick="voltarCampanhasMaster()">← Campanhas</button>
+    <img src="img/logo-grimorio.png" class="master-logo-img">
+    <h2>Grimório Ígneo</h2>
+    <p>Compêndio, criação de monstros e organização de combates.</p>
+  </header>
+
+  <div class="master-tabs">
+  <button class="master-tab-btn active" title="Lore" onclick="trocarAbaMaster('lore', this)">
+    <span class="tab-icone">📖</span>
+  </button>
+
+  <button class="master-tab-btn" title="Mundo" onclick="trocarAbaMaster('mundo', this)">
+    <span class="tab-icone">🌍</span>
+  </button>
+
+  <button class="master-tab-btn" title="Compêndio" onclick="trocarAbaMaster('compendio', this)">
+    <span class="tab-icone">👹</span>
+  </button>
+
+  <button class="master-tab-btn" title="Criar" onclick="trocarAbaMaster('criar', this)">
+    <span class="tab-icone">✍️</span>
+  </button>
+
+  <button class="master-tab-btn" title="Combate" onclick="trocarAbaMaster('combateMaster', this)">
+    <span class="tab-icone">⚔️</span>
+  </button>
+</div>
+
+  <!-- ================= COMPÊNDIO ================= -->
+<section id="abaMaster-compendio" class="master-aba active">
+
+  <button class="voltar" onclick="voltarCampanhasMaster()">
+  ← Campanhas
+  </button>
+
+<div class="grimorio-header">
+  <div class="grimorio-logo-area">
+    <img src="img/logo-grimorio-nova.png" class="logo-grimorio-nova">
+
+    <div class="grimorio-texto-logo">
+      <span class="grimorio-branco">GRIMÓRIO</span>
+
+      <div class="igneo-linha">
+        <span class="linha-ornamento"></span>
+        <span class="grimorio-vermelho">ÍGNEO</span>
+        <span class="linha-ornamento"></span>
       </div>
     </div>
+
+    <div class="grimorio-linha"></div>
+  </div>
+</div>
+
+<p class="master-desc">
+  Todos os monstros criados aparecem aqui.
+</p>
+
+    <div class="compendio-controles">
+  <input
+    id="pesquisaMonstro"
+    type="text"
+    placeholder="🔎 Pesquisar monstro..."
+    oninput="renderMonstrosMestre()"
+  >
+
+  <select id="ordenarMonstros" onchange="renderMonstrosMestre()">
+    <option value="az">A - Z</option>
+    <option value="za">Z - A</option>
+    <option value="hpMaior">HP maior</option>
+    <option value="hpMenor">HP menor</option>
+    <option value="caMaior">CA maior</option>
+    <option value="caMenor">CA menor</option>
+  </select>
+</div>
+
+    <div id="listaMonstrosMestre" class="compendio-grid"></div>
+  </section>
+
+  <!-- ================= CRIAR MONSTRO ================= -->
+  <section id="abaMaster-criar" class="master-aba" style="display:none;">
+    <section class="master-form-box">
+      <h3 id="tituloFormMonstro">Criar Monstro</h3>
+
+      <input id="monstroNome" placeholder="Nome do monstro">
+      <input id="monstroTipo" placeholder="Tipo / espécie">
+      <input id="monstroRegiao" placeholder="Região">
+
+      <div class="master-linha-3">
+        <input id="monstroHpMax" type="number" placeholder="HP máximo">
+        <input id="monstroHpAtual" type="number" placeholder="HP atual">
+        <input id="monstroCa" type="number" placeholder="CA">
+      </div>
+
+      <h4>Status base</h4>
+      <div class="master-status-grid">
+
+  <div class="status-monstro-box">
+    <span>FOR</span>
+    <input id="monstroFor" type="number" value="10" oninput="atualizarModsMonstro()">
+    <div id="modMonstroFor" class="mod-monstro">+0</div>
+  </div>
+
+  <div class="status-monstro-box">
+    <span>DES</span>
+    <input id="monstroDes" type="number" value="10" oninput="atualizarModsMonstro()">
+    <div id="modMonstroDes" class="mod-monstro">+0</div>
+  </div>
+
+  <div class="status-monstro-box">
+    <span>CON</span>
+    <input id="monstroCon" type="number" value="10" oninput="atualizarModsMonstro()">
+    <div id="modMonstroCon" class="mod-monstro">+0</div>
+  </div>
+
+  <div class="status-monstro-box">
+    <span>INT</span>
+    <input id="monstroInt" type="number" value="10" oninput="atualizarModsMonstro()">
+    <div id="modMonstroInt" class="mod-monstro">+0</div>
+  </div>
+
+  <div class="status-monstro-box">
+    <span>SAB</span>
+    <input id="monstroSab" type="number" value="10" oninput="atualizarModsMonstro()">
+    <div id="modMonstroSab" class="mod-monstro">+0</div>
+  </div>
+
+  <div class="status-monstro-box">
+    <span>CAR</span>
+    <input id="monstroCar" type="number" value="10" oninput="atualizarModsMonstro()">
+    <div id="modMonstroCar" class="mod-monstro">+0</div>
+  </div>
+
+</div>
+
+      <textarea id="monstroLore" placeholder="Lore do bicho"></textarea>
+      <textarea id="monstroHabilidades" placeholder="Habilidades especiais"></textarea>
+      <textarea id="monstroDialogos" placeholder="Diálogos possíveis, um por linha"></textarea>
+      <textarea id="monstroEncontros" placeholder="Pontos de encontro / locais onde pode aparecer"></textarea>
+
+      <label class="master-upload">
+        Escolher imagem do monstro
+        <input id="monstroImagemInput" type="file" accept="image/*" onchange="previewImagemMonstro()">
+      </label>
+
+      <img id="previewMonstro" class="preview-monstro" src="" alt="Preview do monstro" style="display:none;">
+
+      <div class="master-form-acoes">
+        <button class="btn-master-principal" onclick="salvarMonstroMestre()">Salvar monstro</button>
+        <button class="btn-master-secundario" onclick="limparFormMonstro()">Limpar</button>
+      </div>
+    </section>
+  </section>
+
+  <!-- ================= COMBATE MASTER ================= -->
+  <section id="abaMaster-combateMaster" class="master-aba" style="display:none;">
+    <h3 class="titulo-secao">Combate</h3>
+    <p class="master-desc">Envie monstros do compêndio para organizar a sessão.</p>
+    <div id="listaCombateMestre" class="combate-master-lista"></div>
+  </section>
+</div>
+
+<!-- ================= SHEET DE DETALHES DO MONSTRO ================= -->
+<div id="sheetMonstroOverlay" class="sheet-monstro-overlay" style="display:none;" onclick="fecharSheetMonstro()"></div>
+
+<div id="sheetMonstro" class="sheet-monstro" style="display:none;">
+  <div class="sheet-handle" onclick="alternarSheetFull()"></div>
+  <div id="conteudoSheetMonstro"></div>
+</div>
+
+  <div id="tela-inicial" class="container" style="display:none;">
+  <button class="btn-voltar-modos" onclick="abrirTelaModo()">← Voltar</button>
+
+  <h2 class="titulo-secao">Selecionar Personagem</h2>
+  <div class="grid-personagens" id="listaPersonagens"></div>
+
+  <div class="acoes-ficha-fixas">
+    <button class="btn-acao-ficha" onclick="ativarModoExportacao()">
+      📤 Exportar
+    </button>
+    <button class="btn-acao-ficha" onclick="abrirImportacao()">
+      📂 Importar
+    </button>
+    <input
+      type="file"
+      id="importarFicha"
+      accept=".json"
+      style="display: none"
+    />
+  </div>
+</div>
 
     <!-- ================= FICHA ================= -->
     <div class="container" id="ficha" style="display: none">
@@ -1165,11 +1419,14 @@
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   import {
-    getFirestore,
-    doc,
-    setDoc,
-    getDoc
-  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  getFirestore,
+  doc,
+  setDoc,
+  getDoc,
+  collection,
+  getDocs,
+  deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCRbpNWige23ErKLRzt5BYNF3ltCYaRw24",
@@ -1184,6 +1441,10 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
+
+  window.db = db;
+  window.doc = doc;
+  window.deleteDoc = deleteDoc;
 
   await setPersistence(auth, browserLocalPersistence);
 
@@ -1245,31 +1506,65 @@
   }
 
   async function salvarFichasNaNuvem() {
-    if (!window.usuarioAtual) return;
+  if (!window.usuarioAtual) return;
 
-    await setDoc(doc(db, "usuarios", window.usuarioAtual.uid), {
-      email: window.usuarioAtual.email,
-      personagens: JSON.parse(localStorage.getItem("personagens")) || [],
-      atualizadoEm: new Date().toISOString()
-    });
+  const uid = window.usuarioAtual.uid;
+  const fichas = JSON.parse(localStorage.getItem("personagens")) || [];
+  const fichasValidas = fichas.filter(ficha =>
+  ficha &&
+  (
+    ficha.nome?.trim() ||
+    ficha.classe?.trim() ||
+    ficha.raca?.trim() ||
+    ficha.imagemBase64
+  )
+);
+
+  for (const ficha of fichasValidas) {
+    if (!ficha.id) {
+  ficha.id = Date.now() + Math.floor(Math.random() * 99999);
+}
+
+    await setDoc(
+      doc(db, "usuarios", uid, "fichas", String(ficha.id)),
+      ficha
+    );
   }
+
+  await setDoc(
+    doc(db, "usuarios", uid),
+    {
+      email: window.usuarioAtual.email,
+      atualizadoEm: new Date().toISOString()
+    },
+    { merge: true }
+  );
+
+  try {
+  localStorage.setItem("personagens", JSON.stringify(fichasValidas));
+} catch (erro) {
+  console.warn("localStorage cheio. Fichas mantidas na nuvem.", erro);
+}
+}
 
   async function carregarFichasDaNuvem() {
   if (!window.usuarioAtual) return;
 
-  const ref = doc(db, "usuarios", window.usuarioAtual.uid);
-  const snap = await getDoc(ref);
+  const uid = window.usuarioAtual.uid;
 
   const fichasLocais =
     JSON.parse(localStorage.getItem("personagens")) || [];
 
-  let fichasNuvem = [];
+  const snapFichas = await getDocs(
+    collection(db, "usuarios", uid, "fichas")
+  );
 
-  if (snap.exists()) {
-    fichasNuvem = snap.data().personagens || [];
-  }
+  const fichasNuvem = [];
 
-  // 🔥 CASO PRINCIPAL (o que estava falhando)
+  snapFichas.forEach((docSnap) => {
+    fichasNuvem.push(docSnap.data());
+  });
+
   if (fichasNuvem.length === 0 && fichasLocais.length > 0) {
     const confirmar = confirm(
       "Encontramos fichas neste dispositivo. Deseja vincular à sua conta?"
@@ -1278,11 +1573,7 @@
     if (confirmar) {
       personagens = fichasLocais;
 
-      await setDoc(ref, {
-        email: window.usuarioAtual.email,
-        personagens,
-        atualizadoEm: new Date().toISOString()
-      });
+      await salvarFichasNaNuvem();
 
       alert("Fichas vinculadas com sucesso!");
     } else {
@@ -1290,11 +1581,9 @@
       localStorage.setItem("personagens", JSON.stringify([]));
     }
   } else if (fichasNuvem.length > 0) {
-    // 🔥 normal (já tem na nuvem)
     personagens = fichasNuvem;
     localStorage.setItem("personagens", JSON.stringify(personagens));
   } else {
-    // 🔥 não tem nada em lugar nenhum
     personagens = [];
   }
 
@@ -1302,6 +1591,116 @@
     renderPersonagens();
   }
 }
+
+async function salvarMonstrosNaNuvem() {
+  if (!window.usuarioAtual) return;
+
+  const uid = window.usuarioAtual.uid;
+
+  const monstros =
+    JSON.parse(localStorage.getItem("monstrosMestre")) || [];
+
+  const combates =
+    JSON.parse(localStorage.getItem("combatesMestre")) || [];
+
+  // 🔥 salva monstros separados
+  for (const monstro of monstros) {
+
+    if (!monstro.id) {
+      monstro.id =
+        Date.now() + Math.floor(Math.random() * 99999);
+    }
+
+    await setDoc(
+      doc(db, "usuarios", uid, "monstros", String(monstro.id)),
+      monstro
+    );
+  }
+
+  // 🔥 combate separado
+  await setDoc(
+    doc(db, "usuarios", uid, "estado", "combate"),
+    {
+      combatesMestre: combates,
+      atualizadoEm: new Date().toISOString()
+    }
+  );
+}
+
+async function carregarMonstrosDaNuvem() {
+  if (!window.usuarioAtual) return;
+
+  const uid = window.usuarioAtual.uid;
+
+  const monstrosLocais =
+    JSON.parse(localStorage.getItem("monstrosMestre")) || [];
+
+  const combatesLocais =
+    JSON.parse(localStorage.getItem("combatesMestre")) || [];
+
+  // 🔥 pega monstros separados
+  const snapMonstros = await getDocs(
+    collection(db, "usuarios", uid, "monstros")
+  );
+
+  const monstrosNuvem = [];
+
+  snapMonstros.forEach((docSnap) => {
+    monstrosNuvem.push(docSnap.data());
+  });
+
+  // 🔥 pega combate
+  const combateRef = doc(
+    db,
+    "usuarios",
+    uid,
+    "estado",
+    "combate"
+  );
+
+  const combateSnap = await getDoc(combateRef);
+
+  let combatesNuvem = [];
+
+  if (combateSnap.exists()) {
+    combatesNuvem =
+      combateSnap.data().combatesMestre || [];
+  }
+
+  monstrosMestre =
+    monstrosNuvem.length > 0
+      ? monstrosNuvem
+      : monstrosLocais;
+
+  combatesMestre =
+    combatesNuvem.length > 0
+      ? combatesNuvem
+      : combatesLocais;
+
+  window.monstrosMestre = monstrosMestre;
+  window.combatesMestre = combatesMestre;
+
+  localStorage.setItem(
+    "monstrosMestre",
+    JSON.stringify(monstrosMestre)
+  );
+
+  localStorage.setItem(
+    "combatesMestre",
+    JSON.stringify(combatesMestre)
+  );
+
+  if (typeof renderMonstrosMestre === "function") {
+    renderMonstrosMestre();
+  }
+
+  if (typeof renderCombatesMestre === "function") {
+    renderCombatesMestre();
+  }
+}
+
+window.salvarMonstrosNaNuvem = salvarMonstrosNaNuvem;
+window.carregarMonstrosDaNuvem = carregarMonstrosDaNuvem;
 
   window.salvarFichasNaNuvem = salvarFichasNaNuvem;
 
@@ -1372,34 +1771,69 @@
   };
 
   window.sairConta = async () => {
-    try {
-      await signOut(auth);
-    } catch (e) {
-      alert(tratarErroFirebase(e.code));
-    }
-  };
+  try {
+    await signOut(auth);
+
+    document.getElementById("loginBox").style.display = "block";
+
+    const telas = [
+      "tela-modo",
+      "tela-inicial",
+      "ficha",
+      "masterIgnea",
+      "sheetMonstro",
+      "sheetMonstroOverlay"
+    ];
+
+    telas.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = "none";
+    });
+
+    window.usuarioAtual = null;
+    personagemAtual = null;
+
+  } catch (e) {
+    alert(tratarErroFirebase(e.code));
+  }
+};
 
   onAuthStateChanged(auth, async (user) => {
-    const loginBox = document.getElementById("loginBox");
-    const telaInicial = document.getElementById("tela-inicial");
-    const ficha = document.getElementById("ficha");
 
-    if (user) {
-      window.usuarioAtual = user;
+  const ficha = document.getElementById("ficha");
 
-      if (loginBox) loginBox.style.display = "none";
-      if (telaInicial) telaInicial.style.display = "block";
+  if (user) {
+    window.usuarioAtual = user;
 
-      await carregarFichasDaNuvem();
-    } else {
+    if (loginBox) loginBox.style.display = "none";
+
+    abrirTelaModo();
+
+    await carregarFichasDaNuvem();
+    await carregarMonstrosDaNuvem();
+
+  }  else {
   window.usuarioAtual = null;
   personagemAtual = null;
 
+  const loginBox = document.getElementById("loginBox");
   if (loginBox) loginBox.style.display = "block";
-  if (telaInicial) telaInicial.style.display = "none";
-  if (ficha) ficha.style.display = "none";
-}
+
+  const telas = [
+    "tela-modo",
+    "tela-inicial",
+    "ficha",
+    "masterIgnea",
+    "sheetMonstro",
+    "sheetMonstroOverlay"
+  ];
+
+  telas.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = "none";
   });
+}
+});
 
 </script>
   
