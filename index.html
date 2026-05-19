@@ -55,21 +55,197 @@
 </div>
 
 <!-- ================= ESCOLHA DE MODO ================= -->
-<div id="tela-modo" class="tela-modo-img" style="display:none;">
+<div id="tela-modo" style="display:none;position:fixed;inset:0;z-index:5000;background:#0e0907;color:#F8F4E3;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px 36px;overflow-y:auto;">
 
-  <div
-    class="area-click area-jornada"
-    onclick="entrarModoJogadorAnimado()"
-  ></div>
+  <!-- fundos animados -->
+  <div style="position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(123,30,40,0.22) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 50% 100%,rgba(60,13,20,0.35) 0%,transparent 55%),linear-gradient(180deg,#0e0907 0%,#160d0a 50%,#0a0605 100%);pointer-events:none;"></div>
+  <div id="tmBgJornada" style="position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 80% 60% at 30% 50%,rgba(100,60,10,0.2) 0%,transparent 65%);opacity:0;transition:opacity 0.6s ease;pointer-events:none;"></div>
+  <div id="tmBgGrimorio" style="position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 80% 60% at 70% 50%,rgba(123,30,40,0.25) 0%,transparent 65%);opacity:0;transition:opacity 0.6s ease;pointer-events:none;"></div>
 
-  <div
-    class="area-click area-grimorio"
-    onclick="entrarModoMestreAnimado()"
-  ></div>
+  <div style="position:relative;z-index:2;width:100%;max-width:420px;display:flex;flex-direction:column;align-items:center;">
 
-  <button class="btn-sair-img" onclick="sairConta()">
-    Sair
-  </button>
+    <!-- HEADER -->
+    <div style="text-align:center;margin-bottom:28px;">
+      <div style="font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:0.45em;color:#A88D42;text-transform:uppercase;margin-bottom:10px;opacity:0.75;">Ficha Ígnea</div>
+      <h1 style="font-family:'Cinzel',serif;font-size:clamp(20px,6vw,26px);font-weight:700;letter-spacing:0.08em;color:#F8F4E3;line-height:1.2;text-shadow:0 2px 12px rgba(0,0,0,0.6);">Escolha seu <span style="background:linear-gradient(135deg,#E8CC80,#C4A95B,#A88D42);-webkit-background-clip:text;color:transparent;">Caminho</span></h1>
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin:10px 0 4px;">
+        <div style="height:1px;width:44px;background:linear-gradient(90deg,transparent,rgba(196,169,91,0.5));"></div>
+        <div style="width:5px;height:5px;background:#C4A95B;transform:rotate(45deg);opacity:0.8;"></div>
+        <div style="height:1px;width:44px;background:linear-gradient(90deg,rgba(196,169,91,0.5),transparent);"></div>
+      </div>
+      <p style="font-family:'EB Garamond',serif;font-style:italic;font-size:13px;color:#9A8A70;">Jornada ou Grimório?</p>
+    </div>
+
+    <!-- CARDS -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;margin-bottom:20px;">
+
+      <!-- JORNADA -->
+      <div id="tmCardJornada"
+        onclick="tmSelectPath('jornada')"
+        onmouseenter="tmHover('jornada')" onmouseleave="tmUnhover()"
+        style="position:relative;border-radius:20px;cursor:pointer;overflow:hidden;aspect-ratio:3/4.2;display:flex;flex-direction:column;justify-content:flex-end;border:1px solid rgba(196,169,91,0.18);background:linear-gradient(160deg,#1e1508 0%,#2a1a08 50%,#140e05 100%);box-shadow:0 8px 32px rgba(0,0,0,0.5);transition:transform 0.35s ease,box-shadow 0.35s ease,border-color 0.35s ease;-webkit-tap-highlight-color:transparent;">
+        <!-- cantos -->
+        <span style="position:absolute;top:8px;left:8px;width:14px;height:14px;border-top:1px solid #C4A95B;border-left:1px solid #C4A95B;opacity:0.45;pointer-events:none;"></span>
+        <span style="position:absolute;top:8px;right:8px;width:14px;height:14px;border-top:1px solid #C4A95B;border-right:1px solid #C4A95B;opacity:0.45;pointer-events:none;"></span>
+        <span style="position:absolute;bottom:8px;left:8px;width:14px;height:14px;border-bottom:1px solid #C4A95B;border-left:1px solid #C4A95B;opacity:0.45;pointer-events:none;"></span>
+        <span style="position:absolute;bottom:8px;right:8px;width:14px;height:14px;border-bottom:1px solid #C4A95B;border-right:1px solid #C4A95B;opacity:0.45;pointer-events:none;"></span>
+        <!-- imagem -->
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding-bottom:55px;">
+          <img src="logo-ficha-ignea.png" style="width:68%;height:auto;object-fit:contain;opacity:0.85;filter:drop-shadow(0 0 18px rgba(196,169,91,0.35));transition:filter 0.3s ease;transform:rotate(90deg);">
+        </div>
+        <!-- glow hover -->
+        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,rgba(196,169,91,0.1) 0%,transparent 65%);opacity:0;transition:opacity 0.4s;pointer-events:none;" class="tm-glow-jornada"></div>
+        <!-- check -->
+        <div id="tmCheckJornada" style="position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:50%;background:#C4A95B;display:flex;align-items:center;justify-content:center;font-size:10px;color:#1a0e05;font-weight:bold;opacity:0;transform:scale(0.5);transition:opacity 0.3s,transform 0.3s;z-index:5;">✓</div>
+        <!-- footer -->
+        <div style="position:relative;z-index:2;padding:12px 12px 14px;background:linear-gradient(0deg,rgba(0,0,0,0.8) 0%,transparent 100%);text-align:center;">
+          <div style="font-family:'Cinzel',serif;font-size:14px;font-weight:700;letter-spacing:0.08em;color:#E8CC80;text-shadow:0 1px 6px rgba(0,0,0,0.8);">Jornada</div>
+          <div style="font-size:11px;color:#9A8A70;letter-spacing:0.15em;text-transform:uppercase;margin-top:2px;">Jogador</div>
+          <div id="tmDivJornada" style="width:28px;height:1px;background:rgba(196,169,91,0.3);margin:7px auto 0;transition:width 0.3s,background 0.3s;"></div>
+        </div>
+      </div>
+
+      <!-- GRIMÓRIO -->
+      <div id="tmCardGrimorio"
+        onclick="tmSelectPath('grimorio')"
+        onmouseenter="tmHover('grimorio')" onmouseleave="tmUnhover()"
+        style="position:relative;border-radius:20px;cursor:pointer;overflow:hidden;aspect-ratio:3/4.2;display:flex;flex-direction:column;justify-content:flex-end;border:1px solid rgba(123,30,40,0.25);background:linear-gradient(160deg,#180a0d 0%,#220d12 50%,#0e0608 100%);box-shadow:0 8px 32px rgba(0,0,0,0.5);transition:transform 0.35s ease,box-shadow 0.35s ease,border-color 0.35s ease;-webkit-tap-highlight-color:transparent;">
+        <!-- cantos -->
+        <span style="position:absolute;top:8px;left:8px;width:14px;height:14px;border-top:1px solid #7B1E28;border-left:1px solid #7B1E28;opacity:0.5;pointer-events:none;"></span>
+        <span style="position:absolute;top:8px;right:8px;width:14px;height:14px;border-top:1px solid #7B1E28;border-right:1px solid #7B1E28;opacity:0.5;pointer-events:none;"></span>
+        <span style="position:absolute;bottom:8px;left:8px;width:14px;height:14px;border-bottom:1px solid #7B1E28;border-left:1px solid #7B1E28;opacity:0.5;pointer-events:none;"></span>
+        <span style="position:absolute;bottom:8px;right:8px;width:14px;height:14px;border-bottom:1px solid #7B1E28;border-right:1px solid #7B1E28;opacity:0.5;pointer-events:none;"></span>
+        <!-- imagem -->
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding-bottom:55px;">
+          <img src="img/logo-grimorio-nova.png" style="width:65%;height:auto;object-fit:contain;opacity:0.85;filter:drop-shadow(0 0 18px rgba(123,30,40,0.5));transition:filter 0.3s ease;">
+        </div>
+        <!-- glow hover -->
+        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,rgba(123,30,40,0.18) 0%,transparent 65%);opacity:0;transition:opacity 0.4s;pointer-events:none;" class="tm-glow-grimorio"></div>
+        <!-- check -->
+        <div id="tmCheckGrimorio" style="position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:50%;background:#7B1E28;display:flex;align-items:center;justify-content:center;font-size:10px;color:#F8F4E3;font-weight:bold;opacity:0;transform:scale(0.5);transition:opacity 0.3s,transform 0.3s;z-index:5;">✓</div>
+        <!-- footer -->
+        <div style="position:relative;z-index:2;padding:12px 12px 14px;background:linear-gradient(0deg,rgba(0,0,0,0.8) 0%,transparent 100%);text-align:center;">
+          <div style="font-family:'Cinzel',serif;font-size:14px;font-weight:700;letter-spacing:0.08em;color:#e88888;text-shadow:0 1px 6px rgba(0,0,0,0.8);">Grimório</div>
+          <div style="font-size:11px;color:#9A8A70;letter-spacing:0.15em;text-transform:uppercase;margin-top:2px;">Mestre</div>
+          <div id="tmDivGrimorio" style="width:28px;height:1px;background:rgba(123,30,40,0.4);margin:7px auto 0;transition:width 0.3s,background 0.3s;"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- DESCRIÇÃO -->
+    <div id="tmDesc" style="width:100%;min-height:50px;text-align:center;margin-bottom:18px;transition:opacity 0.3s ease;">
+      <p style="font-style:italic;font-size:13px;color:rgba(154,138,112,0.45);letter-spacing:0.02em;">Toque em um caminho para revelar seu destino…</p>
+    </div>
+
+    <!-- BOTÃO ENTRAR -->
+    <button id="tmBtnEntrar" disabled onclick="tmConfirm()"
+  style="width:90%;max-width:380px;padding:18px 32px;border-radius:9999px;border:1px solid rgba(196,169,91,0.25);background:rgba(196,169,91,0.08);color:rgba(196,169,91,0.35);font-family:'Cinzel',serif;font-size:18px;font-weight:700;letter-spacing:0.18em;cursor:not-allowed;transition:all 0.4s ease;margin:0 auto 28px auto;display:block;text-align:center;overflow:hidden;">
+  Adentrar
+</button>
+
+<!-- BOTÃO SAIR -->
+<button onclick="sairConta()"
+  style="background:transparent;border:none;color:rgba(154,138,112,0.6);font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.1em;padding:4px 12px;border-radius:100px;cursor:pointer;transition:all 0.3s ease;margin-top:8px;">
+  Sair da conta
+</button>
+
+  </div>
+
+  <script>
+    var tmSelected = null;
+
+    function tmHover(p) {
+      if (tmSelected) return;
+      document.getElementById('tmBgJornada').style.opacity  = p==='jornada'  ? '1' : '0';
+      document.getElementById('tmBgGrimorio').style.opacity = p==='grimorio' ? '1' : '0';
+    }
+    function tmUnhover() {
+      if (tmSelected) return;
+      document.getElementById('tmBgJornada').style.opacity  = '0';
+      document.getElementById('tmBgGrimorio').style.opacity = '0';
+    }
+    function tmSelectPath(p) {
+      tmSelected = p;
+
+      // cards
+      var cj = document.getElementById('tmCardJornada');
+      var cg = document.getElementById('tmCardGrimorio');
+      if (p === 'jornada') {
+  cj.style.borderColor = 'rgba(196,169,91,0.55)';
+  cj.style.transform = 'translateY(-8px) scale(1.04)';
+  cj.style.opacity = '1';
+  cj.style.boxShadow = '0 20px 50px rgba(0,0,0,0.7), 0 0 30px rgba(196,169,91,0.15)';
+  cj.style.filter = 'brightness(1.15)';
+  cg.style.borderColor = 'rgba(123,30,40,0.15)';
+  cg.style.transform = 'scale(0.96)';
+  cg.style.opacity = '0.4';
+  cg.style.boxShadow = 'none';
+  cg.style.filter = 'brightness(0.6)';
+} else {
+  cg.style.borderColor = 'rgba(123,30,40,0.65)';
+  cg.style.transform = 'translateY(-8px) scale(1.04)';
+  cg.style.opacity = '1';
+  cg.style.boxShadow = '0 20px 50px rgba(0,0,0,0.7), 0 0 30px rgba(123,30,40,0.2)';
+  cg.style.filter = 'brightness(1.15)';
+  cj.style.borderColor = 'rgba(196,169,91,0.12)';
+  cj.style.transform = 'scale(0.96)';
+  cj.style.opacity = '0.4';
+  cj.style.boxShadow = 'none';
+  cj.style.filter = 'brightness(0.6)';
+}
+
+      // checks
+      var ckj = document.getElementById('tmCheckJornada');
+      var ckg = document.getElementById('tmCheckGrimorio');
+      ckj.style.opacity = p==='jornada' ? '1' : '0';
+      ckj.style.transform = p==='jornada' ? 'scale(1)' : 'scale(0.5)';
+      ckg.style.opacity = p==='grimorio' ? '1' : '0';
+      ckg.style.transform = p==='grimorio' ? 'scale(1)' : 'scale(0.5)';
+
+      // divisores
+      var dj = document.getElementById('tmDivJornada');
+      var dg = document.getElementById('tmDivGrimorio');
+      dj.style.width = p==='jornada' ? '44px' : '28px';
+      dj.style.background = p==='jornada' ? 'rgba(196,169,91,0.7)' : 'rgba(196,169,91,0.3)';
+      dg.style.width = p==='grimorio' ? '44px' : '28px';
+      dg.style.background = p==='grimorio' ? 'rgba(123,30,40,0.7)' : 'rgba(123,30,40,0.3)';
+
+      // fundos
+      document.getElementById('tmBgJornada').style.opacity  = p==='jornada'  ? '1' : '0';
+      document.getElementById('tmBgGrimorio').style.opacity = p==='grimorio' ? '1' : '0';
+
+      // descrição
+      var desc = { jornada: 'Enfrente os perigos, gerencie sua ficha e leve a batalha adiante. A aventura aguarda além do horizonte.', grimorio: 'Narre, controle e molde o destino dos heróis. O mundo obedece à sua vontade — cada palavra é lei.' };
+      var icon = { jornada: '', grimorio: '' };
+      var panel = document.getElementById('tmDesc');
+      panel.style.opacity = '0';
+      setTimeout(function() {
+        panel.innerHTML = '<div style="font-size:18px;margin-bottom:4px;">'+icon[p]+'</div><p style="font-size:13px;line-height:1.55;color:#9A8A70;max-width:280px;margin:0 auto;">'+desc[p]+'</p>';
+        panel.style.opacity = '1';
+      }, 150);
+
+      // botão
+      var btn = document.getElementById('tmBtnEntrar');
+      btn.disabled = false;
+      btn.style.cursor = 'pointer';
+      if (p === 'jornada') {
+        btn.style.background = 'linear-gradient(135deg,#E8CC80,#C4A95B,#A88D42)';
+        btn.style.color = '#1a0e05';
+        btn.style.border = '1px solid #C4A95B';
+        btn.style.boxShadow = '0 6px 32px rgba(196,169,91,0.45)';
+      } else {
+        btn.style.background = 'linear-gradient(135deg,#e05050,#7B1E28,#5A1520)';
+        btn.style.color = '#F8F4E3';
+        btn.style.border = '1px solid rgba(123,30,40,0.6)';
+        btn.style.boxShadow = '0 6px 32px rgba(123,30,40,0.5)';
+      }
+    }
+    function tmConfirm() {
+      if (!tmSelected) return;
+      tmSelected === 'jornada' ? entrarModoJogadorAnimado() : entrarModoMestreAnimado();
+    }
+  </script>
 
 </div>
 
