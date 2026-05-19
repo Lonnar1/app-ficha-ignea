@@ -379,8 +379,12 @@
 
 .sheet-monstro.full {
   height: 100vh !important;
+  max-height: 100vh !important;
   border-radius: 0 !important;
   padding-top: 10px;
+  overflow-y: scroll !important;
+  -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain;
 }
 
 .grimorio-header{
