@@ -641,10 +641,11 @@
   padding:       14px;
   overflow-y:    auto;
   will-change:   transform;
-  touch-action:  none;
+  touch-action:  pan-y;
   transition:    transform 0.35s ease, opacity 0.35s ease;
   transform:     translateY(100%);
   opacity:       0;
+  -webkit-overflow-scrolling: touch;
 }
 
 .sheet-monstro.aberto {
