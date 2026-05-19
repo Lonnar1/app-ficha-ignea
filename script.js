@@ -3715,7 +3715,7 @@ const npcsPadrao = [
     hpMax: 1000, hpAtual: 1000, ca: 100,
     habilidades: "Deletar: pode simplesmente te deletar do mundo sem mais nem menos, mas para isso precisa deslogar",
     fraquezas: "Falta de intenet",
-    status: { for: 20, des: 20, con: 20, int: 20, sab: 20, car: 20 },
+    status: { for: 30, des: 30, con: 30, int: 30, sab: 30, car: 30 },
     imagem: "img/Npc/Leonardo.jpeg"
   }
 ];
@@ -4167,6 +4167,25 @@ function abrirTelaModo() {
 
   const tela = document.getElementById("tela-modo");
   tela.style.display = "flex";
+
+  // reset estado da tela
+  if (typeof tmSelected !== 'undefined') {
+    window.tmSelected = null;
+    const cj = document.getElementById('tmCardJornada');
+    const cg = document.getElementById('tmCardGrimorio');
+    if (cj) { cj.style.borderColor = ''; cj.style.transform = ''; cj.style.opacity = ''; }
+    if (cg) { cg.style.borderColor = ''; cg.style.transform = ''; cg.style.opacity = ''; }
+    const ckj = document.getElementById('tmCheckJornada');
+    const ckg = document.getElementById('tmCheckGrimorio');
+    if (ckj) { ckj.style.opacity = '0'; ckj.style.transform = 'scale(0.5)'; }
+    if (ckg) { ckg.style.opacity = '0'; ckg.style.transform = 'scale(0.5)'; }
+    const btn = document.getElementById('tmBtnEntrar');
+    if (btn) { btn.disabled = true; btn.style.cssText = ''; }
+    const desc = document.getElementById('tmDesc');
+    if (desc) desc.innerHTML = '<p style="font-style:italic;font-size:13px;color:rgba(154,138,112,0.45);">Toque em um caminho para revelar seu destino…</p>';
+    document.getElementById('tmBgJornada').style.opacity = '0';
+    document.getElementById('tmBgGrimorio').style.opacity = '0';
+  }
 
   tela.style.opacity = "0";
   tela.style.transform = "scale(1.06)";
@@ -4987,6 +5006,16 @@ function iniciarDragSheet(e) {
 
   const ponto = pegarPontoEvento(e);
 
+  // Em fullscreen, só inicia drag se tocar nos primeiros 60px (topo/handle)
+  if (sheet.classList.contains("full")) {
+    const rect = sheet.getBoundingClientRect();
+    const toqueRelativo = ponto.clientY - rect.top;
+    if (toqueRelativo > 60) {
+      sheetArrastando = false;
+      return; // deixa o scroll nativo acontecer
+    }
+  }
+
   sheetDragInicioX = ponto.clientX;
   sheetDragInicioY = ponto.clientY;
   sheetArrastando = true;
@@ -5085,7 +5114,7 @@ async function salvarItemMestre() {
 }
 
 function moverDragSheet(e) {
-  if (!sheetArrastando) return;
+  if (!sheetArrastando) return; // scroll nativo acontece
 
   const sheet = document.getElementById("sheetMonstro");
   if (!sheet) return;
@@ -6590,15 +6619,11 @@ function renderNPCsMundo() {
         <span class="npc-toggle-seta" style="margin-left:auto;color:#7A6A50;font-size:12px;">▼</span>
       </div>
       <small style="color:#7A6A50;font-size:11px;">${[escapeHtml(n.classe||""), escapeHtml(n.regiao||"")].filter(Boolean).join(" · ")}</small>
-      <div style="margin-top:6px;">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span id="npcHpCoracao_${n.id}" style="font-size:11px;color:${hpCor};font-weight:bold;">❤ ${hpAtual}/${hpMax}</span>
-          <div style="flex:1;height:6px;background:rgba(0,0,0,0.1);border-radius:4px;overflow:hidden;">
-            <div id="npcHpBarra_${n.id}" style="height:100%;width:${hpPct}%;background:${hpCor};border-radius:4px;transition:width 0.3s ease;"></div>
-          </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
+        <span id="npcHpCoracao_${n.id}" style="font-size:11px;color:${hpCor};font-weight:bold;">❤ ${hpAtual}/${hpMax}</span>
+        <div style="flex:1;height:6px;background:rgba(0,0,0,0.1);border-radius:4px;overflow:hidden;">
+          <div id="npcHpBarra_${n.id}" style="height:100%;width:${hpPct}%;background:${hpCor};border-radius:4px;transition:width 0.3s ease;"></div>
         </div>
-        ${d.ca ? `<div style="font-size:11px;color:#7A6A50;font-weight:bold;margin-top:3px;">🛡️ CA ${d.ca}</div>` : ""}
-      </div>
       </div>
     </div>
   </div>
@@ -6634,8 +6659,9 @@ function renderNPCsMundo() {
       ${bloco("Religião", d.religiao)}
       ${bloco("Observações", d.observacoes)}
 
-      ${(d.velocidade || d.desafio) ? `
+      ${(d.ca || d.velocidade || d.desafio) ? `
       <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+        ${d.ca ? `<span style="background:#F0EBD8;border:1px solid rgba(196,169,91,0.3);border-radius:8px;padding:5px 10px;font-size:12px;color:#2A1A10;"><strong>CA</strong> ${d.ca}</span>` : ""}
         ${d.velocidade ? `<span style="background:#F0EBD8;border:1px solid rgba(196,169,91,0.3);border-radius:8px;padding:5px 10px;font-size:12px;color:#2A1A10;"><strong>Vel</strong> ${escapeHtml(d.velocidade)}</span>` : ""}
         ${d.desafio ? `<span style="background:#F0EBD8;border:1px solid rgba(196,169,91,0.3);border-radius:8px;padding:5px 10px;font-size:12px;color:#2A1A10;"><strong>ND</strong> ${escapeHtml(d.desafio)}</span>` : ""}
       </div>` : ""}
@@ -6739,7 +6765,7 @@ function toggleNPCMundo(id) {
     detalhes.style.opacity   = "0";
     detalhes.setAttribute("data-aberto", "1");
     requestAnimationFrame(() => {
-      detalhes.style.maxHeight = "2000px";
+      detalhes.style.maxHeight = "600px";
       detalhes.style.opacity   = "1";
     });
   }
@@ -6994,7 +7020,7 @@ ${m.dificuldade ? `<span class="lore-badge" style="background:${(difInfo[m.dific
     detalhes.style.opacity   = "0";
     detalhes.setAttribute("data-aberto", "1");
     requestAnimationFrame(() => {
-      detalhes.style.maxHeight = "2000px";
+      detalhes.style.maxHeight = "600px";
       detalhes.style.opacity   = "1";
     });
   }
