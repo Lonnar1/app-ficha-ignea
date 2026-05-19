@@ -1602,3 +1602,15 @@ body:has(#masterIgnea[style*="block"]) .popup-box p {
   width: 100% !important;
   box-sizing: border-box !important;
 }
+
+#tmBtnEntrar {
+  border-radius: 999px !important;
+  -webkit-border-radius: 999px !important;
+  width: 60% !important;
+  max-width: 380px !important;
+  font-family: 'Cinzel', serif !important;
+  padding: 18px 32px !important;
+  display: block !important;
+  margin: 0 auto 28px auto !important;
+  letter-spacing: 0.18em !important;
+}
