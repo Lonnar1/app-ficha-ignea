@@ -3,6 +3,10 @@ let morte = {
   falhas: [false, false, false],
 };
 
+let iniciativaOrdem = [];
+let iniciativaTurnoAtual = 0;
+let _etapasForm = [];
+let _filtroCompendio = "todos";
 let racasCustomSalvas =
   JSON.parse(localStorage.getItem("racasCustomSalvas")) || [];
 let editandoRacaCustom = -1;
@@ -23,11 +27,52 @@ let campanhaAtualMaster =
   JSON.parse(localStorage.getItem("campanhaAtualMaster")) ?? null;
   
 function salvarCampanhasMaster() {
-  localStorage.setItem("campanhasMaster", JSON.stringify(campanhasMaster));
-  localStorage.setItem(
-    "campanhaAtualMaster",
-    JSON.stringify(campanhaAtualMaster)
-  );
+  localStorage.setItem("campanhaAtualMaster", JSON.stringify(campanhaAtualMaster));
+
+  // Remove base64 antes de salvar (agora as imagens sao links do ImgBB)
+  const campanhasSemBase64 = campanhasMaster.map(c => ({
+    ...c,
+    imagem: c.imagem?.startsWith("data:") ? "" : (c.imagem || ""),
+    bosses: (c.bosses || []).map(b => ({ ...b, imagem: b.imagem?.startsWith("data:") ? "" : (b.imagem || "") })),
+    itensMaster: (c.itensMaster || []).map(i => ({ ...i, imagem: i.imagem?.startsWith("data:") ? "" : (i.imagem || "") })),
+    npcs: (c.npcs || []).map(n => ({ ...n, imagem: n.imagem?.startsWith("data:") ? "" : (n.imagem || "") })),
+    monstrosMestre: (c.monstrosMestre || []).map(m => ({ ...m, imagem: m.imagem?.startsWith("data:") ? "" : (m.imagem || "") })),
+  }));
+
+  // Salva no Firestore com os links do ImgBB
+  if (window.usuarioAtual && window.db && window.setDoc) {
+    const uid = window.usuarioAtual.uid;
+    window.setDoc(
+      window.doc(window.db, "mestres", uid),
+      { campanhas: campanhasSemBase64, campanhaAtual: campanhaAtualMaster },
+      { merge: true }
+    ).catch(e => console.error("Erro ao salvar campanhas:", e));
+  }
+
+  // localStorage
+  try {
+    localStorage.setItem("campanhasMaster", JSON.stringify(campanhasSemBase64));
+  } catch(e) {
+    console.warn("localStorage cheio:", e);
+  }
+}
+
+async function carregarCampanhasMasterFirebase() {
+  if (!window.usuarioAtual || !window.db) return;
+  try {
+    const uid = window.usuarioAtual.uid;
+    const snap = await window.getDoc(window.doc(window.db, "mestres", uid));
+    if (snap.exists()) {
+      const data = snap.data();
+      if (data.campanhas) {
+        campanhasMaster = data.campanhas;
+        campanhaAtualMaster = data.campanhaAtual ?? null;
+        renderCampanhasMaster();
+      }
+    }
+  } catch(e) {
+    console.error("Erro ao carregar campanhas:", e);
+  }
 }
 
 let gastosCirculos = {
@@ -276,6 +321,8 @@ function entrarCampanhaMaster(index) {
 
   document.getElementById("telaCampanhasMaster").style.display = "none";
   document.getElementById("masterIgnea").style.display = "block";
+  document.querySelector(".header-rpg")?.style.setProperty("display", "none", "important"); // ← ADD
+  document.querySelector(".folhas-bg")?.style.setProperty("display", "none", "important");  // ← ADD
 
   carregarDadosCampanhaAtual();
 }
@@ -296,7 +343,6 @@ function deletarCampanhaMaster(index) {
 function voltarCampanhasMaster() {
   document.getElementById("masterIgnea").style.display = "none";
   document.getElementById("telaCampanhasMaster").style.display = "block";
-
   renderCampanhasMaster();
 }
 
@@ -306,6 +352,18 @@ function carregarDadosCampanhaAtual() {
 
   const titulo = document.getElementById("tituloCampanhaAtual");
   if (titulo) titulo.textContent = campanha.nome;
+
+  combatesMestre = campanha.combates || [];
+  window.combatesMestre = combatesMestre;
+  localStorage.setItem("combatesMestre", JSON.stringify(combatesMestre));
+
+  if (typeof renderCombatesMestre === "function") renderCombatesMestre();
+
+  setTimeout(() => {
+    inicializarAbaMundo();
+    renderMundoCampanha();
+    renderLoreCampanha();
+  }, 80);
 }
 
 function getAtributoFinal(attr) {
@@ -491,6 +549,31 @@ function abrirPopupBonusCustom() {
   `;
 
   abrirPopup("Raça Custom", html, true, null);
+}
+
+function atualizarModsMaster(tipo) {
+
+  const atributos = ["For", "Des", "Con", "Int", "Sab", "Car"];
+
+  atributos.forEach(attr => {
+
+    const input = document.getElementById(tipo + attr);
+
+    if (!input) return;
+
+    const valor = parseInt(input.value) || 10;
+
+    const mod = Math.floor((valor - 10) / 2);
+
+    const span = document.getElementById(tipo + "Mod" + attr);
+
+    if (span) {
+      span.textContent =
+        mod >= 0 ? `+${mod}` : mod;
+    }
+
+  });
+
 }
 
 function getNomeRacaAtual() {
@@ -686,6 +769,7 @@ function salvarGastosCirculos() {
 /* ================= POPUP ================= */
 
 function abrirPopup(titulo, conteudo, usarHTML = false, onEditar = null) {
+  const noGrimorio = document.getElementById("masterIgnea")?.style.display !== "none";
   const popup = document.getElementById("popup");
   const tituloEl = document.getElementById("popup-titulo");
   const textoEl = document.getElementById("popup-texto");
@@ -1260,23 +1344,24 @@ function entrarModoJogadorAnimado() {
   }, 450);
 }
 
-function entrarModoMestreAnimado() {
-  const tela = document.getElementById("tela-modo");
-  if (!tela) return;
+function entrarModoMestre() {
+  controlarHeader(false);
+  document.querySelector(".header-rpg")?.style.setProperty("display", "none", "important");
+  document.querySelector(".folhas-bg")?.style.setProperty("display", "none", "important");
 
-  tela.classList.add("zoom-grimorio");
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("tela-modo").style.display = "none";
+  document.getElementById("tela-inicial").style.display = "none";
+  document.getElementById("ficha").style.display = "none";
+  document.getElementById("masterIgnea").style.display = "none";
 
-  setTimeout(() => {
-    tela.classList.remove("zoom-grimorio");
+  const telaCampanhas = document.getElementById("telaCampanhasMaster");
+  if (telaCampanhas) {
+    telaCampanhas.style.display = "block";
+  }
 
-    entrarModoMestre();
-
-    tela.style.opacity = "1";
-    tela.style.transform = "scale(1)";
-  }, 550);
+  renderCampanhasMaster();
 }
-
-
 
 function voltarInicio() {
   const telaInicial = document.getElementById("tela-inicial");
@@ -1362,15 +1447,21 @@ function toggleSecao(id, titulo) {
   const box = document.getElementById(id);
   if (!box) return;
 
-  box.classList.toggle("fechado");
+  const estaAberto = box.classList.contains("aberto");
 
-  const estaFechado = box.classList.contains("fechado");
-
-  if (titulo) {
-    titulo.classList.toggle("fechado", estaFechado);
+  if (estaAberto) {
+    box.classList.remove("aberto");
+    box.classList.add("fechado");
+  } else {
+    box.classList.add("aberto");
+    box.classList.remove("fechado");
   }
 
-  localStorage.setItem("secao_" + id, estaFechado ? "fechada" : "aberta");
+  if (titulo) {
+    titulo.classList.toggle("fechado", estaAberto);
+  }
+
+  localStorage.setItem("secao_" + id, estaAberto ? "fechada" : "aberta");
 }
 
 function restaurarSecoes() {
@@ -1384,9 +1475,11 @@ function restaurarSecoes() {
     const titulo = document.querySelector(`[onclick*="${id}"]`);
 
     if (estado === "fechada") {
+      box.classList.remove("aberto");
       box.classList.add("fechado");
       if (titulo) titulo.classList.add("fechado");
     } else {
+      box.classList.add("aberto");
       box.classList.remove("fechado");
       if (titulo) titulo.classList.remove("fechado");
     }
@@ -3516,6 +3609,7 @@ function getGrupoPoder(poder) {
   return `circulo-${numero}`;
 }
 
+
 function limitarAtributo(input) {
   let valor = parseInt(input.value);
 
@@ -3606,6 +3700,200 @@ function animarTrocaPoder(origem, destino, grupo) {
 
 /* ================= GRIMÓRIO ÍGNEO / MASTER ================= */
 
+
+const npcsPadrao = [
+  {
+    id: "npc-padrao-leon",
+    _tipo: "npc",
+    origem: "padrao",
+    nome: "Leon, o Taverneiro Sombrio",
+    tipo: "Humano",
+    relacao: "neutro",
+    personalidade: "Sombrio, direto e misterioso. Fala pouco mas sabe de tudo. Nunca sorri, mas tampouco engana. mas Muito dificil de tirar do serio caso tire tome cuidado.",
+    lore: "Ninguém sabe de onde Leon veio. Ele simplesmente apareceu certa noite, comprou a taverna com moedas de origem desconhecida e nunca mais saiu de trás do balcão. Dizem que já serviu reis, assassinos e deuses — e tratou todos com a mesma indiferença.",
+    observacoes: "🎭 EASTER EGG — Se algum jogador pedir 'carne de javali', Leon para, olha fixo e responde em voz baixa: '...Você sabe o nome proibido. Poucos sabem que este mundo não nasceu de magia antiga — nasceu de linhas de código, numa tela às três da manhã. O arquiteto ainda caminha entre vocês. Mas não pergunte seu nome.'",
+    hpMax: 1000, hpAtual: 1000, ca: 100,
+    habilidades: "Deletar: pode simplesmente te deletar do mundo sem mais nem menos, mas para isso precisa deslogar",
+    fraquezas: "Falta de intenet",
+    status: { for: 20, des: 20, con: 20, int: 20, sab: 20, car: 20 },
+    imagem: "img/Npc/Leonardo.jpeg"
+  }
+];
+
+const encontrosPadrao = [
+  {
+    id: "encontro-padrao-1", origem: "padrao",
+    nome: "Emboscada na Estrada",
+    regiao: "Estrada Real",
+    localizacao: "Entre duas cidades",
+    dificuldade: "Médio",
+    objetivo: "Sobreviver e descobrir quem ordenou a emboscada",
+    envolvidos: "Grupo de bandidos com um líder misterioso encapuzado",
+    gatilho: "Os jogadores viajam entre cidades sem escolta",
+    ambiente: "Floresta às margens da estrada, visibilidade reduzida, terreno irregular",
+    consequencias: "O líder foge se reduzido a 30% HP, deixando uma carta cifrada",
+    loot: "Bolsas com 50po, a carta cifrada, adaga com emblema desconhecido",
+    notas: "O emblema na adaga pode ser gancho para próxima aventura",
+    imagem: "img/Encontros/Emboscada-na-Estrada.jpg"
+  },
+  {
+    id: "encontro-padrao-2", origem: "padrao",
+    nome: "O Mercado Sombrio",
+    regiao: "Cidade",
+    localizacao: "Beco nos fundos do mercado principal",
+    dificuldade: "Fácil",
+    objetivo: "Investigar rumores de itens roubados sendo vendidos",
+    envolvidos: "Comerciantes ilegais, guarda corrupto, possível informante",
+    gatilho: "Jogadores ouvem rumores ou perdem um item valioso",
+    ambiente: "Beco escuro, tendas improvisadas, movimento constante de pessoas suspeitas",
+    consequencias: "Confronto com a guarda se prenderem alguém. Informante pode virar aliado.",
+    loot: "Itens roubados variados, lista de compradores VIP",
+    notas: "Oportunidade de roleplay e investigação antes de qualquer combate",
+    imagem: "img/Encontros/O-Mercado-Sombrio.jpg"
+  },
+  {
+    id: "encontro-padrao-3", origem: "padrao",
+    nome: "A Cripta Desperta",
+    regiao: "Cemitério Antigo",
+    localizacao: "Cripta da família nobre abandonada",
+    dificuldade: "Difícil",
+    objetivo: "Descobrir o que perturbou os mortos e pará-lo",
+    envolvidos: "Esqueletos, zumbis, e um espectro no nível mais profundo",
+    gatilho: "Mortos começam a aparecer na cidade à noite",
+    ambiente: "Escuridão total sem tochas, paredes cobertas de musgo, armadilhas antigas",
+    consequencias: "Se o espectro escapar vai possuir um NPC importante da cidade",
+    loot: "Joia da família nobre, pergaminhos antigos, 200po em moedas velhas",
+    notas: "O espectro era um membro da família — pode ser apaziguado com informação certa",
+    imagem: "img/Encontros/A-Cripta Desperta.jpg"
+  },
+  {
+    id: "encontro-padrao-5", origem: "padrao",
+    nome: "Tempestade no Mar",
+    regiao: "Alto Mar",
+    localizacao: "Navio mercante a dois dias do porto",
+    dificuldade: "Lendário",
+    objetivo: "Sobreviver à tempestade e ao monstro marinho que ela acordou",
+    envolvidos: "Tripulação em pânico, capitão ferido, criatura das profundezas",
+    gatilho: "Jogadores viajam de navio ou são contratados como escolta",
+    ambiente: "Navio balançando, visibilidade zero, chuva torrencial, ondas gigantes",
+    consequencias: "Se o navio afundar os jogadores precisam chegar à costa nadando",
+    loot: "Carga valiosa do navio, gratidão do capitão, mapa de rotas secretas",
+    notas: "A criatura não é maliciosa — foi perturbada por algo no fundo do mar",
+    imagem: "img/Encontros/Tempestade-no-Mar.jpg"
+  }
+];
+
+
+const itensPadrao = [
+  {
+    id: "item-padrao-1", _tipo: "item", origem: "padrao",
+    nome: "Lâmina do Crepúsculo",
+    tipo: "arma",
+    raridade: "raro",
+    sintonizacao: "Sim",
+    efeito: "Espada longa +2. Ao anoitecer e amanhecer causa 2d6 de dano extra de radiante. Uma vez por dia pode lançar Palavra Divina.",
+    imagem: "img/Itens/Lâmina-do-Crepúsculo.jpg"
+  },
+  {
+    id: "item-padrao-2", _tipo: "item", origem: "padrao",
+    nome: "Manto dos Sussurros",
+    tipo: "armadura",
+    raridade: "incomum",
+    sintonizacao: "Sim",
+    efeito: "Capa encantada que concede vantagem em testes de Furtividade. O usuário pode lançar Silêncio uma vez por dia sem gastar espaço de magia.",
+    imagem: "img/Itens/Manto-dos-Sussurros.jpg"
+  },
+  {
+    id: "item-padrao-3", _tipo: "item", origem: "padrao",
+    nome: "Amuleto do Viajante",
+    tipo: "acessório",
+    raridade: "normal",
+    sintonizacao: "Não",
+    efeito: "Concede resistência a cansaço de viagem. O portador nunca se perde em locais que já visitou e pode rolar Sobrevivência com vantagem.",
+    imagem: "img/Itens/Amuleto-do-Viajante.jpg"
+  },
+  {
+    id: "item-padrao-4", _tipo: "item", origem: "padrao",
+    nome: "Frasco de Memórias",
+    tipo: "poção",
+    raridade: "raro",
+    sintonizacao: "Não",
+    efeito: "Ao quebrar, libera as memórias de quem o criou. Pode conter informações valiosas ou revelar segredos de um NPC. Conteúdo definido pelo Mestre.",
+    imagem: "img/Itens/Frasco-de-Memórias.jpg"
+  },
+  {
+    id: "item-padrao-5", _tipo: "item", origem: "padrao",
+    nome: "Grimório das Chamas",
+    tipo: "livro",
+    raridade: "reliquia",
+    sintonizacao: "Sim",
+    efeito: "Contém 3 magias de fogo esquecidas. Ao sintonizar, o usuário aprende Bola de Fogo aprimorada (8d6). O livro queima qualquer um que tente lê-lo sem sintonização.",
+    imagem: "img/Itens/Grimório-das-Chamas.jpg"
+  }
+];
+
+const bossesPadrao = [
+  {
+    id: "boss-padrao-1", _tipo: "boss", origem: "padrao",
+    nome: "Senhor das Sombras",
+    tipo: "Morto-vivo",
+    regiao: "Catacumbas Profundas",
+    hpMax: 180, hpAtual: 180, ca: 17,
+    status: { for: 20, des: 14, con: 18, int: 16, sab: 12, car: 18 },
+    lore: "Um antigo senhor da guerra que fez um pacto com forças das trevas para escapar da morte. Governa um exército de mortos-vivos nas catacumbas sob a cidade esquecida.",
+    habilidades: "Drenar Vida: ao acertar um golpe, recupera 10 HP. Aura de Terror: criaturas a até 10m fazem teste de sabedoria ou ficam amedrontadas.",
+    fraquezas: "Luz sagrada causa dano dobrado. Fica enfraquecido ao amanhecer.",
+    imagem: "img/Boss/Senhor-das-sombras.jpg"
+  },
+  {
+    id: "boss-padrao-2", _tipo: "boss", origem: "padrao",
+    nome: "A Tecelã",
+    tipo: "Aberração",
+    regiao: "Floresta Corrompida",
+    hpMax: 150, hpAtual: 150, ca: 15,
+    status: { for: 16, des: 18, con: 14, int: 20, sab: 16, car: 8 },
+    lore: "Uma entidade antiga que tece o destino dos mortais como fios. Habita o coração de uma floresta corrompida, manipulando os habitantes locais há séculos.",
+    habilidades: "Fios do Destino: pode reescrever o resultado de um dado uma vez por rodada. Marionetes: controla até 3 humanoides simultaneamente.",
+    fraquezas: "Seus fios podem ser cortados com lâminas abençoadas. Perde poderes longe da floresta.",
+    imagem: "img/Boss/A-Tecela.jpg"
+  },
+  {
+    id: "boss-padrao-3", _tipo: "boss", origem: "padrao",
+    nome: "Kargoth, o Devastador",
+    tipo: "Gigante",
+    regiao: "Montanhas do Norte",
+    hpMax: 220, hpAtual: 220, ca: 16,
+    status: { for: 24, des: 8, con: 22, int: 6, sab: 8, car: 10 },
+    lore: "Um gigante de pedra exilado de seu clã por ser considerado cruel demais até para os seus. Constrói uma fortaleza nas montanhas usando trabalho forçado de aldeões capturados.",
+    habilidades: "Golpe Devastador: causa 4d10 de dano e joga o alvo 6m para trás. Arremesso de Rocha: ataque à distância de 30m causando 3d8.",
+    fraquezas: "Lento e previsível. Ataques em seus joelhos reduzem sua velocidade pela metade.",
+    imagem: "img/Boss/Kargoth-o-Devastador.jpg"
+  },
+  {
+    id: "boss-padrao-4", _tipo: "boss", origem: "padrao",
+    nome: "Vespera",
+    tipo: "Feiticeira",
+    regiao: "Torre de Âmbar",
+    hpMax: 120, hpAtual: 120, ca: 13,
+    status: { for: 8, des: 14, con: 12, int: 22, sab: 16, car: 20 },
+    lore: "Uma ex-conselheira real que foi banida por praticar magia proibida. Passou décadas aperfeiçoando feitiços de controle mental e busca vingança contra a coroa.",
+    habilidades: "Dominação: controla um inimigo por 1 minuto. Contramagia: pode cancelar qualquer feitiço uma vez por rodada.",
+    fraquezas: "Fisicamente fraca. Tem dificuldade em combate próximo e depende de seus lacaios.",
+    imagem: "img/Boss/Vespera.jpg"
+  },
+  {
+    id: "boss-padrao-5", _tipo: "boss", origem: "padrao",
+    nome: "O Guardião Sem Nome",
+    tipo: "Construto",
+    regiao: "Ruínas Antigas",
+    hpMax: 200, hpAtual: 200, ca: 19,
+    status: { for: 22, des: 10, con: 20, int: 4, sab: 10, car: 1 },
+    lore: "Um golem colossal criado por uma civilização desaparecida para proteger seus segredos eternamente. Não tem vontade própria — apenas cumpre sua programação sem parar.",
+    habilidades: "Imune a charme e medo. Regenera 15 HP por rodada a menos que tome dano de raio.",
+    fraquezas: "Raio danifica seus mecanismos internos. Tem um símbolo de controle gravado nas costas.",
+    imagem: "img/Boss/O-Guardião-Sem-Nome.jpg"
+  }
+];
 
 const compendioPadrao = [
  {
@@ -3800,6 +4088,24 @@ const compendioPadrao = [
     encontros: "Cavernas, ruínas tomadas por teias e florestas antigas.",
     imagem: "img/monstros/Aranha-Gigante.jpg"
   },
+
+  {
+    id: "padrao-bananao",
+    origem: "padrao",
+    nome: "Bananao",
+    tipo: "Fruta",
+    regiao: "Florestas densas Bananeiras.",
+    hpMax: 250,
+    hpAtual: 250,
+    ca: 14,
+    status: { for: 20, des: 20, con: 20, int: 20, sab: 20, car: 20 },
+    lore: "Um ser que cansou de ser comido e virou sua maior ameaça.",
+    habilidades: "Onda de vitamina, Suquinho natural de banana",
+    dialogos: ["Som de liquidificador", "A criatura observa em silêncio.", "Cascas de banana se movem ao redor."],
+    encontros: "florestas antigas.",
+    imagem: "img/monstros/Bananao.png"
+  },
+
   {
     id: "padrao-ogre",
     origem: "padrao",
@@ -3849,6 +4155,9 @@ let sheetDragInicioY = 0;
 let sheetArrastando = false;
 
 function abrirTelaModo() {
+  document.querySelector(".header-rpg")?.style.removeProperty("display");
+  document.querySelector(".folhas-bg")?.style.removeProperty("display");
+
   document.getElementById("loginBox").style.display = "none";
   document.getElementById("tela-inicial").style.display = "none";
   document.getElementById("masterIgnea").style.display = "none";
@@ -3867,6 +4176,22 @@ function abrirTelaModo() {
     tela.style.opacity = "1";
     tela.style.transform = "scale(1)";
   });
+}
+
+
+
+function entrarModoMestreAnimado() {
+  const tela = document.getElementById("tela-modo");
+  if (!tela) return;
+
+  tela.classList.add("zoom-grimorio");
+
+  setTimeout(() => {
+    tela.classList.remove("zoom-grimorio");
+    entrarModoMestre();
+    tela.style.opacity = "1";
+    tela.style.transform = "scale(1)";
+  }, 550);
 }
 
 function esconderTelasPrincipais() {
@@ -3898,28 +4223,12 @@ function entrarModoJogador() {
   }
 }
 
-function entrarModoMestre() {
-  controlarHeader(false);
-
-  document.getElementById("loginBox").style.display = "none";
-  document.getElementById("tela-modo").style.display = "none";
-  document.getElementById("tela-inicial").style.display = "none";
-  document.getElementById("ficha").style.display = "none";
-  document.getElementById("masterIgnea").style.display = "none";
-
-  const telaCampanhas = document.getElementById("telaCampanhasMaster");
-  if (telaCampanhas) {
-    telaCampanhas.style.display = "block";
-  }
-
-  renderCampanhasMaster();
-}
-
 function voltarTelaModo() {
   abrirTelaModo();
 }
 
 function trocarAbaMaster(nomeAba, btn) {
+  document.querySelector('.header-rpg').style.display = 'none';
   document.querySelectorAll(".master-aba").forEach(aba => {
     aba.style.display = "none";
     aba.classList.remove("active");
@@ -3935,10 +4244,69 @@ function trocarAbaMaster(nomeAba, btn) {
     alvo.classList.add("active");
   }
 
+ if (nomeAba === "mundo") {
+  inicializarAbaMundo();
+  renderMundoCampanha();
+}
+
+if (nomeAba === "lore") {
+  setTimeout(() => renderLoreCampanha(), 50);
+}
+
   if (btn) btn.classList.add("active");
 
-  if (nomeAba === "compendio") renderMonstrosMestre();
+  if (nomeAba === "compendio") {
+  injetarFiltrosCompendio();
+  renderMonstrosMestre();
+}
   if (nomeAba === "combateMaster") renderCombatesMestre();
+}
+
+function injetarFiltrosCompendio() {
+  const controles = document.querySelector(".compendio-controles");
+  if (!controles || document.getElementById("filtroTipoMonstro")) return;
+
+  const select = document.createElement("select");
+  select.id = "filtroTipoMonstro";
+  select.innerHTML = `
+    <option value="todos">📚 Todos</option>
+    <option value="monstros">👹 Criaturas</option>
+    <option value="bosses">💀 Bosses</option>
+    <option value="npcs">🧙 NPCs</option>
+    <option value="itens">⚔️ Itens</option>
+  `;
+  select.onchange = () => {
+    _filtroCompendio = select.value;
+    renderMonstrosMestre();
+  };
+
+  const ordenar = document.getElementById("ordenarMonstros");
+  ordenar.after(select);
+}
+
+function _estiloBtnFiltro(ativo) {
+  return `
+    padding:6px 14px;
+    border-radius:999px;
+    border:1px solid ${ativo ? "rgba(200,80,80,0.55)" : "rgba(216,200,170,0.18)"};
+    background:${ativo ? "linear-gradient(180deg,#5f1717,#2a0b0b)" : "rgba(14,11,9,0.6)"};
+    color:${ativo ? "#f1dfbd" : "#a08060"};
+    font-size:13px;
+    font-weight:bold;
+    cursor:pointer;
+    transition:0.18s;
+    white-space:nowrap;
+  `;
+}
+
+
+
+function ativarFiltroCompendio(key) {
+  _filtroCompendio = key;
+  document.querySelectorAll(".compendio-filtro-btn").forEach(btn => {
+    btn.style.cssText = _estiloBtnFiltro(btn.dataset.filtro === key);
+  });
+  renderMonstrosMestre();
 }
 
 function salvarMonstrosMestreStorage() {
@@ -3951,6 +4319,12 @@ function salvarMonstrosMestreStorage() {
 }
 
 function salvarCombatesMestreStorage() {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (campanha) {
+    campanha.combates = combatesMestre;
+    salvarCampanhasMaster();
+  }
+
   localStorage.setItem("combatesMestre", JSON.stringify(combatesMestre));
   window.combatesMestre = combatesMestre;
 
@@ -4001,7 +4375,25 @@ function previewImagemMonstro() {
   reader.readAsDataURL(file);
 }
 
-function salvarMonstroMestre() {
+async function uploadImagemFirebase(base64, caminho) {
+  try {
+    const formData = new FormData();
+    formData.append("image", base64.split(",")[1]);
+    formData.append("key", "26dfe793d942b94afde4b0cf7a63a385");
+    const response = await fetch("https://api.imgbb.com/1/upload", {
+      method: "POST",
+      body: formData,
+    });
+    const data = await response.json();
+    if (data.success) return { url: data.data.url, deleteUrl: data.data.delete_url };
+    throw new Error("ImgBB upload falhou");
+  } catch(e) {
+    console.error("Erro upload imagem ImgBB:", e);
+    return { url: base64, deleteUrl: "" };
+  }
+}
+
+async function salvarMonstroMestre() {
   const nome = document.getElementById("monstroNome")?.value.trim();
   const tipo = document.getElementById("monstroTipo")?.value.trim();
   const regiao = document.getElementById("monstroRegiao")?.value.trim();
@@ -4041,6 +4433,9 @@ function salvarMonstroMestre() {
 
     lore: document.getElementById("monstroLore")?.value.trim() || "",
     habilidades: document.getElementById("monstroHabilidades")?.value.trim() || "",
+    ataques:     document.getElementById("monstroAtaques")?.value.trim()     || "",
+    reacoes:     document.getElementById("monstroReacoes")?.value.trim()     || "",
+    resistencias:document.getElementById("monstroResistencias")?.value.trim() || "",
 
     dialogos: (document.getElementById("monstroDialogos")?.value || "")
       .split("\n")
@@ -4048,7 +4443,9 @@ function salvarMonstroMestre() {
       .filter(fala => fala.length > 0),
 
     encontros: document.getElementById("monstroEncontros")?.value.trim() || "",
-    imagem: imagemMonstroBase64 || monstroAntigo?.imagem || ""
+    ...(imagemMonstroBase64
+    ? await uploadImagemFirebase(imagemMonstroBase64, `monstros/${Date.now()}.jpg`).then(r => ({ imagem: r.url, imagemDeleteUrl: r.deleteUrl }))
+    : { imagem: monstroAntigo?.imagem || "", imagemDeleteUrl: monstroAntigo?.imagemDeleteUrl || "" })
   };
 
   if (editandoMonstroMestre >= 0) {
@@ -4077,7 +4474,7 @@ function limparFormMonstro() {
     "monstroHpAtual",
     "monstroCa",
     "monstroLore",
-    "monstroHabilidades",
+    "monstroHabilidades","monstroAtaques","monstroReacoes","monstroResistencias",
     "monstroDialogos",
     "monstroEncontros"
   ];
@@ -4120,86 +4517,303 @@ function renderMonstrosMestre() {
 
   lista.innerHTML = "";
 
- const listaCompleta = [
-  ...compendioPadrao,
-  ...monstrosMestre
-];
+  const campanha = campanhasMaster?.[campanhaAtualMaster] || {};
 
-let listaFiltrada = [...listaCompleta];
+  const monstrosBase = [...(compendioPadrao || []), ...(monstrosMestre || [])];
+  const bossesBase   = [...(bossesPadrao || []), ...(campanha.bosses || []).map(b => ({ ...b, _tipo: "boss" }))];
+  const itensBase    = [...(itensPadrao || []), ...(campanha.itensMaster || []).map(i => ({ ...i, _tipo: "item" }))];
+  const npcsBase = [...(npcsPadrao || []), ...(campanha.npcs || []).map(n => ({ ...n, _tipo: "npc" }))];
 
-const pesquisa = document.getElementById("pesquisaMonstro")?.value
-  ?.toLowerCase()
-  .trim() || "";
-
-if (pesquisa) {
-  listaFiltrada = listaFiltrada.filter(monstro =>
-    (monstro.nome || "").toLowerCase().includes(pesquisa) ||
-    (monstro.tipo || "").toLowerCase().includes(pesquisa) ||
-    (monstro.regiao || "").toLowerCase().includes(pesquisa)
-  );
-}
-
-const ordenacao = document.getElementById("ordenarMonstros")?.value || "az";
-
-listaFiltrada.sort((a, b) => {
-  if (ordenacao === "az") {
-    return (a.nome || "").localeCompare(b.nome || "");
+  let listaCompleta;
+  switch (_filtroCompendio) {
+    case "monstros": listaCompleta = monstrosBase; break;
+    case "bosses":   listaCompleta = bossesBase;   break;
+    case "itens":    listaCompleta = itensBase;    break;
+    case "npcs":     listaCompleta = npcsBase;     break;
+    default:         listaCompleta = [...monstrosBase, ...bossesBase, ...itensBase, ...npcsBase];
   }
 
-  if (ordenacao === "za") {
-    return (b.nome || "").localeCompare(a.nome || "");
+  const pesquisa = document.getElementById("pesquisaMonstro")?.value?.toLowerCase().trim() || "";
+  let listaFiltrada = pesquisa
+    ? listaCompleta.filter(e =>
+        (e.nome   || "").toLowerCase().includes(pesquisa) ||
+        (e.tipo   || "").toLowerCase().includes(pesquisa) ||
+        (e.regiao || "").toLowerCase().includes(pesquisa) ||
+        (e.classe || "").toLowerCase().includes(pesquisa)
+      )
+    : [...listaCompleta];
+
+  const ordenacao = document.getElementById("ordenarMonstros")?.value || "az";
+  listaFiltrada.sort((a, b) => {
+    if (ordenacao === "az")      return (a.nome || "").localeCompare(b.nome || "");
+    if (ordenacao === "za")      return (b.nome || "").localeCompare(a.nome || "");
+    if (ordenacao === "hpMaior") return (b.hpMax || 0) - (a.hpMax || 0);
+    if (ordenacao === "hpMenor") return (a.hpMax || 0) - (b.hpMax || 0);
+    if (ordenacao === "caMaior") return (b.ca || 0) - (a.ca || 0);
+    if (ordenacao === "caMenor") return (a.ca || 0) - (b.ca || 0);
+    if (ordenacao === "criaturas") {
+      const ordemTipo = { boss: 0 };
+      const ta = ordemTipo[a._tipo] ?? 1;
+      const tb = ordemTipo[b._tipo] ?? 1;
+      return ta !== tb ? ta - tb : (a.nome || "").localeCompare(b.nome || "");
+    }
+    if (ordenacao === "npcs") {
+      const ordemRel = { inimigo: 0, neutro: 1, aliado: 2 };
+      const ra = ordemRel[a.relacao] ?? 1;
+      const rb = ordemRel[b.relacao] ?? 1;
+      return ra !== rb ? ra - rb : (a.nome || "").localeCompare(b.nome || "");
+    }
+    if (ordenacao === "itens") {
+      const ordemRar = { reliquia: 0, raro: 1, incomum: 2, normal: 3 };
+      const ra = ordemRar[a.raridade] ?? 3;
+      const rb = ordemRar[b.raridade] ?? 3;
+      return ra !== rb ? ra - rb : (a.nome || "").localeCompare(b.nome || "");
+    }
+    return 0;
+  });
+
+  listaSheetCompendio = listaFiltrada;
+
+  if (!listaFiltrada.length) {
+    const msgs = {
+      todos:    "Nenhum resultado encontrado.",
+      monstros: "Nenhum monstro ainda.",
+      bosses:   "Nenhum boss criado.\nCrie um na aba ✍️ Criar.",
+      itens:    "Nenhum item criado.\nCrie um na aba ✍️ Criar.",
+      npcs:     "Nenhum NPC criado.\nCrie um na aba ✍️ Criar.",
+    };
+    lista.innerHTML = `<p style="text-align:center;color:#cdb791;grid-column:1/-1;padding:24px 0;white-space:pre-line;">${msgs[_filtroCompendio] || msgs.todos}</p>`;
+    return;
   }
 
-  if (ordenacao === "hpMaior") {
-    return (b.hpMax || 0) - (a.hpMax || 0);
-  }
-
-  if (ordenacao === "hpMenor") {
-    return (a.hpMax || 0) - (b.hpMax || 0);
-  }
-
-  if (ordenacao === "caMaior") {
-    return (b.ca || 0) - (a.ca || 0);
-  }
-
-  if (ordenacao === "caMenor") {
-    return (a.ca || 0) - (b.ca || 0);
-  }
-
-  return 0;
-});
-
-listaSheetCompendio = listaFiltrada;
-
-
-if (!listaFiltrada.length) {
-  lista.innerHTML = `
-    <p style="text-align:center; color:#cdb791; grid-column:1/-1;">
-      Nenhum monstro disponível.
-    </p>
-  `;
-  return;
-}
-
-    listaFiltrada.forEach((monstro, index) => {
+  listaFiltrada.forEach((entry, index) => {
     const card = document.createElement("div");
     card.className = "compendio-card";
+    card.style.backgroundImage = `url("${entry.imagem || "icon-512.png"}")`;
 
-    const imagem = monstro.imagem || "icon-512.png";
-    card.style.backgroundImage = `url("${imagem}")`;
+    card.onclick = () => {
+      const tipo = entry._tipo;
+      if (!tipo) {
+      const idxReal = monstrosMestre.findIndex(m => m.id === entry.id);
+      abrirSheetMonstroPorObjeto(entry, idxReal, listaFiltrada);
+      }
+      else if (tipo === "boss") _abrirPopupBossCompendio(entry);
+      else if (tipo === "item") _abrirPopupItemCompendio(entry);
+      else if (tipo === "npc")  _abrirPopupNPCCompendio(entry);
+    };
 
-    card.onclick = () => abrirSheetMonstroPorObjeto(monstro, index, listaFiltrada);
+    const badge = { boss:"💀 Boss", item:"⚔️ Item", npc:"🧙 NPC" }[entry._tipo] || "👹 Criatura";
+    const subtitulo = entry._tipo === "item"
+      ? [entry.tipo, ({normal:"Normal",incomum:"Incomum",raro:"Raro",reliquia:"Relíquia"})[entry.raridade]].filter(Boolean).join(" · ")
+      : entry._tipo === "npc"
+        ? [entry.raca, entry.classe].filter(Boolean).join(" · ")
+        : (entry.tipo || "Tipo não definido");
+    const stats = entry._tipo === "item"
+      ? (entry.sintonia === "sim" ? "✦ Sintonização" : "")
+      : entry._tipo === "npc"
+        ? (entry.regiao || "")
+        : `HP ${entry.hpAtual ?? entry.hpMax ?? 0}/${entry.hpMax ?? 0} • CA ${entry.ca || 0}`;
+
+    const ehCriado = entry._tipo === "boss" || entry._tipo === "item" || entry._tipo === "npc" || (!entry._tipo && monstrosMestre.includes(entry));
 
     card.innerHTML = `
       <div class="compendio-info">
-        <strong>${escapeHtml(monstro.nome)}</strong>
-        <small>${escapeHtml(monstro.tipo || "Tipo não definido")}</small>
-        <span>HP ${monstro.hpAtual}/${monstro.hpMax} • CA ${monstro.ca || 0}</span>
+        <small style="opacity:0.7">${badge}</small>
+        <strong>${escapeHtml(entry.nome || "Sem nome")}</strong>
+        <small>${escapeHtml(subtitulo)}</small>
+        <span>${escapeHtml(stats)}</span>
+
       </div>
     `;
 
     lista.appendChild(card);
   });
+}
+
+function selecionarDificuldade(valor, btn) {
+  document.querySelectorAll('.criar-dif-btn').forEach(b => b.classList.remove('ativo'));
+  btn.classList.add('ativo');
+  document.getElementById('encontroDificuldade').value = valor;
+}
+
+function selecionarRaridade(valor, btn) {
+  document.querySelectorAll('.btn-raridade').forEach(b => b.classList.remove('ativo'));
+  btn.classList.add('ativo');
+  document.getElementById('itemMasterRaridade').value = valor;
+}
+
+async function excluirEntradaCompendio(tipo, id) {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!confirm("Deseja excluir este item?")) return;
+
+  // helper para deletar imagem do Storage
+  async function deletarImagem(deleteUrl) {
+    if (deleteUrl?.startsWith("https://")) {
+      try {
+        await fetch(deleteUrl, { method: "GET" }); // ImgBB deleta via GET no delete_url
+      } catch(e) { console.warn("Erro ao deletar imagem ImgBB:", e); }
+    }
+  }
+
+  if (tipo === "monstro") {
+    const idx = monstrosMestre.findIndex(m => m.id === id);
+    if (idx !== -1) {
+      await deletarImagem(monstrosMestre[idx].imagemDeleteUrl);
+      monstrosMestre.splice(idx, 1);
+      salvarMonstrosMestreStorage();
+    }
+  } else if (tipo === "boss") {
+    const boss = (campanha.bosses || []).find(b => b.id === id);
+    await deletarImagem(boss?.imagemDeleteUrl);
+    campanha.bosses = (campanha.bosses || []).filter(b => b.id !== id);
+    salvarCampanhasMaster();
+  } else if (tipo === "item") {
+    const item = (campanha.itensMaster || []).find(i => i.id === id);
+    await deletarImagem(item?.imagemDeleteUrl);
+    campanha.itensMaster = (campanha.itensMaster || []).filter(i => i.id !== id);
+    salvarCampanhasMaster();
+  } else if (tipo === "npc") {
+    const npc = (campanha.npcs || []).find(n => n.id === id);
+    await deletarImagem(npc?.imagemDeleteUrl);
+    campanha.npcs = (campanha.npcs || []).filter(n => n.id !== id);
+    salvarCampanhasMaster();
+  }
+
+  renderMonstrosMestre();
+}
+
+function _abrirPopupEncontroCompendio(encontro) {
+  window._entradaSessaoAtual = encontro;
+  const bloco = (titulo, valor) => valor ? `
+    <div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
+      <div style="background:#D4C9A8;padding:7px 12px;text-align:center;">
+        <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">${titulo}</span>
+      </div>
+      <div style="padding:10px 14px;font-size:13px;color:#2A1A10;line-height:1.6;">${escapeHtml(valor)}</div>
+    </div>` : "";
+
+  const conteudo = `
+    <h2 class="sheet-titulo" style="text-align:center;margin-bottom:4px;">${escapeHtml(encontro.nome)}</h2>
+    <div class="sheet-meta" style="text-align:center;margin-bottom:12px;">${[encontro.regiao, encontro.localizacao].filter(Boolean).map(v => escapeHtml(v)).join(" · ")}</div>
+    ${bloco("Envolvidos", encontro.envolvidos)}
+    ${bloco("Objetivo", encontro.objetivo)}
+    ${bloco("Gatilho", encontro.gatilho)}
+    ${bloco("Ambiente", encontro.ambiente)}
+    ${bloco("Consequências", encontro.consequencias)}
+    ${bloco("Loot / Recompensa", encontro.loot)}
+    ${bloco("Notas do Mestre", encontro.notas)}
+  `;
+  _abrirSheetCustom(conteudo);
+}
+
+function _abrirPopupBossCompendio(boss) {
+  const mod = v => { const m = Math.floor(((v||10)-10)/2); return m >= 0 ? `+${m}` : `${m}`; };
+  window._entradaSessaoAtual = boss;
+
+  const bloco = (titulo, texto) => `
+    <div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
+      <div style="background:#D4C9A8;padding:7px 12px;text-align:center;">
+        <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">${titulo}</span>
+      </div>
+      <div style="padding:10px 14px;font-size:13px;color:#2A1A10;line-height:1.6;">${texto}</div>
+    </div>`;
+
+  const conteudo = `
+    ${boss.imagem ? `<img src="${boss.imagem}" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin-bottom:12px;">` : ""}
+    <h2 class="sheet-titulo" style="text-align:center;margin-bottom:4px;">${escapeHtml(boss.nome)}</h2>
+    <div class="sheet-meta" style="text-align:center;margin-bottom:8px;">${[boss.titulo, boss.tipo, boss.regiao].filter(Boolean).map(v => escapeHtml(v)).join(" • ")}</div>
+    ${boss.hpMax ? `<div class="sheet-hp-ca" style="text-align:center;margin-bottom:12px;">HP ${boss.hpMax} • CA ${boss.ca || 0}</div>` : ""}
+    ${(boss.status && Object.keys(boss.status).length) ? `
+    <div class="sheet-status-grid" style="margin-bottom:12px;">
+      ${["for","des","con","int","sab","car"].map(a => `
+        <div>${a.toUpperCase()}<br>${boss.status[a]||10}<small>${mod(boss.status[a]||10)}</small></div>`).join("")}
+    </div>` : ""}
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+      <button style="background:#7B1E28!important;border:none!important;border-radius:8px;color:#fff!important;padding:10px;font-size:13px;cursor:pointer;" onclick='enviarMonstroPadraoParaCombate(${JSON.stringify(boss)})'>⚔️ Enviar para combate</button>
+    </div>
+    ${boss.fases     ? bloco("Fases", escapeHtml(boss.fases)) : ""}
+    ${boss.mecanicas ? bloco("Mecânicas", escapeHtml(boss.mecanicas)) : ""}
+    ${boss.ataques   ? bloco("Ataques", escapeHtml(boss.ataques)) : ""}
+    ${boss.fraquezas ? bloco("Fraquezas", escapeHtml(boss.fraquezas)) : ""}
+    ${boss.lore      ? bloco("Lore", escapeHtml(boss.lore)) : ""}
+    <button style="width:100%;margin-top:4px;background:rgba(143,34,34,0.8)!important;border:none!important;border-radius:8px;color:#fff!important;padding:10px;font-size:13px;cursor:pointer;" onclick="excluirEntradaCompendio('boss',${boss.id})">🗑 Excluir Boss</button>
+  `;
+  _abrirSheetCustom(conteudo);
+}
+
+function _abrirPopupItemCompendio(item) {
+  window._entradaSessaoAtual = item;
+  const r = {normal:"Normal", incomum:"Incomum", raro:"Raro", reliquia:"Relíquia"};
+
+  const bloco = (titulo, texto) => `
+    <div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
+      <div style="background:#D4C9A8;padding:7px 12px;text-align:center;">
+        <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">${titulo}</span>
+      </div>
+      <div style="padding:10px 14px;font-size:13px;color:#2A1A10;line-height:1.6;">${texto}</div>
+    </div>`;
+
+  const conteudo = `
+    ${item.imagem ? `<img src="${item.imagem}" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin-bottom:12px;">` : ""}
+    <h2 class="sheet-titulo" style="text-align:center;margin-bottom:4px;">${escapeHtml(item.nome)}</h2>
+    <div class="sheet-meta" style="text-align:center;margin-bottom:8px;">${[item.tipo, r[item.raridade]].filter(Boolean).join(" • ")}</div>
+    ${item.sintonia === "sim" ? `<div class="sheet-meta" style="text-align:center;margin-bottom:12px;">✦ Requer sintonização</div>` : ""}
+    ${item.efeito    ? bloco("Efeito", escapeHtml(item.efeito)) : ""}
+    ${item.descricao ? bloco("Descrição", escapeHtml(item.descricao)) : ""}
+    ${item.historia  ? bloco("História", escapeHtml(item.historia)) : ""}
+    ${item.origem    ? bloco("Origem", escapeHtml(item.origem)) : ""}
+    <button style="width:100%;margin-top:4px;background:rgba(143,34,34,0.8)!important;border:none!important;border-radius:8px;color:#fff!important;padding:10px;font-size:13px;cursor:pointer;" onclick="excluirEntradaCompendio('item',${item.id})">🗑 Excluir Item</button>
+  `;
+  _abrirSheetCustom(conteudo);
+}
+
+function _abrirPopupNPCCompendio(npc) {
+  const mod = v => { const m = Math.floor(((v||10)-10)/2); return m >= 0 ? `+${m}` : `${m}`; };
+  window._entradaSessaoAtual = npc;
+
+  const bloco = (titulo, texto) => `
+    <div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
+      <div style="background:#D4C9A8;padding:7px 12px;text-align:center;">
+        <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">${titulo}</span>
+      </div>
+      <div style="padding:10px 14px;font-size:13px;color:#2A1A10;line-height:1.6;">${texto}</div>
+    </div>`;
+
+  const conteudo = `
+    ${npc.imagem ? `<img src="${npc.imagem}" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin-bottom:12px;">` : ""}
+    <h2 class="sheet-titulo" style="text-align:center;margin-bottom:4px;">${escapeHtml(npc.nome)}</h2>
+    <div class="sheet-meta" style="text-align:center;margin-bottom:8px;">${[npc.raca, npc.classe, npc.regiao].filter(Boolean).map(v => escapeHtml(v)).join(" • ")}</div>
+    ${(npc.status && Object.keys(npc.status).length) ? `
+    <div class="sheet-status-grid" style="margin-bottom:12px;">
+      ${["for","des","con","int","sab","car"].map(a => `
+        <div>${a.toUpperCase()}<br>${npc.status[a]||10}<small>${mod(npc.status[a]||10)}</small></div>`).join("")}
+    </div>` : ""}
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+      <button style="background:#7B1E28!important;border:none!important;border-radius:8px;color:#fff!important;padding:10px;font-size:13px;cursor:pointer;" onclick="adicionarNPCAoMundo()">🌍 Adicionar ao Mundo</button>
+    </div>
+    ${npc.personalidade ? bloco("Personalidade", escapeHtml(npc.personalidade)) : ""}
+    ${npc.relacoes      ? bloco("Relações", escapeHtml(npc.relacoes)) : ""}
+    ${npc.pericias      ? bloco("Perícias", escapeHtml(npc.pericias)) : ""}
+    ${npc.religiao      ? bloco("Religião", escapeHtml(npc.religiao)) : ""}
+    ${npc.observacoes   ? bloco("Observações", escapeHtml(npc.observacoes)) : ""}
+    <button style="width:100%;margin-top:4px;background:rgba(143,34,34,0.8)!important;border:none!important;border-radius:8px;color:#fff!important;padding:10px;font-size:13px;cursor:pointer;" onclick="excluirEntradaCompendio('npc',${npc.id})">🗑 Excluir NPC</button>
+  `;
+  _abrirSheetCustom(conteudo);
+}
+
+function _abrirSheetCustom(conteudo) {
+  const sheetOverlay = document.getElementById("sheetMonstroOverlay");
+  const sheet        = document.getElementById("sheetMonstro");
+  const conteudoDiv  = document.getElementById("conteudoSheetMonstro");
+  if (!sheet || !conteudoDiv) return;
+
+  conteudoDiv.innerHTML = conteudo;
+  sheetOverlay.style.display = "block";
+  sheet.style.display        = "block";
+  sheet.classList.remove("full", "aberto");
+  requestAnimationFrame(() => sheet.classList.add("aberto"));
+  document.body.classList.add("master-sheet-aberto");
+  ativarGestosSheetMonstro();
 }
 
 
@@ -4218,200 +4832,137 @@ function criarCopiaEditavelMonstroPadrao(monstro) {
   editarMonstroMestre(indexNovo);
 }
 
+function abrirSheetMonstroPadrao(monstro) {
+  const overlay  = document.getElementById("sheetMonstroOverlay");
+  const sheet    = document.getElementById("sheetMonstro");
+  const conteudo = document.getElementById("conteudoSheetMonstro");
+  const estavaAberto = sheet.classList.contains("aberto");
+  const estavaFull   = sheet.classList.contains("full");
+  if (!overlay || !sheet || !conteudo) return;
+
+  const imagem = monstro.imagem || "";
+  const bloco  = (titulo, texto) => `
+    <div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
+      <div style="background:#D4C9A8;padding:7px 12px;text-align:center;">
+        <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">${titulo}</span>
+      </div>
+      <div style="padding:10px 14px;font-size:13px;color:#2A1A10;line-height:1.6;">${texto}</div>
+    </div>`;
+
+  conteudo.innerHTML = `
+    ${imagem ? `<img class="sheet-img" src="${imagem}" alt="${escapeHtml(monstro.nome)}" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin-bottom:12px;">` : ""}
+
+    <h2 class="sheet-titulo" style="text-align:center;margin-bottom:4px;">${escapeHtml(monstro.nome)}</h2>
+    <div class="sheet-meta" style="text-align:center;margin-bottom:8px;">${escapeHtml(monstro.tipo || "Tipo não definido")} · ${escapeHtml(monstro.regiao || "Região não definida")}</div>
+    <div class="sheet-hp-ca" style="text-align:center;margin-bottom:12px;">HP ${monstro.hpAtual}/${monstro.hpMax} · CA ${monstro.ca || 0}</div>
+
+    <div class="sheet-status-grid" style="margin-bottom:12px;">
+      <div>FOR<br>${monstro.status?.for||10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.for||10))}</small></div>
+      <div>DES<br>${monstro.status?.des||10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.des||10))}</small></div>
+      <div>CON<br>${monstro.status?.con||10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.con||10))}</small></div>
+      <div>INT<br>${monstro.status?.int||10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.int||10))}</small></div>
+      <div>SAB<br>${monstro.status?.sab||10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.sab||10))}</small></div>
+      <div>CAR<br>${monstro.status?.car||10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.car||10))}</small></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+      <button style="background:#7B1E28!important;border:none!important;border-radius:8px;color:#fff!important;padding:10px;font-size:13px;cursor:pointer;" onclick='enviarMonstroPadraoParaCombate(${JSON.stringify(monstro)})'>⚔️ Enviar para combate</button>
+      <button style="background:rgba(196,169,91,0.2)!important;border:1px solid rgba(196,169,91,0.4)!important;border-radius:8px;color:#C4A95B!important;padding:10px;font-size:13px;cursor:pointer;" onclick='criarCopiaEditavelMonstroPadrao(${JSON.stringify(monstro)})'>✏️ Criar cópia editável</button>
+    </div>
+
+    ${bloco("Lore", formatarTexto(monstro.lore || "Sem lore cadastrada."))}
+    ${bloco("Habilidades Especiais", formatarTexto(monstro.habilidades || "Sem habilidades cadastradas."))}
+    ${bloco("Diálogos", monstro.dialogos?.length ? monstro.dialogos.map(f => `"${escapeHtml(f)}"`).join("<br>") : "Sem falas cadastradas.")}
+    ${bloco("Pontos de Encontro", formatarTexto(monstro.encontros || "Sem pontos de encontro cadastrados."))}
+    ${monstro.origem !== "padrao" ? `<button style="width:100%;margin-top:4px;background:rgba(143,34,34,0.8)!important;border:none!important;border-radius:8px;color:#fff!important;padding:10px;font-size:13px;cursor:pointer;" onclick="excluirMonstroMestre(sheetMonstroIndexAtual)">🗑️ Excluir Monstro</button>` : ""}
+  `;
+
+  sheet.style.transition = "";
+  sheet.style.transform  = "";
+  sheet.style.opacity    = "";
+  sheet.style.height     = "";
+
+  overlay.style.display = "block";
+  sheet.style.display   = "block";
+
+  if (!estavaAberto) sheet.classList.remove("full", "aberto");
+  if (estavaFull)    sheet.classList.add("full");
+
+  setTimeout(() => sheet.classList.add("aberto"), 10);
+  document.body.classList.add("master-sheet-aberto");
+  ativarGestosSheetMonstro();
+}
+
+function abrirSheetMonstroPorObjeto(monstro, index, lista = null) {
+  if (lista) listaSheetCompendio = lista;
+  sheetMonstroIndexAtual = index;
+  abrirSheetMonstroPadrao(monstro);
+}
+
 function abrirSheetMonstro(index) {
   const monstro = monstrosMestre[index];
   if (!monstro) return;
 
   sheetMonstroIndexAtual = index;
 
-  const overlay = document.getElementById("sheetMonstroOverlay");
-  const sheet = document.getElementById("sheetMonstro");
+  const overlay  = document.getElementById("sheetMonstroOverlay");
+  const sheet    = document.getElementById("sheetMonstro");
   const conteudo = document.getElementById("conteudoSheetMonstro");
-
   if (!overlay || !sheet || !conteudo) return;
 
-  const imagem = monstro.imagem || "icon-512.png";
+  const imagem = monstro.imagem || "";
+  const bloco  = (titulo, texto) => `
+    <div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
+      <div style="background:#D4C9A8;padding:7px 12px;text-align:center;">
+        <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">${titulo}</span>
+      </div>
+      <div style="padding:10px 14px;font-size:13px;color:#2A1A10;line-height:1.6;">${texto}</div>
+    </div>`;
 
   conteudo.innerHTML = `
-    <img class="sheet-img" src="${imagem}" alt="${escapeHtml(monstro.nome)}">
+    ${imagem ? `<img class="sheet-img" src="${imagem}" alt="${escapeHtml(monstro.nome)}" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin-bottom:12px;">` : ""}
 
-    <h2 class="sheet-titulo">${escapeHtml(monstro.nome)}</h2>
+    <h2 class="sheet-titulo" style="text-align:center;margin-bottom:4px;">${escapeHtml(monstro.nome)}</h2>
+    <div class="sheet-meta" style="text-align:center;margin-bottom:8px;">${escapeHtml(monstro.tipo || "Tipo não definido")} · ${escapeHtml(monstro.regiao || "Região não definida")}</div>
+    <div class="sheet-hp-ca" style="text-align:center;margin-bottom:12px;">HP ${monstro.hpAtual}/${monstro.hpMax} · CA ${monstro.ca || 0}</div>
 
-    <div class="sheet-meta">
-      ${escapeHtml(monstro.tipo || "Tipo não definido")} • 
-      ${escapeHtml(monstro.regiao || "Região não definida")}
+    <div class="sheet-status-grid" style="margin-bottom:12px;">
+      <div>FOR<br>${monstro.status?.for||10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.for||10))}</small></div>
+      <div>DES<br>${monstro.status?.des||10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.des||10))}</small></div>
+      <div>CON<br>${monstro.status?.con||10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.con||10))}</small></div>
+      <div>INT<br>${monstro.status?.int||10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.int||10))}</small></div>
+      <div>SAB<br>${monstro.status?.sab||10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.sab||10))}</small></div>
+      <div>CAR<br>${monstro.status?.car||10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.car||10))}</small></div>
     </div>
 
-    <div class="sheet-hp-ca">
-      HP ${monstro.hpAtual}/${monstro.hpMax} • CA ${monstro.ca || 0}
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+      <button style="background:#7B1E28!important;border:none!important;border-radius:8px;color:#fff!important;padding:10px;font-size:13px;cursor:pointer;" onclick="enviarMonstroParaCombate(${index})">⚔️ Enviar para combate</button>
+      <button style="background:rgba(196,169,91,0.2)!important;border:1px solid rgba(196,169,91,0.4)!important;border-radius:8px;color:#C4A95B!important;padding:10px;font-size:13px;cursor:pointer;" onclick="editarMonstroMestre(${index})">✏️ Editar</button>
     </div>
 
-    <div class="sheet-status-grid">
-  <div>FOR<br>${monstro.status?.for || 10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.for || 10))}</small></div>
-  <div>DES<br>${monstro.status?.des || 10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.des || 10))}</small></div>
-  <div>CON<br>${monstro.status?.con || 10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.con || 10))}</small></div>
-  <div>INT<br>${monstro.status?.int || 10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.int || 10))}</small></div>
-  <div>SAB<br>${monstro.status?.sab || 10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.sab || 10))}</small></div>
-  <div>CAR<br>${monstro.status?.car || 10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.car || 10))}</small></div>
-    </div>
-
-    <div class="sheet-acoes">
-      <button class="btn-master-principal" onclick="enviarMonstroParaCombate(${index})">
-        ⚔️ Enviar para combate
-      </button>
-
-      <button class="btn-master-secundario" onclick="editarMonstroMestre(${index})">
-        ✏️ Editar
-      </button>
-
-      <button class="btn-master-perigo" onclick="excluirMonstroMestre(${index})">
-        🗑️ Excluir
-      </button>
-    </div>
-
-    <div class="sheet-bloco">
-      <strong>Lore</strong>
-      <p>${formatarTexto(monstro.lore || "Sem lore cadastrada.")}</p>
-    </div>
-
-    <div class="sheet-bloco">
-      <strong>Habilidades especiais</strong>
-      <p>${formatarTexto(monstro.habilidades || "Sem habilidades cadastradas.")}</p>
-    </div>
-
-    <div class="sheet-bloco">
-      <strong>Diálogos</strong>
-      <p>${monstro.dialogos?.length ? monstro.dialogos.map(f => `“${escapeHtml(f)}”`).join("<br>") : "Sem falas cadastradas."}</p>
-      <button class="btn-master-principal" onclick="sortearFalaMonstro(${index})">🎲 Fala aleatória</button>
-      <div id="falaAleatoriaTexto"></div>
-    </div>
-
-    <div class="sheet-bloco">
-      <strong>Pontos de encontro</strong>
-      <p>${formatarTexto(monstro.encontros || "Sem pontos de encontro cadastrados.")}</p>
-    </div>
+    ${bloco("Lore", formatarTexto(monstro.lore || "Sem lore cadastrada."))}
+    ${bloco("Habilidades Especiais", formatarTexto(monstro.habilidades || "Sem habilidades cadastradas."))}
+    ${bloco("Diálogos", monstro.dialogos?.length ? monstro.dialogos.map(f => `"${escapeHtml(f)}"`).join("<br>") : "Sem falas cadastradas.")}
+    ${bloco("Pontos de Encontro", formatarTexto(monstro.encontros || "Sem pontos de encontro cadastrados."))}
+    <button style="width:100%;margin-top:4px;background:rgba(143,34,34,0.8)!important;border:none!important;border-radius:8px;color:#fff!important;padding:10px;font-size:13px;cursor:pointer;" onclick="excluirMonstroMestre(${index})">🗑️ Excluir Monstro</button>
   `;
 
   overlay.style.display = "block";
-sheet.style.display = "block";
-
-sheet.classList.remove("full");
-sheet.classList.remove("aberto");
-
-requestAnimationFrame(() => {
-  sheet.classList.add("aberto");
-});
-
-document.body.classList.add("master-sheet-aberto");
+  sheet.style.display = "block";
+  sheet.classList.remove("full", "aberto");
+  requestAnimationFrame(() => sheet.classList.add("aberto"));
+  document.body.classList.add("master-sheet-aberto");
+  ativarGestosSheetMonstro();
 }
-
-
-
-function abrirSheetMonstroPorObjeto(monstro, index, lista = null) {
-  if (lista) listaSheetCompendio = lista;
-
-  sheetMonstroIndexAtual = index;
-
-  abrirSheetMonstroPadrao(monstro);
-}
-
-function abrirSheetMonstroPadrao(monstro) {
-  const overlay = document.getElementById("sheetMonstroOverlay");
-  const sheet = document.getElementById("sheetMonstro");
-  const conteudo = document.getElementById("conteudoSheetMonstro");
-  const estavaAberto = sheet.classList.contains("aberto");
-  const estavaFull = sheet.classList.contains("full");  
-
-  if (!overlay || !sheet || !conteudo) return;
-
-  const imagem = monstro.imagem || "icon-512.png";
-
-  conteudo.innerHTML = `
-    <img class="sheet-img" src="${imagem}" alt="${escapeHtml(monstro.nome)}">
-
-    <h2 class="sheet-titulo">${escapeHtml(monstro.nome)}</h2>
-
-    <div class="sheet-meta">
-      ${escapeHtml(monstro.tipo || "Tipo não definido")} • 
-      ${escapeHtml(monstro.regiao || "Região não definida")}
-    </div>
-
-    <div class="sheet-hp-ca">
-      HP ${monstro.hpAtual}/${monstro.hpMax} • CA ${monstro.ca || 0}
-    </div>
-
-    <div class="sheet-status-grid">
-      <div>FOR<br>${monstro.status?.for || 10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.for || 10))}</small></div>
-      <div>DES<br>${monstro.status?.des || 10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.des || 10))}</small></div>
-      <div>CON<br>${monstro.status?.con || 10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.con || 10))}</small></div>
-      <div>INT<br>${monstro.status?.int || 10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.int || 10))}</small></div>
-      <div>SAB<br>${monstro.status?.sab || 10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.sab || 10))}</small></div>
-      <div>CAR<br>${monstro.status?.car || 10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.car || 10))}</small></div>
-    </div>
-
-    <div class="sheet-acoes">
-  <button class="btn-master-principal" onclick='enviarMonstroPadraoParaCombate(${JSON.stringify(monstro)})'>
-    ⚔️ Enviar para combate
-  </button>
-
-  <button class="btn-master-secundario" onclick='criarCopiaEditavelMonstroPadrao(${JSON.stringify(monstro)})'>
-    ✏️ Criar cópia editável
-  </button>
-</div>
-
-    <div class="sheet-bloco">
-      <strong>Lore</strong>
-      <p>${formatarTexto(monstro.lore || "Sem lore cadastrada.")}</p>
-    </div>
-
-    <div class="sheet-bloco">
-      <strong>Habilidades especiais</strong>
-      <p>${formatarTexto(monstro.habilidades || "Sem habilidades cadastradas.")}</p>
-    </div>
-
-    <div class="sheet-bloco">
-      <strong>Diálogos</strong>
-      <p>${monstro.dialogos?.length ? monstro.dialogos.map(f => `“${escapeHtml(f)}”`).join("<br>") : "Sem falas cadastradas."}</p>
-    </div>
-
-    <div class="sheet-bloco">
-      <strong>Pontos de encontro</strong>
-      <p>${formatarTexto(monstro.encontros || "Sem pontos de encontro cadastrados.")}</p>
-    </div>
-  `;
-
-sheet.style.transition = "";
-sheet.style.transform = "";
-sheet.style.opacity = "";
-sheet.style.height = "";
-
-overlay.style.display = "block";
-sheet.style.display = "block";
-
-if (!estavaAberto) {
-  sheet.classList.remove("full");
-  sheet.classList.remove("aberto");
-}
-
-if (estavaFull) {
-  sheet.classList.add("full");
-}
-
-setTimeout(() => {
-  sheet.classList.add("aberto");
-}, 10);
-
-document.body.classList.add("master-sheet-aberto");
-ativarGestosSheetMonstro();
-}
-
 
 function ativarGestosSheetMonstro() {
   const sheet = document.getElementById("sheetMonstro");
   if (!sheet) return;
 
-  if (sheet.dataset.gestosAtivos === "1") return;
-  sheet.dataset.gestosAtivos = "1";
+ sheet.removeEventListener("touchstart", iniciarDragSheet);
+sheet.removeEventListener("touchmove", moverDragSheet);
+sheet.removeEventListener("touchend", finalizarDragSheet);
+sheet.removeEventListener("mousedown", iniciarDragSheet);
 
   sheet.addEventListener("touchstart", iniciarDragSheet, { passive: true });
   sheet.addEventListener("touchmove", moverDragSheet, { passive: false });
@@ -4441,6 +4992,96 @@ function iniciarDragSheet(e) {
   sheetArrastando = true;
 
   sheet.style.transition = "none";
+}
+
+async function salvarBossMestre() {
+  const nome = document.getElementById("bossNome")?.value.trim();
+  if (!nome) { alert("Coloque o nome do boss."); return; }
+
+  if (campanhaAtualMaster === null || campanhaAtualMaster === undefined) {
+    alert("Nenhuma campanha selecionada."); return;
+  }
+
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) { alert("Campanha não encontrada."); return; }
+
+  campanha.bosses ||= [];
+  campanha.bosses.push({
+    id: Date.now(), _tipo: "boss", nome,
+    tipo:       document.getElementById("bossTipo")?.value.trim() || "",
+    regiao:     document.getElementById("bossRegiao")?.value.trim() || "",
+    hpMax:      parseInt(document.getElementById("bossHpMax")?.value) || 0,
+    hpAtual:    parseInt(document.getElementById("bossHpAtual")?.value) || 0,
+    ca:         parseInt(document.getElementById("bossCa")?.value) || 0,
+    status: {
+      for: parseInt(document.getElementById("bossFor")?.value) || 10,
+      des: parseInt(document.getElementById("bossDes")?.value) || 10,
+      con: parseInt(document.getElementById("bossCon")?.value) || 10,
+      int: parseInt(document.getElementById("bossInt")?.value) || 10,
+      sab: parseInt(document.getElementById("bossSab")?.value) || 10,
+      car: parseInt(document.getElementById("bossCar")?.value) || 10,
+    },
+    lore:        document.getElementById("bossLore")?.value.trim()        || "",
+    habilidades: document.getElementById("bossHabilidades")?.value.trim()  || "",
+    fraquezas:   document.getElementById("bossFraquezas")?.value.trim()    || "",
+    ataques:     document.getElementById("bossAtaques")?.value.trim()      || "",
+    reacoes:     document.getElementById("bossReacoes")?.value.trim()      || "",
+    resistencias:document.getElementById("bossResistencias")?.value.trim() || "",
+    ...(window._imagemBossBase64
+    ? await uploadImagemFirebase(window._imagemBossBase64, `bosses/${Date.now()}.jpg`).then(r => ({ imagem: r.url, imagemDeleteUrl: r.deleteUrl }))
+    : { imagem: "", imagemDeleteUrl: "" }),
+  });
+
+  salvarCampanhasMaster();
+  renderMonstrosMestre();
+
+  ["bossNome","bossTipo","bossRegiao","bossHpMax","bossHpAtual","bossCa",
+   "bossLore","bossHabilidades","bossFraquezas","bossAtaques","bossReacoes","bossResistencias"].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = "";
+  });
+  const preview = document.getElementById("previewBoss");
+  if (preview) { preview.src = ""; preview.style.display = "none"; }
+
+  mostrarToastMundo("Boss salvo!");
+}
+
+async function salvarItemMestre() {
+  const nome = document.getElementById("itemMasterNome")?.value.trim();
+  if (!nome) { alert("Coloque o nome do item."); return; }
+
+  if (campanhaAtualMaster === null || campanhaAtualMaster === undefined) {
+    alert("Nenhuma campanha selecionada."); return;
+  }
+
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) { alert("Campanha não encontrada."); return; }
+
+  campanha.itensMaster ||= [];
+  campanha.itensMaster.push({
+    id: Date.now(), _tipo: "item", nome,
+    tipo:      document.getElementById("itemMasterTipo")?.value.trim() || "",
+    raridade:  document.getElementById("itemMasterRaridade")?.value || "normal",
+    sintonia:  document.getElementById("itemMasterSintonia")?.value || "nao",
+    efeito:    document.getElementById("itemMasterEfeito")?.value.trim() || "",
+    descricao: document.getElementById("itemMasterDescricao")?.value.trim() || "",
+    historia:  document.getElementById("itemMasterHistoria")?.value.trim() || "",
+    origem:    document.getElementById("itemMasterOrigem")?.value.trim() || "",
+    ...(window._imagemItemBase64
+    ? await uploadImagemFirebase(window._imagemItemBase64, `itens/${Date.now()}.jpg`).then(r => ({ imagem: r.url, imagemDeleteUrl: r.deleteUrl }))
+    : { imagem: "", imagemDeleteUrl: "" }),
+  });
+
+  salvarCampanhasMaster();
+  renderMonstrosMestre();
+
+  ["itemMasterNome","itemMasterTipo","itemMasterEfeito","itemMasterDescricao",
+   "itemMasterHistoria","itemMasterOrigem"].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = "";
+  });
+  const preview = document.getElementById("previewItemMaster");
+  if (preview) { preview.src = ""; preview.style.display = "none"; }
+
+  mostrarToastMundo("Item salvo!");
 }
 
 function moverDragSheet(e) {
@@ -4639,11 +5280,12 @@ function editarMonstroMestre(index) {
   document.getElementById("monstroCar").value = monstro.status?.car || 10;
 
   document.getElementById("monstroLore").value = monstro.lore || "";
-  document.getElementById("monstroHabilidades").value = monstro.habilidades || "";
-  document.getElementById("monstroDialogos").value = Array.isArray(monstro.dialogos)
-    ? monstro.dialogos.join("\n")
-    : "";
-  document.getElementById("monstroEncontros").value = monstro.encontros || "";
+  const elHab = document.getElementById("monstroHabilidades");
+if (elHab) elHab.value = monstro.habilidades || "";
+const elDia = document.getElementById("monstroDialogos");
+if (elDia) elDia.value = Array.isArray(monstro.dialogos) ? monstro.dialogos.join("\n") : "";
+const elEnc = document.getElementById("monstroEncontros");
+if (elEnc) elEnc.value = monstro.encontros || "";
 
   const preview = document.getElementById("previewMonstro");
   if (preview && monstro.imagem) {
@@ -4660,15 +5302,28 @@ function editarMonstroMestre(index) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-function excluirMonstroMestre(index) {
+async function excluirMonstroMestre(index) {
   const monstro = monstrosMestre[index];
   if (!monstro) return;
 
   const confirmar = confirm(`Deseja excluir "${monstro.nome}"?`);
   if (!confirmar) return;
 
-  monstrosMestre.splice(index, 1);
+  // deleta imagem do Storage
+  if (window.storage && window.usuarioAtual && monstro.imagem?.startsWith("https://")) {
+    try {
+      const imgRef = window.storageRef(window.storage, monstro.imagem);
+      await window.deleteObject(imgRef);
+    } catch(e) { console.warn("Imagem não encontrada no Storage:", e); }
+  }
 
+  // apaga do Firebase
+  if (window.usuarioAtual && monstro.id) {
+    const uid = window.usuarioAtual.uid;
+    deleteDoc(doc(db, "usuarios", uid, "monstros", String(monstro.id)));
+  }
+
+  monstrosMestre.splice(index, 1);
   salvarMonstrosMestreStorage();
   renderMonstrosMestre();
   fecharSheetMonstro();
@@ -4706,8 +5361,16 @@ function toggleMinimizarCombate(index) {
 
   monstro.minimizado = !monstro.minimizado;
 
+  const card = document.querySelectorAll(".combate-card")[index];
+  if (!card) return;
+
+  if (monstro.minimizado) {
+    card.classList.add("minimizado");
+  } else {
+    card.classList.remove("minimizado");
+  }
+
   salvarCombatesMestreStorage();
-  renderCombatesMestre();
 }
 
 function renderCombatesMestre() {
@@ -4755,8 +5418,11 @@ function renderCombatesMestre() {
           </small>
 
           <div class="combate-hp">
-            ❤️ HP ${monstro.hpAtual}/${monstro.hpMax}
-          </div>
+  ❤️ HP ${monstro.hpAtual}/${monstro.hpMax}
+  <div class="combate-hp-barra">
+    <div class="combate-hp-fill" style="width:${Math.max(0,Math.min(100,Math.round((monstro.hpAtual/monstro.hpMax)*100)))}%;background:${monstro.hpAtual/monstro.hpMax > 0.5 ? '#2a7a40' : monstro.hpAtual/monstro.hpMax > 0.25 ? '#7a6020' : '#8f2222'};"></div>
+  </div>
+</div>
 
         </div>
 
@@ -4839,16 +5505,17 @@ function renderCombatesMestre() {
 
         <!-- BOTÕES RÁPIDOS -->
         <div class="combate-botoes">
-
-  <button class="btn-hp-dano" onclick="alterarHpCombate(${index}, -1)"> Dano -1</button>
-<button class="btn-hp-dano" onclick="alterarHpCombate(${index}, -5)"> Dano -5</button>
-<button class="btn-hp-dano" onclick="alterarHpCombate(${index}, -10)"> Dano -10</button>
-
-<button class="btn-hp-cura" onclick="alterarHpCombate(${index}, 1)"> Cura +1</button>
-<button class="btn-hp-cura" onclick="alterarHpCombate(${index}, 5)"> Cura +5</button>
-<button class="btn-hp-cura" onclick="alterarHpCombate(${index}, 10)"> Cura +10</button>
-
-        </div>
+  <div class="combate-botoes-linha">
+    <button class="btn-hp-dano" onclick="alterarHpCombate(${index}, -1)">Dano -1</button>
+    <button class="btn-hp-dano" onclick="alterarHpCombate(${index}, -5)">Dano -5</button>
+    <button class="btn-hp-dano" onclick="alterarHpCombate(${index}, -10)">Dano -10</button>
+  </div>
+  <div class="combate-botoes-linha">
+    <button class="btn-hp-cura" onclick="alterarHpCombate(${index}, 1)">Cura +1</button>
+    <button class="btn-hp-cura" onclick="alterarHpCombate(${index}, 5)">Cura +5</button>
+    <button class="btn-hp-cura" onclick="alterarHpCombate(${index}, 10)">Cura +10</button>
+  </div>
+</div>
 
         <!-- MANUAL -->
         <div class="combate-manual">
@@ -4910,6 +5577,51 @@ function renderCombatesMestre() {
           </div>
         ` : ""}
 
+        <!-- ATAQUES -->
+        ${monstro.ataques ? `
+          <div class="sheet-bloco" style="border-left:3px solid #8f2222;">
+            <strong>⚔️ Ataques</strong>
+            <p style="white-space:pre-line;">${formatarTexto(monstro.ataques)}</p>
+          </div>
+        ` : ""}
+
+        <!-- REAÇÕES -->
+        ${monstro.reacoes ? `
+          <div class="sheet-bloco">
+            <strong>🛡️ Reações</strong>
+            <p style="white-space:pre-line;">${formatarTexto(monstro.reacoes)}</p>
+          </div>
+        ` : ""}
+
+        <!-- RESISTÊNCIAS -->
+        ${monstro.resistencias ? `
+          <div class="sheet-bloco">
+            <strong>💎 Resistências / Imunidades</strong>
+            <p>${formatarTexto(monstro.resistencias)}</p>
+          </div>
+        ` : ""}
+
+        <!-- FRAQUEZAS (boss) -->
+        ${monstro.fraquezas ? `
+          <div class="sheet-bloco">
+            <strong>💀 Fraquezas</strong>
+            <p>${formatarTexto(monstro.fraquezas)}</p>
+          </div>
+        ` : ""}
+
+          <!-- LOG -->
+${monstro.log && monstro.log.length > 0 ? `
+  <div class="combate-log">
+    <div class="combate-log-titulo">Log de combate</div>
+    ${monstro.log.map(e => `
+      <div class="combate-log-item combate-log-${e.tipo}">
+        <span class="combate-log-hora">${e.hora}</span>
+        <span>${e.texto}</span>
+      </div>
+    `).join("")}
+  </div>
+` : ""}
+
         <!-- REMOVER -->
         <button
           class="btn-master-secundario"
@@ -4930,13 +5642,41 @@ function alterarHpCombate(index, valor) {
   const monstro = combatesMestre[index];
   if (!monstro) return;
 
+  const hpAntes = monstro.hpAtual;
   monstro.hpAtual += valor;
-
   if (monstro.hpAtual < 0) monstro.hpAtual = 0;
   if (monstro.hpAtual > monstro.hpMax) monstro.hpAtual = monstro.hpMax;
 
+  const diff = monstro.hpAtual - hpAntes;
+  if (diff !== 0) {
+    if (!monstro.log) monstro.log = [];
+    const hora = new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    if (diff < 0) {
+      monstro.log.unshift({ tipo: "dano", texto: `${monstro.nome} tomou ${Math.abs(diff)} de dano — HP: ${monstro.hpAtual}/${monstro.hpMax}`, hora });
+    } else {
+      monstro.log.unshift({ tipo: "cura", texto: `${monstro.nome} recebeu ${diff} de cura — HP: ${monstro.hpAtual}/${monstro.hpMax}`, hora });
+    }
+    if (monstro.log.length > 20) monstro.log.pop();
+  }
+
   salvarCombatesMestreStorage();
   renderCombatesMestre();
+}
+
+function aplicarDanoCombate(index) {
+  const input = document.getElementById(`danoCombate${index}`);
+  const dano = parseInt(input?.value) || 0;
+  if (dano <= 0) return;
+  alterarHpCombate(index, -dano);
+  if (input) input.value = "";
+}
+
+function aplicarCuraCombate(index) {
+  const input = document.getElementById(`curaCombate${index}`);
+  const cura = parseInt(input?.value) || 0;
+  if (cura <= 0) return;
+  alterarHpCombate(index, cura);
+  if (input) input.value = "";
 }
 
 function aplicarDanoCombate(index) {
@@ -5032,6 +5772,115 @@ function formatarTexto(texto) {
 }
 
 /* ================= INIT ================= */
+
+let editandoEventoLore = -1;
+
+function getCampanhaAtualLore() {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) return null;
+
+  if (!campanha.loreDados) {
+    campanha.loreDados = {
+      historiaPrincipal: "",
+      sessoes: [],
+      eventos: []
+    };
+  }
+
+  campanha.loreDados.sessoes ??= [];
+  campanha.loreDados.eventos ??= [];
+  campanha.loreDados.historiaPrincipal ??= "";
+
+  return campanha;
+}
+
+function salvarHistoriaPrincipalLore() {
+  const campanha = getCampanhaAtualLore();
+  if (!campanha) return;
+
+  campanha.loreDados.historiaPrincipal =
+    document.getElementById("historiaPrincipalLore")?.value || "";
+
+  salvarCampanhasMaster();
+}
+
+
+
+function salvarSessaoLore() {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) return;
+  const nome = document.getElementById("sessaoNome")?.value.trim();
+  if (!nome) { alert("Digite o nome da sessão."); return; }
+
+  campanha.sessoes ||= [];
+  campanha.sessoes.push({
+    id:        Date.now(),
+    nome,
+    status:    document.getElementById("sessaoStatus")?.value || "planejada",
+    descricao: document.getElementById("sessaoDescricao")?.value.trim() || "",
+    data:      new Date().toLocaleDateString("pt-BR"),
+  });
+
+  salvarCampanhasMaster();
+  document.getElementById("sessaoNome").value = "";
+  document.getElementById("sessaoDescricao").value = "";
+  renderSessoesLore();
+}
+
+function salvarEventoLore() {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) return;
+  const nome = document.getElementById("eventoNome")?.value.trim();
+  if (!nome) { alert("Digite o nome do evento."); return; }
+
+  campanha.eventos ||= [];
+  campanha.eventos.push({
+    id:        Date.now(),
+    nome,
+    tipo:      document.getElementById("eventoTipo")?.value || "outro",
+    descricao: document.getElementById("eventoDescricao")?.value.trim() || "",
+    data:      new Date().toLocaleDateString("pt-BR"),
+  });
+
+  salvarCampanhasMaster();
+  document.getElementById("eventoNome").value = "";
+  document.getElementById("eventoDescricao")?.value && (document.getElementById("eventoDescricao").value = "");
+  renderEventosLore();
+}
+ 
+function salvarHistoriaPrincipalLore() {
+  const campanha = garantirEstruturaLoreCampanha();
+  if (!campanha) return;
+
+  campanha.loreDados.historiaPrincipal =
+    document.getElementById("historiaPrincipalLore")?.value || "";
+
+  salvarCampanhasMaster();
+}
+
+function apagarSessaoLore(index) {
+  const campanha = garantirEstruturaLoreCampanha();
+  if (!campanha) return;
+
+  if (!confirm("Apagar esta sessão?")) return;
+
+  campanha.loreDados.sessoes.splice(index, 1);
+  salvarCampanhasMaster();
+  renderLoreCampanha();
+}
+
+
+function apagarEventoLore(index) {
+  const campanha = garantirEstruturaLoreCampanha();
+  if (!campanha) return;
+
+  if (!confirm("Apagar este evento?")) return;
+
+  campanha.loreDados.eventos.splice(index, 1);
+  salvarCampanhasMaster();
+  renderLoreCampanha();
+}
+
 
 function init() {
   atualizarTudo();
@@ -5137,3 +5986,1739 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 atualizarDropdownRacas();
+
+
+/* ================= LORE MASTER ================= */
+
+function salvarHistoriaPrincipalLore() {
+
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) return;
+
+  const texto = document.getElementById("historiaPrincipalLore").value;
+
+  campanha.historiaPrincipal = texto;
+
+  salvarCampanhasMaster();
+}
+
+/* ================= SESSÕES ================= */
+
+function salvarSessaoLore() {
+
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) return;
+
+  const nome = document.getElementById("sessaoNome").value.trim();
+  const descricao = document.getElementById("sessaoDescricao").value.trim();
+
+  if (!nome || !descricao) return;
+
+  if (!campanha.sessoes) {
+    campanha.sessoes = [];
+  }
+
+  campanha.sessoes.unshift({
+    id: Date.now(),
+    nome,
+    descricao,
+    data: new Date().toLocaleDateString("pt-BR")
+  });
+
+  salvarCampanhasMaster();
+
+  document.getElementById("sessaoNome").value = "";
+  document.getElementById("sessaoDescricao").value = "";
+
+  renderSessoesLore();
+}
+
+
+function deletarSessaoLore(id) {
+
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) return;
+
+  campanha.sessoes =
+    campanha.sessoes.filter(s => s.id !== id);
+
+  salvarCampanhasMaster();
+  renderSessoesLore();
+}
+
+/* ================= EVENTOS ================= */
+
+function salvarEventoLore() {
+
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) return;
+
+  const nome = document.getElementById("eventoNome").value.trim();
+  const descricao = document.getElementById("eventoDescricao").value.trim();
+
+  if (!nome || !descricao) return;
+
+  if (!campanha.eventos) {
+    campanha.eventos = [];
+  }
+
+  campanha.eventos.unshift({
+    id: Date.now(),
+    nome,
+    descricao,
+    data: new Date().toLocaleDateString("pt-BR")
+  });
+
+  salvarCampanhasMaster();
+
+  document.getElementById("eventoNome").value = "";
+  document.getElementById("eventoDescricao").value = "";
+
+  renderEventosLore();
+}
+
+
+function deletarEventoLore(id) {
+
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) return;
+
+  campanha.eventos =
+    campanha.eventos.filter(e => e.id !== id);
+
+  salvarCampanhasMaster();
+  renderEventosLore();
+}
+
+
+/* ================= LORE MASTER ================= */
+
+function salvarHistoriaPrincipalLore() {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) return;
+
+  campanha.historiaPrincipal =
+    document.getElementById("historiaPrincipalLore")?.value || "";
+
+  salvarCampanhasMaster();
+}
+
+function salvarSessaoLore() {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) return;
+
+  campanha.sessoes ||= [];
+
+  const nome = document.getElementById("sessaoNome").value.trim();
+  const descricao = document.getElementById("sessaoDescricao").value.trim();
+
+  if (!nome || !descricao) return;
+
+  campanha.sessoes.push({
+    id: Date.now(),
+    nome,
+    descricao,
+    data: new Date().toLocaleDateString("pt-BR"),
+  });
+
+  document.getElementById("sessaoNome").value = "";
+  document.getElementById("sessaoDescricao").value = "";
+
+  salvarCampanhasMaster();
+  renderSessoesLore();
+}
+
+function salvarEventoLore() {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) return;
+
+  campanha.eventos ||= [];
+
+  const nome = document.getElementById("eventoNome").value.trim();
+  const descricao = document.getElementById("eventoDescricao").value.trim();
+
+  if (!nome || !descricao) return;
+
+  campanha.eventos.push({
+    id: Date.now(),
+    nome,
+    descricao,
+    data: new Date().toLocaleDateString("pt-BR"),
+  });
+
+  document.getElementById("eventoNome").value = "";
+  document.getElementById("eventoDescricao").value = "";
+
+  salvarCampanhasMaster();
+  renderEventosLore();
+}
+
+function renderSessoesLore() {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  const lista = document.getElementById("listaSessoesLore");
+  if (!lista || !campanha) return;
+
+  campanha.sessoes ||= [];
+
+  if (!campanha.sessoes.length) {
+    lista.innerHTML = `<p class="master-desc" style="padding:12px 0;">Nenhuma sessão ainda.</p>`;
+    return;
+  }
+
+  const corStatus  = { completa:"#2a7a40", planejada:"#7a6020", cancelada:"#7a2020" };
+  const labelStatus = { completa:"Completa", planejada:"Planejada", cancelada:"Cancelada" };
+
+  lista.innerHTML = campanha.sessoes.map((s, i) => {
+    const status = s.status || "planejada";
+    const cor = corStatus[status] || "#5a4a3a";
+    return `
+    <div style="
+      background:#F0EBD8;
+      border:1px solid rgba(196,169,91,0.3);
+      border-left:3px solid ${cor};
+       border-radius:10px;
+      padding:14px 16px;
+      margin-bottom:12px;
+      cursor:pointer;
+    " onclick="abrirDetalheSessaoLore(${s.id})">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <div style="
+          width:28px;height:28px;border-radius:50%;flex-shrink:0;
+          background:${cor}22;border:1.5px solid ${cor}66;
+          color:${cor};font-size:12px;font-weight:bold;
+          display:flex;align-items:center;justify-content:center;">
+          ${i + 1}
+        </div>
+        <strong style="flex:1;color:#2A1A10;font-size:14px;">${escapeHtml(s.nome)}</strong>
+        <span style="
+          font-size:10px;font-weight:bold;padding:3px 9px;border-radius:20px;
+          background:${cor}22;color:${cor};border:1px solid ${cor}44;">
+          ${labelStatus[status] || status}
+        </span>
+      </div>
+      ${s.descricao ? `<p style="font-size:12px;color:#7A6A50;margin:0 0 10px 38px;line-height:1.5;">${escapeHtml(s.descricao)}</p>` : ""}
+      <div style="display:flex;gap:8px;justify-content:flex-end;border-top:1px solid rgba(196,169,91,0.2);padding-top:8px;margin-top:4px;">
+        <button onclick="event.stopPropagation();editarSessaoLore(${s.id})" style="
+          background:transparent;border:1px solid rgba(196,169,91,0.4);border-radius:6px;
+          color:#7A6A50;font-size:13px;padding:4px 10px;cursor:pointer;">✏</button>
+        <button onclick="event.stopPropagation();deletarSessaoLore(${s.id})" style="
+          background:transparent;border:1px solid rgba(143,34,34,0.3);border-radius:6px;
+          color:#8f2222;font-size:13px;padding:4px 10px;cursor:pointer;">🗑</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderEventosLore() {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  const lista = document.getElementById("listaEventosLore");
+  if (!lista || !campanha) return;
+
+  campanha.eventos ||= [];
+
+  if (!campanha.eventos.length) {
+    lista.innerHTML = `<p class="master-desc" style="padding:12px 0;">Nenhum evento ainda.</p>`;
+    return;
+  }
+
+  const tipoInfo = {
+    batalha:  { emoji:"⚔️", cor:"#8f2222" },
+    revelacao:{ emoji:"🔍", cor:"#1a5f8f" },
+    morte:    { emoji:"💀", cor:"#4a4a4a" },
+    alianca:  { emoji:"🤝", cor:"#2a7a40" },
+    outro:    { emoji:"📌", cor:"#7a6020" },
+  };
+
+  lista.innerHTML = campanha.eventos.map(e => {
+    const t = tipoInfo[e.tipo] || tipoInfo.outro;
+    return `
+    <div style="
+      background:#F0EBD8;
+      border:1px solid rgba(196,169,91,0.3);
+      border-left:3px solid ${t.cor};
+      border-radius:10px;
+      padding:14px 16px;
+      margin-bottom:12px;
+      cursor:pointer;
+    " onclick="abrirDetalheEventoLore(${e.id})">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span style="
+          font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;
+          padding:3px 9px;border-radius:20px;
+          background:${t.cor}22;color:${t.cor};border:1px solid ${t.cor}44;">
+          ${t.emoji} ${e.tipo || "outro"}
+        </span>
+        ${e.data ? `<span style="font-size:11px;color:#7a6040;margin-left:auto;">${e.data}</span>` : ""}
+      </div>
+      <strong style="color:#2A1A10;font-size:14px;">${escapeHtml(e.nome)}</strong>
+      ${e.descricao ? `<p style="font-size:12px;color:#7A6A50;margin:6px 0 10px;line-height:1.5;">${escapeHtml(e.descricao)}</p>` : ""}
+      <div style="display:flex;gap:8px;justify-content:flex-end;border-top:1px solid rgba(196,169,91,0.2);padding-top:8px;margin-top:4px;">
+        <button onclick="event.stopPropagation();editarEventoLore(${e.id})" style="
+          background:transparent;border:1px solid rgba(196,169,91,0.4);border-radius:6px;
+          color:#7A6A50;font-size:13px;padding:4px 10px;cursor:pointer;">✏</button>
+        <button onclick="event.stopPropagation();deletarEventoLore(${e.id})" style="
+          background:transparent;border:1px solid rgba(143,34,34,0.3);border-radius:6px;
+          color:#8f2222;font-size:13px;padding:4px 10px;cursor:pointer;">🗑</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function deletarSessaoLore(id) {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) return;
+
+  campanha.sessoes =
+    campanha.sessoes.filter(s => s.id !== id);
+
+  salvarCampanhasMaster();
+  renderSessoesLore();
+}
+
+
+function deletarEventoLore(id) {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) return;
+
+  campanha.eventos =
+    campanha.eventos.filter(e => e.id !== id);
+
+  salvarCampanhasMaster();
+  renderEventosLore();
+}
+
+function editarSessaoLore(id) {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) return;
+  const s = campanha.sessoes.find(s => s.id === id);
+  if (!s) return;
+
+  const modal = document.createElement("div");
+  modal.id = "modalEditarSessao";
+  modal.style.cssText = `position:fixed;inset:0;z-index:9999;background:rgba(20,12,6,0.85);display:flex;align-items:center;justify-content:center;padding:24px;`;
+  modal.innerHTML = `
+    <div style="background:#1E1208;border:1px solid rgba(196,169,91,0.35);border-radius:14px;padding:24px;width:100%;max-width:420px;position:relative;">
+      <button onclick="document.getElementById('modalEditarSessao').remove()" style="position:absolute;top:12px;right:14px;background:transparent;border:none;color:#7A6A50;font-size:20px;cursor:pointer;">✕</button>
+      <h3 style="color:#C4A95B;font-size:16px;margin:0 0 16px;font-family:'Cinzel',serif;">✏ Editar Sessão</h3>
+
+      <label style="color:#7A6A50;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Nome</label>
+      <input id="editSessaoNome" value="${escapeHtml(s.nome)}" style="width:100%;background:#2A1A10;border:1px solid rgba(196,169,91,0.3);border-radius:8px;color:#F8F4E3;padding:10px 12px;font-size:14px;margin:6px 0 14px;box-sizing:border-box;">
+
+      <label style="color:#7A6A50;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Status</label>
+      <select id="editSessaoStatus" style="width:100%;background:#2A1A10;border:1px solid rgba(196,169,91,0.3);border-radius:8px;color:#F8F4E3;padding:10px 12px;font-size:14px;margin:6px 0 14px;box-sizing:border-box;">
+        <option value="planejada" ${s.status==='planejada'?'selected':''}>🟡 Planejada</option>
+        <option value="completa"  ${s.status==='completa' ?'selected':''}>✅ Completa</option>
+        <option value="cancelada" ${s.status==='cancelada'?'selected':''}>❌ Cancelada</option>
+      </select>
+
+      <label style="color:#7A6A50;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Descrição</label>
+      <textarea id="editSessaoDescricao" rows="4" style="width:100%;background:#2A1A10;border:1px solid rgba(196,169,91,0.3);border-radius:8px;color:#F8F4E3;padding:10px 12px;font-size:13px;margin:6px 0 16px;box-sizing:border-box;resize:vertical;">${escapeHtml(s.descricao || '')}</textarea>
+
+      <button onclick="salvarEdicaoSessaoLore(${id})" style="width:100%;background:#7B1E28;border:none;border-radius:8px;color:#F8F4E3;padding:12px;font-size:14px;font-family:'Cinzel',serif;cursor:pointer;">Salvar alterações</button>
+    </div>
+  `;
+  modal.addEventListener("click", e => { if (e.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+
+function salvarEdicaoSessaoLore(id) {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) return;
+  const sessao = campanha.sessoes.find(s => s.id === id);
+  if (!sessao) return;
+
+  sessao.nome      = document.getElementById("editSessaoNome").value;
+  sessao.descricao = document.getElementById("editSessaoDescricao").value;
+  sessao.status    = document.getElementById("editSessaoStatus").value;
+
+  salvarCampanhasMaster();
+  renderSessoesLore();
+  document.getElementById("modalEditarSessao")?.remove();
+}
+
+function editarEventoLore(id) {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) return;
+  const e = campanha.eventos.find(e => e.id === id);
+  if (!e) return;
+
+  const tipoInfo = { batalha:"⚔️ Batalha", revelacao:"🔍 Revelação", morte:"💀 Morte", alianca:"🤝 Aliança", outro:"📌 Outro" };
+
+  const modal = document.createElement("div");
+  modal.id = "modalEditarEvento";
+  modal.style.cssText = `position:fixed;inset:0;z-index:9999;background:rgba(20,12,6,0.85);display:flex;align-items:center;justify-content:center;padding:24px;`;
+  modal.innerHTML = `
+    <div style="background:#1E1208;border:1px solid rgba(196,169,91,0.35);border-radius:14px;padding:24px;width:100%;max-width:420px;position:relative;">
+      <button onclick="document.getElementById('modalEditarEvento').remove()" style="position:absolute;top:12px;right:14px;background:transparent;border:none;color:#7A6A50;font-size:20px;cursor:pointer;">✕</button>
+      <h3 style="color:#C4A95B;font-size:16px;margin:0 0 16px;font-family:'Cinzel',serif;">✏ Editar Evento</h3>
+
+      <label style="color:#7A6A50;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Nome</label>
+      <input id="editEventoNome" value="${escapeHtml(e.nome)}" style="width:100%;background:#2A1A10;border:1px solid rgba(196,169,91,0.3);border-radius:8px;color:#F8F4E3;padding:10px 12px;font-size:14px;margin:6px 0 14px;box-sizing:border-box;">
+
+      <label style="color:#7A6A50;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Tipo</label>
+      <select id="editEventoTipo" style="width:100%;background:#2A1A10;border:1px solid rgba(196,169,91,0.3);border-radius:8px;color:#F8F4E3;padding:10px 12px;font-size:14px;margin:6px 0 14px;box-sizing:border-box;">
+        ${Object.entries(tipoInfo).map(([val, label]) => `<option value="${val}" ${e.tipo===val?'selected':''}>${label}</option>`).join('')}
+      </select>
+
+      <label style="color:#7A6A50;font-size:11px;text-transform:uppercase;letter-spacing:1px;">Descrição</label>
+      <textarea id="editEventoDescricao" rows="4" style="width:100%;background:#2A1A10;border:1px solid rgba(196,169,91,0.3);border-radius:8px;color:#F8F4E3;padding:10px 12px;font-size:13px;margin:6px 0 16px;box-sizing:border-box;resize:vertical;">${escapeHtml(e.descricao || '')}</textarea>
+
+      <button onclick="salvarEdicaoEventoLore(${id})" style="width:100%;background:#7B1E28;border:none;border-radius:8px;color:#F8F4E3;padding:12px;font-size:14px;font-family:'Cinzel',serif;cursor:pointer;">Salvar alterações</button>
+    </div>
+  `;
+  modal.addEventListener("click", e => { if (e.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+
+function salvarEdicaoEventoLore(id) {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) return;
+  const evento = campanha.eventos.find(e => e.id === id);
+  if (!evento) return;
+
+  evento.nome      = document.getElementById("editEventoNome").value;
+  evento.descricao = document.getElementById("editEventoDescricao").value;
+  evento.tipo      = document.getElementById("editEventoTipo").value;
+
+  salvarCampanhasMaster();
+  renderEventosLore();
+  fecharPopup();
+  document.getElementById("modalEditarEvento")?.remove();
+}
+
+/* ═══════════════════════════════════════════
+   ABA MUNDO — NPCs, Missões, Encontros
+═══════════════════════════════════════════ */
+
+function inicializarAbaMundo() {
+  document.querySelectorAll(".mundo-secao").forEach(s => s.style.display = "none");
+  document.querySelectorAll(".mundo-tab-btn").forEach(b => b.classList.remove("active"));
+
+  const missoes = document.getElementById("mundoSecaoMissoes");
+  if (missoes) missoes.style.display = "block";
+
+  const primeiroBtn = document.querySelector("#abaMaster-mundo .mundo-tab-btn");
+  if (primeiroBtn) primeiroBtn.classList.add("active");
+
+  renderMundoCampanha();
+}
+
+function renderMundoCampanha() {
+  renderMissoesMundo();
+}
+
+function trocarAbaLore(aba, btn) {
+  const mapa = {
+    historia: "loreSecaoHistoria",
+    sessoes:  "loreSecaoSessoes",
+    eventos:  "loreSecaoEventos",
+  };
+
+  const atual = document.querySelector("#abaMaster-lore .mundo-secao[style*='block']");
+  const proxEl = document.getElementById(mapa[aba]);
+  if (!proxEl) return;
+
+  document.querySelectorAll("#abaMaster-lore .mundo-tab-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+
+  if (atual && atual !== proxEl) {
+    atual.style.transition = "opacity 0.2s ease, transform 0.2s ease";
+    atual.style.opacity = "0";
+    atual.style.transform = "translateX(-12px)";
+    setTimeout(() => {
+      atual.style.display = "none";
+      atual.style.opacity = "";
+      atual.style.transform = "";
+      proxEl.style.display = "block";
+      proxEl.style.opacity = "0";
+      proxEl.style.transform = "translateX(12px)";
+      proxEl.style.transition = "opacity 0.2s ease, transform 0.2s ease";
+      requestAnimationFrame(() => {
+        proxEl.style.opacity = "1";
+        proxEl.style.transform = "translateX(0)";
+      });
+    }, 200);
+  } else {
+    proxEl.style.display = "block";
+    proxEl.style.opacity = "0";
+    proxEl.style.transform = "translateX(12px)";
+    proxEl.style.transition = "opacity 0.2s ease, transform 0.2s ease";
+    requestAnimationFrame(() => {
+      proxEl.style.opacity = "1";
+      proxEl.style.transform = "translateX(0)";
+    });
+  }
+
+  if (aba === "sessoes") renderSessoesLore();
+  if (aba === "eventos") renderEventosLore();
+}
+
+/* ── NPCs ── */
+function salvarNPCMundo() {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) return;
+
+  const nome = document.getElementById("mundoNPCNome")?.value.trim();
+  if (!nome) { alert("Digite o nome do NPC."); return; }
+
+  campanha.npcsMundo ||= [];
+  campanha.npcsMundo.push({
+  id:      Date.now(),
+  nome,
+  classe:  document.getElementById("mundoNPCClasse")?.value.trim() || "",
+  regiao:  document.getElementById("mundoNPCRegiao")?.value.trim() || "",
+  relacao: document.getElementById("mundoNPCRelacao")?.value || "neutro",
+  desc:    document.getElementById("mundoNPCDesc")?.value.trim()   || "",
+});
+
+  salvarCampanhasMaster();
+  ["mundoNPCNome","mundoNPCClasse","mundoNPCRegiao","mundoNPCDesc"]
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+  renderNPCsMundo();
+  mostrarToastMundo("NPC adicionado!");
+}
+
+async function salvarNPCMestre() {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) { alert("Nenhuma campanha selecionada."); return; }
+
+  const nome = document.getElementById("npcNome")?.value.trim();
+  if (!nome) { alert("Digite o nome do NPC."); return; }
+
+  campanha.npcs ||= [];
+
+  campanha.npcs.push({
+    id:            Date.now(),
+    nome,
+    raca:          document.getElementById("npcRaca")?.value.trim()        || "",
+    idade:         document.getElementById("npcIdade")?.value.trim()       || "",
+    classe:        document.getElementById("npcClasse")?.value.trim()      || "",
+    regiao:        document.getElementById("npcRegiao")?.value.trim()      || "",
+    religiao:      document.getElementById("npcReligiao")?.value.trim()    || "",
+    localizacao:   document.getElementById("npcLocalizacao")?.value.trim() || "",
+    pericias:      document.getElementById("npcPericias")?.value.trim()    || "",
+    status: {
+      for: parseInt(document.getElementById("npcFor")?.value) || 10,
+      des: parseInt(document.getElementById("npcDes")?.value) || 10,
+      con: parseInt(document.getElementById("npcCon")?.value) || 10,
+      int: parseInt(document.getElementById("npcInt")?.value) || 10,
+      sab: parseInt(document.getElementById("npcSab")?.value) || 10,
+      car: parseInt(document.getElementById("npcCar")?.value) || 10,
+    },
+    personalidade: document.getElementById("npcPersonalidade")?.value.trim() || "",
+    relacoes:      document.getElementById("npcRelacoes")?.value.trim()      || "",
+    observacoes:   document.getElementById("npcObservacoes")?.value.trim()   || "",
+    hpMax:         parseInt(document.getElementById("npcHpMax")?.value)      || 20,
+    ca:            parseInt(document.getElementById("npcCa")?.value)         || 10,
+    velocidade:    document.getElementById("npcVelocidade")?.value.trim()    || "",
+    desafio:       document.getElementById("npcDesafio")?.value.trim()       || "",
+    habilidades:   document.getElementById("npcHabilidades")?.value.trim()   || "",
+    acoes:         document.getElementById("npcAcoes")?.value.trim()         || "",
+    reacoes:       document.getElementById("npcReacoes")?.value.trim()       || "",
+    resistencias:  document.getElementById("npcResistencias")?.value.trim()  || "",
+    ...(window._imagemNpcBase64
+    ? await uploadImagemFirebase(window._imagemNpcBase64, `npcs/${Date.now()}.jpg`).then(r => ({ imagem: r.url, imagemDeleteUrl: r.deleteUrl }))
+    : { imagem: "", imagemDeleteUrl: "" }),
+  });
+
+  salvarCampanhasMaster();
+
+  /* limpa o form */
+  ["npcNome","npcRaca","npcIdade","npcClasse","npcRegiao","npcReligiao",
+   "npcLocalizacao","npcPericias","npcPersonalidade","npcRelacoes","npcObservacoes",
+   "npcHabilidades","npcAcoes","npcReacoes","npcResistencias","npcVelocidade","npcDesafio"]
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+  ["npcFor","npcDes","npcCon","npcInt","npcSab","npcCar"]
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = "10"; });
+  const npcHpEl = document.getElementById("npcHpMax"); if (npcHpEl) npcHpEl.value = "20";
+  const npcCaEl = document.getElementById("npcCa"); if (npcCaEl) npcCaEl.value = "10";
+  window.imagemNPCBase64 = "";
+  const inp = document.getElementById("npcImagemInput"); if (inp) inp.value = "";
+  const pre = document.getElementById("previewNPC");
+  if (pre) { pre.src = ""; pre.style.display = "none"; }
+
+  renderMonstrosMestre();
+  mostrarToastMundo("NPC salvo no Compêndio! 👹");
+} 
+
+function renderNPCsMundo() {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  const lista    = document.getElementById("mundoNPCLista");
+  if (!lista) return;
+  campanha.npcsMundo ||= [];
+
+  if (!campanha.npcsMundo.length) {
+    lista.innerHTML = `<p class="master-desc">Nenhum NPC ainda.</p>`;
+    return;
+  }
+
+  const relInfo = {
+    aliado:  { cor:"#2a7a40", label:"Aliado"  },
+    neutro:  { cor:"#7a6020", label:"Neutro"  },
+    inimigo: { cor:"#8f2222", label:"Inimigo" },
+  };
+
+  lista.innerHTML = campanha.npcsMundo.map(n => {
+    const rel      = relInfo[n.relacao] || relInfo.neutro;
+    const iniciais = (n.nome||"?").split(" ").map(p=>p[0]).join("").slice(0,2).toUpperCase();
+    const cor      = _corAvatar(n.nome);
+    const d        = n.dadosCompletos || {};
+    const mod      = v => { const m = Math.floor(((v||10)-10)/2); return m>=0?`+${m}`:`${m}`; };
+    const hpMax    = n.hpMax || d.hpMax || d.hp || 20;
+    const hpAtual  = n.hpAtual !== undefined ? n.hpAtual : hpMax;
+    const hpPct    = Math.max(0, Math.min(100, Math.round((hpAtual/hpMax)*100)));
+    const hpCor    = hpPct > 60 ? "#2a7a40" : hpPct > 30 ? "#7a6020" : "#8f2222";
+
+    const bloco = (titulo, valor) => valor ? `
+      <div style="background:#F0EBD8;border-radius:8px;margin-bottom:8px;overflow:hidden;border:1px solid rgba(196,169,91,0.2);">
+        <div style="background:#DDD5BC;padding:6px 12px;text-align:center;">
+          <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">${titulo}</span>
+        </div>
+        <p style="color:#2A1A10;font-size:13px;margin:0;padding:10px 12px;line-height:1.5;text-align:center;">${escapeHtml(valor)}</p>
+      </div>` : "";
+
+    return `
+<div class="npc-card-mundo" id="npcMundo_${n.id}" style="background:#F8F4E3;border:1px solid rgba(196,169,91,0.3);border-left:3px solid ${rel.cor};border-radius:10px;margin-bottom:12px;">
+  <div class="npc-card-header" onclick="toggleNPCMundo(${n.id})" style="display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;">
+    <div style="width:38px;height:38px;border-radius:50%;background:${cor};color:#fff;font-size:14px;font-weight:bold;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">
+  ${n.imagem ? `<img src="${n.imagem}" style="width:100%;height:100%;object-fit:cover;">` : iniciais}
+</div>
+    <div style="flex:1;min-width:0;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+        <strong style="color:#2A1A10;font-size:14px;">${escapeHtml(n.nome)}</strong>
+        <span style="font-size:10px;padding:2px 8px;border-radius:20px;background:${rel.cor}22;color:${rel.cor};border:1px solid ${rel.cor}44;">${rel.label}</span>
+        <span class="npc-toggle-seta" style="margin-left:auto;color:#7A6A50;font-size:12px;">▼</span>
+      </div>
+      <small style="color:#7A6A50;font-size:11px;">${[escapeHtml(n.classe||""), escapeHtml(n.regiao||"")].filter(Boolean).join(" · ")}</small>
+      <div style="margin-top:6px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span id="npcHpCoracao_${n.id}" style="font-size:11px;color:${hpCor};font-weight:bold;">❤ ${hpAtual}/${hpMax}</span>
+          <div style="flex:1;height:6px;background:rgba(0,0,0,0.1);border-radius:4px;overflow:hidden;">
+            <div id="npcHpBarra_${n.id}" style="height:100%;width:${hpPct}%;background:${hpCor};border-radius:4px;transition:width 0.3s ease;"></div>
+          </div>
+        </div>
+        ${d.ca ? `<div style="font-size:11px;color:#7A6A50;font-weight:bold;margin-top:3px;">🛡️ CA ${d.ca}</div>` : ""}
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="npc-card-detalhes" id="npcDetalhes_${n.id}" style="display:none;max-height:0;overflow:hidden;" data-aberto="0">
+    <div style="padding:0 16px 16px;">
+
+     <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;padding:10px;background:#F0EBD8;border-radius:8px;border:1px solid rgba(196,169,91,0.2);">
+  <div style="display:flex;gap:4px;">
+    <button onclick="event.stopPropagation();alterarHpNPC(${n.id},-10)" style="flex:1;background:#6b1818!important;border:none!important;border-radius:6px;color:#fff!important;padding:8px 4px;font-size:12px;cursor:pointer;font-weight:bold;">-10</button>
+    <button onclick="event.stopPropagation();alterarHpNPC(${n.id},-5)"  style="flex:1;background:#8f2222!important;border:none!important;border-radius:6px;color:#fff!important;padding:8px 4px;font-size:12px;cursor:pointer;font-weight:bold;">-5</button>
+    <button onclick="event.stopPropagation();alterarHpNPC(${n.id},-1)"  style="flex:1;background:#8f2222!important;border:none!important;border-radius:6px;color:#fff!important;padding:8px 4px;font-size:12px;cursor:pointer;font-weight:bold;">-1</button>
+    <button onclick="event.stopPropagation();alterarHpNPC(${n.id},+1)"  style="flex:1;background:#2a7a40!important;border:none!important;border-radius:6px;color:#fff!important;padding:8px 4px;font-size:12px;cursor:pointer;font-weight:bold;">+1</button>
+    <button onclick="event.stopPropagation();alterarHpNPC(${n.id},+5)"  style="flex:1;background:#2a7a40!important;border:none!important;border-radius:6px;color:#fff!important;padding:8px 4px;font-size:12px;cursor:pointer;font-weight:bold;">+5</button>
+    <button onclick="event.stopPropagation();alterarHpNPC(${n.id},+10)" style="flex:1;background:#1a5c2e!important;border:none!important;border-radius:6px;color:#fff!important;padding:8px 4px;font-size:12px;cursor:pointer;font-weight:bold;">+10</button>
+  </div>
+</div>
+
+
+      ${(d.status && Object.keys(d.status).length) ? `
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:12px;">
+        ${["for","des","con","int","sab","car"].map(a=>`
+          <div style="background:#F0EBD8;border-radius:8px;padding:8px 4px;text-align:center;border:1px solid rgba(196,169,91,0.2);">
+            <div style="font-size:9px;color:#7A6A50;text-transform:uppercase;letter-spacing:0.5px;">${a}</div>
+            <div style="font-size:15px;font-weight:bold;color:#2A1A10;">${d.status[a]||10}</div>
+            <div style="font-size:10px;color:#7B1E28;">${mod(d.status[a]||10)}</div>
+          </div>`).join("")}
+      </div>` : ""}
+
+      ${bloco("Personalidade", n.desc)}
+      ${bloco("Relações", d.relacoes)}
+      ${bloco("Perícias", d.pericias)}
+      ${bloco("Religião", d.religiao)}
+      ${bloco("Observações", d.observacoes)}
+
+      ${(d.velocidade || d.desafio) ? `
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+        ${d.velocidade ? `<span style="background:#F0EBD8;border:1px solid rgba(196,169,91,0.3);border-radius:8px;padding:5px 10px;font-size:12px;color:#2A1A10;"><strong>Vel</strong> ${escapeHtml(d.velocidade)}</span>` : ""}
+        ${d.desafio ? `<span style="background:#F0EBD8;border:1px solid rgba(196,169,91,0.3);border-radius:8px;padding:5px 10px;font-size:12px;color:#2A1A10;"><strong>ND</strong> ${escapeHtml(d.desafio)}</span>` : ""}
+      </div>` : ""}
+
+      ${bloco("⚔️ Habilidades Especiais", d.habilidades)}
+      ${bloco("🎯 Ações", d.acoes)}
+      ${bloco("🛡️ Reações", d.reacoes)}
+      ${bloco("💎 Resistências / Imunidades", d.resistencias)}
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:8px;">
+        <button onclick="event.stopPropagation();enviarNPCParaCombate(${n.id})" style="flex:1;background:#8f2222!important;border:none!important;border-radius:8px;color:#fff!important;padding:8px;font-size:12px;cursor:pointer;font-weight:bold;">⚔️ Enviar para Combate</button>
+        <span onclick="deletarNPCMundo(${n.id})" style="cursor:pointer;font-size:12px;color:#8f2222;opacity:0.8;white-space:nowrap;">🗑 Remover</span>
+      </div>
+    </div>
+  </div>
+</div>`;
+  }).join("");
+}
+
+function enviarNPCParaCombate(id) {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  const n = campanha?.npcsMundo?.find(x => x.id === id);
+  if (!n) return;
+
+  const d = n.dadosCompletos || {};
+  const hpMax = n.hpMax || d.hpMax || 20;
+
+  const copia = {
+    instanciaId:  Date.now() + Math.floor(Math.random() * 9999),
+    monstroBaseId: n.id,
+    origem:       "npc_mundo",
+    nome:         n.nome || "NPC",
+    tipo:         d.classe || d.raca || "NPC",
+    regiao:       n.regiao || "",
+    hpMax,
+    hpAtual:      n.hpAtual !== undefined ? n.hpAtual : hpMax,
+    ca:           d.ca || 10,
+    velocidade:   d.velocidade || "",
+    desafio:      d.desafio || "",
+    status: d.status || { for:10, des:10, con:10, int:10, sab:10, car:10 },
+    lore:         n.desc || "",
+    habilidades:  d.habilidades || "",
+    acoes:        d.acoes || "",
+    reacoes:      d.reacoes || "",
+    resistencias: d.resistencias || "",
+    imagem:       n.imagem || "",
+  };
+
+  combatesMestre.push(copia);
+  salvarCombatesMestreStorage();
+  renderCombatesMestre();
+
+  // Muda para aba de combate
+  const btnCombate = document.querySelector('.master-tab-btn[onclick*="combate"]');
+  if (btnCombate) btnCombate.click();
+
+  mostrarToastMundo(`${copia.nome} entrou no combate! ⚔️`);
+}
+
+function alterarHpNPC(id, delta) {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  const n = campanha?.npcsMundo?.find(x => x.id === id);
+  if (!n) return;
+
+  const hpMax   = n.hpMax || n.dadosCompletos?.hpMax || n.dadosCompletos?.hp || 20;
+  const hpAtual = Math.max(0, Math.min(hpMax, (n.hpAtual !== undefined ? n.hpAtual : hpMax) + delta));
+  n.hpAtual     = hpAtual;
+
+  const hpPct = Math.max(0, Math.min(100, Math.round((hpAtual/hpMax)*100)));
+  const hpCor = hpPct > 60 ? "#2a7a40" : hpPct > 30 ? "#7a6020" : "#8f2222";
+
+  const barra   = document.getElementById(`npcHpBarra_${id}`);
+  const valor   = document.getElementById(`npcHpValor_${id}`);
+  const coracao = document.getElementById(`npcHpCoracao_${id}`);
+
+  if (barra)   { barra.style.width = `${hpPct}%`; barra.style.background = hpCor; }
+  if (valor)   { valor.textContent = `${hpAtual}/${hpMax}`; }
+  if (coracao) { coracao.style.color = hpCor; coracao.textContent = `❤ ${hpAtual}/${hpMax}`; }
+
+  salvarCampanhasMaster();
+}
+
+function toggleNPCMundo(id) {
+  const detalhes = document.getElementById("npcDetalhes_" + id);
+  const card     = document.getElementById("npcMundo_" + id);
+  if (!detalhes) return;
+
+  const aberto = detalhes.getAttribute("data-aberto") === "1";
+
+  detalhes.style.transition = "max-height 0.3s ease, opacity 0.3s ease";
+  detalhes.style.overflow   = "hidden";
+
+  if (aberto) {
+    detalhes.style.maxHeight = "0";
+    detalhes.style.opacity   = "0";
+    detalhes.setAttribute("data-aberto", "0");
+    setTimeout(() => { detalhes.style.display = "none"; }, 300);
+  } else {
+    detalhes.style.display  = "block";
+    detalhes.style.maxHeight = "0";
+    detalhes.style.opacity   = "0";
+    detalhes.setAttribute("data-aberto", "1");
+    requestAnimationFrame(() => {
+      detalhes.style.maxHeight = "2000px";
+      detalhes.style.opacity   = "1";
+    });
+  }
+
+  const seta = card?.querySelector(".npc-toggle-seta");
+  if (seta) seta.textContent = aberto ? "▼" : "▲";
+}
+
+function _corAvatar(nome) {
+  const cores = ["#8f2222","#1a5f8f","#2a7a40","#7a6020","#5a2a8f","#8f5a20"];
+  let hash = 0;
+  for (let c of (nome||"")) hash += c.charCodeAt(0);
+  return cores[hash % cores.length];
+}
+
+function trocarAbaMundo(aba, btn) {
+  const mapa = {
+    missoes:   "mundoSecaoMissoes",
+    npcs:      "mundoSecaoNpcs",
+    encontros: "mundoSecaoEncontros",
+  };
+
+  const atual = document.querySelector(".mundo-secao[style*='block']");
+  const proxEl = document.getElementById(mapa[aba]);
+  if (!proxEl || atual === proxEl) return;
+
+  document.querySelectorAll(".mundo-tab-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+
+  if (atual) {
+    atual.style.transition = "opacity 0.2s ease, transform 0.2s ease";
+    atual.style.opacity = "0";
+    atual.style.transform = "translateX(-12px)";
+    setTimeout(() => {
+      atual.style.display = "none";
+      atual.style.opacity = "";
+      atual.style.transform = "";
+
+      proxEl.style.display = "block";
+      proxEl.style.opacity = "0";
+      proxEl.style.transform = "translateX(12px)";
+      proxEl.style.transition = "opacity 0.2s ease, transform 0.2s ease";
+      requestAnimationFrame(() => {
+        proxEl.style.opacity = "1";
+        proxEl.style.transform = "translateX(0)";
+      });
+    }, 200);
+  } else {
+    proxEl.style.display = "block";
+    proxEl.style.opacity = "0";
+    proxEl.style.transform = "translateX(12px)";
+    proxEl.style.transition = "opacity 0.2s ease, transform 0.2s ease";
+    requestAnimationFrame(() => {
+      proxEl.style.opacity = "1";
+      proxEl.style.transform = "translateX(0)";
+    });
+  }
+
+  if (aba === "encontros") renderEncontrosMundo();
+  if (aba === "npcs") renderNPCsMundo();
+}
+
+function editarNPCMundo(id) {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  const npc = campanha?.npcsMundo?.find(n => n.id === id);
+  if (!npc) return;
+
+  abrirPopup("Editar NPC", `
+    <div class="popup-form">
+      <input id="editNPCNome"   value="${escapeHtml(npc.nome)}">
+      <input id="editNPCClasse" value="${escapeHtml(npc.classe || "")}">
+      <input id="editNPCRegiao" value="${escapeHtml(npc.regiao || "")}">
+      <textarea id="editNPCDesc">${escapeHtml(npc.desc || "")}</textarea>
+      <button class="popup-salvar-btn" onclick="salvarEdicaoNPCMundo(${id})">Salvar</button>
+    </div>`, true);
+}
+
+function salvarEdicaoNPCMundo(id) {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  const npc = campanha?.npcsMundo?.find(n => n.id === id);
+  if (!npc) return;
+
+  npc.nome   = document.getElementById("editNPCNome")?.value.trim()   || npc.nome;
+  npc.classe = document.getElementById("editNPCClasse")?.value.trim() || "";
+  npc.regiao = document.getElementById("editNPCRegiao")?.value.trim() || "";
+  npc.desc   = document.getElementById("editNPCDesc")?.value.trim()   || "";
+
+  salvarCampanhasMaster();
+  renderNPCsMundo();
+  fecharPopup();
+}
+
+function deletarNPCMundo(id) {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha || !confirm("Remover este NPC?")) return;
+  campanha.npcsMundo = campanha.npcsMundo.filter(n => n.id !== id);
+  salvarCampanhasMaster();
+  renderNPCsMundo();
+}
+
+/* ── Missões ── */
+function salvarMissaoMundo() {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) return;
+
+  const nome = document.getElementById("mundoMissaoNome")?.value.trim();
+  if (!nome) { alert("Digite o nome da missão."); return; }
+
+  campanha.missoes ||= [];
+  campanha.missoes.push({
+    id:         Date.now(),
+    nome,
+    prioridade:  document.getElementById("mundoMissaoPrioridade")?.value || "andamento",
+    dificuldade: document.getElementById("mundoMissaoDificuldade")?.value || "medio",
+    desc:        document.getElementById("mundoMissaoDesc")?.value.trim() || "",
+    etapas:      _etapasForm.map(e => ({ nome: e.nome, feita: false })),
+  });
+
+  salvarCampanhasMaster();
+  document.getElementById("mundoMissaoNome").value = "";
+  document.getElementById("mundoMissaoDesc").value = "";
+  _etapasForm = [];
+  renderEtapasForm();
+  renderMissoesMundo();
+  mostrarToastMundo("Missão adicionada!");
+}
+
+function renderMissoesMundo() {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  const lista = document.getElementById("mundoMissaoLista");
+  if (!lista) return;
+  campanha.missoes ||= [];
+
+  if (!campanha.missoes.length) {
+    lista.innerHTML = `<p class="master-desc" style="padding:12px 0;">Nenhuma missão ainda.</p>`;
+    return;
+  }
+
+  const priorInfo = {
+    andamento:  { cor:"#7a6020", label:"Em andamento" },
+    concluida:  { cor:"#2a7a40", label:"Concluída"    },
+    abandonada: { cor:"#4a4a4a", label:"Abandonada"   },
+  };
+
+  const difInfo = {
+    facil:  { cor:"#2a7a40", label:"Fácil"  },
+    medio:  { cor:"#7a6020", label:"Médio"  },
+    dificil:{ cor:"#8f2222", label:"Difícil"},
+    epico:  { cor:"#5a1a7a", label:"Épico"  },
+  };
+
+  lista.innerHTML = campanha.missoes.map(m => {
+    const p = priorInfo[m.prioridade || m.status] || priorInfo.andamento;
+    const etapasTotal      = m.etapas?.length || 0;
+const etapasConcluidas = m.etapas?.filter(e => e.feita).length || 0;
+const pct = etapasTotal ? Math.min(100, Math.round((etapasConcluidas / etapasTotal) * 100)) : 0;
+
+const etapasHtml = (m.etapas || []).map((e, i) => `
+  <div class="missao-etapa" onclick="toggleEtapaMissao(${m.id}, ${i})" style="
+    display:flex;align-items:center;gap:8px;
+    padding:6px 0;border-bottom:1px solid rgba(216,200,170,0.06);
+    cursor:pointer;">
+    <span style="
+      width:18px;height:18px;border-radius:4px;flex-shrink:0;
+      border:1px solid ${e.feita ? p.cor : 'rgba(216,200,170,0.25)'};
+      background:${e.feita ? p.cor + '33' : 'transparent'};
+      display:flex;align-items:center;justify-content:center;
+      font-size:11px;color:${p.cor};">
+      ${e.feita ? '✓' : ''}
+    </span>
+    <span style="font-size:13px;color:${e.feita ? '#7a6a5a' : '#d8c8aa'};
+      text-decoration:${e.feita ? 'line-through' : 'none'};">
+      ${escapeHtml(e.nome)}
+    </span>
+  </div>`).join("");
+
+    return `
+    <div class="missao-card-mundo" id="missaoMundo_${m.id}">
+
+      <!-- cabeçalho clicável -->
+      <div class="missao-card-header" onclick="toggleMissaoMundo(${m.id})">
+        <div class="missao-card-topo">
+          <strong>${escapeHtml(m.nome)}</strong>
+          <span class="lore-badge" style="background:${p.cor}22;color:${p.cor};border:1px solid ${p.cor}44;font-size:10px;padding:2px 7px;">${p.label}</span>
+${m.dificuldade ? `<span class="lore-badge" style="background:${(difInfo[m.dificuldade]||difInfo.medio).cor}22;color:${(difInfo[m.dificuldade]||difInfo.medio).cor};border:1px solid ${(difInfo[m.dificuldade]||difInfo.medio).cor}44;font-size:10px;padding:2px 7px;">${(difInfo[m.dificuldade]||difInfo.medio).label}</span>` : ""}
+          <span class="npc-toggle-seta">▼</span>
+        </div>
+        <!-- barra de progresso sempre visível -->
+        <div class="missao-progresso" style="margin-top:8px;">
+          <div class="missao-barra-bg">
+            <div class="missao-barra-fill" style="width:${pct}%;background:${p.cor};"></div>
+          </div>
+          <small style="color:#7a6a5a;font-size:11px;">${etapasConcluidas} de ${etapasTotal} etapas</small>
+        </div>
+      </div>
+
+      <!-- detalhes expansíveis -->
+      <div class="npc-card-detalhes" id="missaoDetalhes_${m.id}" style="display:none;max-height:0;overflow:hidden;" data-aberto="0">
+        ${m.desc ? `<p style="color:#b9a98c;font-size:13px;margin:0 0 10px;">${escapeHtml(m.desc)}</p>` : ""}
+        <div style="margin-bottom:8px;">${etapasHtml}</div>
+        <div style="margin-top:10px;text-align:right;">
+          <span onclick="deletarMissaoMundo(${m.id})" style="cursor:pointer;font-size:12px;color:#8f2222;opacity:0.8;display:inline-block;">🗑 Remover missão</span>
+        </div>
+      </div>
+
+    </div>`;
+  }).join("");
+}
+
+  lista.innerHTML = campanha.missoes.map(m => {
+    const p = priorInfo[m.prioridade || m.status] || priorInfo.andamento;
+    const etapasTotal     = parseInt(m.etapasTotal)     || 3;
+    const etapasConcluidas= parseInt(m.etapasConcluidas)|| 0;
+    const pct = Math.min(100, Math.round((etapasConcluidas / etapasTotal) * 100));
+    return `
+    <div class="missao-card-mundo">
+      <div class="missao-card-topo">
+        <strong>${escapeHtml(m.nome)}</strong>
+        <span class="lore-badge" style="background:${p.cor}22;color:${p.cor};border:1px solid ${p.cor}44;">${p.label}</span>
+      </div>
+      ${m.desc ? `<p class="lore-resumo">${escapeHtml(m.desc)}</p>` : ""}
+      <div class="missao-progresso">
+        <div class="missao-barra-bg">
+          <div class="missao-barra-fill" style="width:${pct}%;background:${p.cor};"></div>
+        </div>
+        <small>${etapasConcluidas} de ${etapasTotal} etapas</small>
+      </div>
+      <div class="card-lore-botoes">
+        <button onclick="deletarMissaoMundo(${m.id})">🗑</button>
+      </div>
+    </div>`;
+  }).join("");
+
+  function toggleMissaoMundo(id) {
+  const detalhes = document.getElementById("missaoDetalhes_" + id);
+  const card     = document.getElementById("missaoMundo_" + id);
+  if (!detalhes) return;
+
+  const aberto = detalhes.getAttribute("data-aberto") === "1";
+
+  detalhes.style.transition = "max-height 0.3s ease, opacity 0.3s ease";
+  detalhes.style.overflow   = "hidden";
+
+  if (aberto) {
+    detalhes.style.maxHeight = "0";
+    detalhes.style.opacity   = "0";
+    detalhes.setAttribute("data-aberto", "0");
+    setTimeout(() => { detalhes.style.display = "none"; }, 300);
+  } else {
+    detalhes.style.display   = "block";
+    detalhes.style.maxHeight = "0";
+    detalhes.style.opacity   = "0";
+    detalhes.setAttribute("data-aberto", "1");
+    requestAnimationFrame(() => {
+      detalhes.style.maxHeight = "2000px";
+      detalhes.style.opacity   = "1";
+    });
+  }
+
+  const seta = card?.querySelector(".npc-toggle-seta");
+  if (seta) seta.textContent = aberto ? "▼" : "▲";
+}
+
+function toggleEtapaMissao(missaoId, etapaIndex) {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  const m = campanha?.missoes?.find(x => x.id === missaoId);
+  if (!m || !m.etapas) return;
+
+  m.etapas[etapaIndex].feita = !m.etapas[etapaIndex].feita;
+
+  if (m.etapas.every(e => e.feita)) m.prioridade = "concluida";
+  else if (m.prioridade === "concluida") m.prioridade = "andamento";
+
+  salvarCampanhasMaster();
+
+  // salva quais estão abertos antes de re-renderizar
+  const abertos = [];
+  document.querySelectorAll(".npc-card-detalhes[data-aberto='1']").forEach(el => {
+    abertos.push(el.id);
+  });
+
+  renderMissoesMundo();
+
+  // reabre os que estavam abertos
+  abertos.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.display = "block";
+    el.style.maxHeight = "600px";
+    el.style.opacity = "1";
+    el.setAttribute("data-aberto", "1");
+    const missaoId = id.replace("missaoDetalhes_", "");
+    const seta = document.querySelector(`#missaoMundo_${missaoId} .npc-toggle-seta`);
+    if (seta) seta.textContent = "▲";
+  });
+}
+
+function editarMissaoMundo(id) {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  const m = campanha?.missoes?.find(x => x.id === id);
+  if (!m) return;
+
+  abrirPopup("Editar Missão", `
+    <div class="popup-form">
+      <input id="editMissaoNome"   value="${escapeHtml(m.nome)}">
+      <input id="editMissaoStatus" value="${escapeHtml(m.status || "ativa")}">
+      <textarea id="editMissaoDesc">${escapeHtml(m.desc || "")}</textarea>
+      <button class="popup-salvar-btn" onclick="salvarEdicaoMissaoMundo(${id})">Salvar</button>
+    </div>`, true);
+}
+
+function salvarEdicaoMissaoMundo(id) {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  const m = campanha?.missoes?.find(x => x.id === id);
+  if (!m) return;
+
+  m.nome   = document.getElementById("editMissaoNome")?.value.trim()   || m.nome;
+  m.status = document.getElementById("editMissaoStatus")?.value.trim() || "ativa";
+  m.desc   = document.getElementById("editMissaoDesc")?.value.trim()   || "";
+
+  salvarCampanhasMaster();
+  renderMissoesMundo();
+  fecharPopup();
+}
+
+function deletarMissaoMundo(id) {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha || !confirm("Remover esta missão?")) return;
+  campanha.missoes = campanha.missoes.filter(m => m.id !== id);
+  salvarCampanhasMaster();
+  renderMissoesMundo();
+}
+
+async function salvarEncontroMundo() {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) return;
+
+  const nome = document.getElementById("encontroNome")?.value.trim();
+  if (!nome) { mostrarToastMundo("Digite o nome do encontro."); return; }
+
+  campanha.encontrosPlanejados ||= [];
+  campanha.encontrosPlanejados.push({
+    id:            Date.now(),
+    nome,
+    regiao:        document.getElementById("encontroRegiao")?.value.trim()        || "",
+    localizacao:   document.getElementById("encontroLocalizacao")?.value.trim()   || "",
+    envolvidos:    document.getElementById("encontroEnvolvidos")?.value.trim()    || "",
+    objetivo:      document.getElementById("encontroObjetivo")?.value.trim()      || "",
+    gatilho:       document.getElementById("encontroGatilho")?.value.trim()       || "",
+    ambiente:      document.getElementById("encontroAmbiente")?.value.trim()      || "",
+    consequencias: document.getElementById("encontroConsequencias")?.value.trim() || "",
+    loot:          document.getElementById("encontroLoot")?.value.trim()          || "",
+    notas:         document.getElementById("encontroNotas")?.value.trim()         || "",
+    dificuldade:   document.getElementById("encontroDificuldade")?.value          || "",
+    ...(window._imagemEncontroBase64
+    ? await uploadImagemFirebase(window._imagemEncontroBase64, `encontros/${Date.now()}.jpg`).then(r => ({ imagem: r.url, imagemDeleteUrl: r.deleteUrl }))
+    : { imagem: "", imagemDeleteUrl: "" }),
+  });
+
+  salvarCampanhasMaster();
+  ["encontroNome","encontroRegiao","encontroLocalizacao","encontroEnvolvidos",
+   "encontroObjetivo","encontroGatilho","encontroAmbiente","encontroConsequencias",
+   "encontroLoot","encontroNotas"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+  renderEncontrosMundo();
+  mostrarToastMundo("Encontro adicionado!");
+}
+
+function renderEncontrosMundo() {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  const lista    = document.getElementById("mundoEncontroLista");
+  if (!lista) return;
+
+  campanha.encontrosPlanejados ||= [];
+
+  if (!campanha.encontrosPlanejados.length) {
+    lista.innerHTML = `<p class="master-desc">Nenhum encontro planejado ainda.</p>`;
+    return;
+  }
+
+  lista.innerHTML = campanha.encontrosPlanejados.map(e => {
+    const preview = e.objetivo
+      ? escapeHtml(e.objetivo).slice(0, 80) + (e.objetivo.length > 80 ? "…" : "")
+      : e.envolvidos
+        ? escapeHtml(e.envolvidos).slice(0, 80) + (e.envolvidos.length > 80 ? "…" : "")
+        : "Sem descrição.";
+
+    return `
+    <div style="
+      background:#F0EBD8;border:1px solid rgba(196,169,91,0.3);
+      border-left:3px solid #7B1E28;border-radius:10px;
+      padding:14px 16px;margin-bottom:12px;cursor:pointer;
+    " onclick="abrirDetalheEncontro(${e.id})">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <strong style="color:#2A1A10;font-size:14px;">${escapeHtml(e.nome)}</strong>
+          ${e.dificuldade ? `<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:${({facil:'rgba(60,140,40,0.15)',medio:'rgba(180,140,20,0.15)',dificil:'rgba(180,80,20,0.15)',lendario:'rgba(139,26,26,0.15)'}[e.dificuldade]||'transparent')};color:${({facil:'#2a6010',medio:'#6a5010',dificil:'#7a3810',lendario:'#6a1010'}[e.dificuldade]||'#7A6A50')};">${e.dificuldade.charAt(0).toUpperCase()+e.dificuldade.slice(1)}</span>` : ""}
+        </div>
+        ${e.regiao ? `<span style="font-size:11px;color:#7A6A50;background:rgba(196,169,91,0.15);padding:2px 8px;border-radius:20px;">${escapeHtml(e.regiao)}</span>` : ""}
+      </div>
+      <p style="font-size:12px;color:#7A6A50;margin:0 0 10px;line-height:1.5;">${preview}</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end;border-top:1px solid rgba(196,169,91,0.2);padding-top:8px;">
+        <button onclick="event.stopPropagation();editarEncontroMundo(${e.id})" style="background:transparent;border:1px solid rgba(196,169,91,0.4);border-radius:6px;color:#7A6A50;font-size:13px;padding:4px 10px;cursor:pointer;">✏</button>
+        <button onclick="event.stopPropagation();deletarEncontroMundo(${e.id})" style="background:transparent;border:1px solid rgba(143,34,34,0.3);border-radius:6px;color:#8f2222;font-size:13px;padding:4px 10px;cursor:pointer;">🗑</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function abrirDetalheEncontro(id) {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  const e = campanha?.encontrosPlanejados?.find(x => x.id === id);
+  if (!e) return;
+
+  const campo = (label, valor) => valor ? `
+    <div style="margin-bottom:12px;">
+      <span style="font-size:10px;color:#7A6A50;text-transform:uppercase;letter-spacing:1px;">${label}</span>
+      <p style="color:#D8C8AA;font-size:13px;line-height:1.6;margin:4px 0 0;background:#2A1A10;border-radius:8px;padding:10px 12px;border:1px solid rgba(196,169,91,0.15);">${escapeHtml(valor)}</p>
+    </div>` : "";
+
+  const modal = document.createElement("div");
+  modal.id = "modalDetalheEncontro";
+  modal.style.cssText = `position:fixed;inset:0;z-index:9999;background:rgba(20,12,6,0.85);display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto;`;
+  modal.innerHTML = `
+    <div style="background:#1E1208;border:1px solid rgba(196,169,91,0.35);border-radius:14px;padding:24px;width:100%;max-width:420px;position:relative;margin:auto;">
+      <button onclick="document.getElementById('modalDetalheEncontro').remove()" style="position:absolute;top:12px;right:14px;background:transparent;border:none;color:#7A6A50;font-size:20px;cursor:pointer;">✕</button>
+
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+        <span style="font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(123,30,40,0.2);color:#C4A95B;border:1px solid rgba(123,30,40,0.4);">🗺️ Encontro</span>
+        ${e.regiao ? `<span style="font-size:11px;color:#7A6A50;">${escapeHtml(e.regiao)}</span>` : ""}
+        ${e.localizacao ? `<span style="font-size:11px;color:#7A6A50;">· ${escapeHtml(e.localizacao)}</span>` : ""}
+      </div>
+
+      <h3 style="color:#C4A95B;font-size:18px;margin:0 0 16px;font-family:'Cinzel',serif;">${escapeHtml(e.nome)}</h3>
+
+      ${campo("Envolvidos", e.envolvidos)}
+      ${campo("Objetivo", e.objetivo)}
+      ${campo("Gatilho", e.gatilho)}
+      ${campo("Ambiente", e.ambiente)}
+      ${campo("Consequências", e.consequencias)}
+      ${campo("Loot / Recompensa", e.loot)}
+      ${campo("Notas do Mestre", e.notas)}
+
+      <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
+        <button onclick="document.getElementById('modalDetalheEncontro').remove();editarEncontroMundo(${e.id})" style="background:transparent;border:1px solid rgba(196,169,91,0.4);border-radius:8px;color:#C4A95B;padding:8px 16px;cursor:pointer;font-size:13px;">✏ Editar</button>
+        <button onclick="document.getElementById('modalDetalheEncontro').remove();deletarEncontroMundo(${e.id})" style="background:transparent;border:1px solid rgba(143,34,34,0.4);border-radius:8px;color:#8f2222;padding:8px 16px;cursor:pointer;font-size:13px;">🗑 Remover</button>
+      </div>
+    </div>
+  `;
+  modal.addEventListener("click", ev => { if (ev.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+
+function editarEncontroMundo(id) {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  const e = campanha?.encontrosPlanejados?.find(x => x.id === id);
+  if (!e) return;
+
+  abrirPopup("Editar Encontro", `
+    <div class="popup-form">
+      <input id="editEncontroNome"   value="${escapeHtml(e.nome)}">
+      <input id="editEncontroRegiao" value="${escapeHtml(e.regiao || "")}">
+      <textarea id="editEncontroDesc">${escapeHtml(e.desc || "")}</textarea>
+      <button class="popup-salvar-btn" onclick="salvarEdicaoEncontroMundo(${id})">Salvar</button>
+    </div>`, true);
+}
+
+function salvarEdicaoEncontroMundo(id) {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  const e = campanha?.encontrosPlanejados?.find(x => x.id === id);
+  if (!e) return;
+
+  e.nome   = document.getElementById("editEncontroNome")?.value.trim()   || e.nome;
+  e.regiao = document.getElementById("editEncontroRegiao")?.value.trim() || "";
+  e.desc   = document.getElementById("editEncontroDesc")?.value.trim()   || "";
+
+  salvarCampanhasMaster();
+  renderEncontrosMundo();
+  fecharPopup();
+}
+
+function deletarEncontroMundo(id) {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha || !confirm("Remover este encontro?")) return;
+  campanha.encontrosPlanejados = campanha.encontrosPlanejados.filter(e => e.id !== id);
+  salvarCampanhasMaster();
+  renderEncontrosMundo();
+}
+
+/* ── render tudo junto ── */
+function renderMundoCampanha() {
+  renderNPCsMundo();
+  renderMissoesMundo();
+  renderEncontrosMundo();
+}
+
+/* ── toast leve ── */
+function mostrarToastMundo(msg) {
+  const t = document.createElement("div");
+  t.textContent = msg;
+  t.style.cssText = `
+    position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(10px);
+    background:linear-gradient(180deg,#5f1717,#2a0b0b);color:#d8c8aa;
+    border:1px solid rgba(216,200,170,0.22);border-radius:999px;
+    padding:9px 22px;font-size:14px;font-weight:bold;z-index:99999;
+    opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;
+  `;
+  document.body.appendChild(t);
+  requestAnimationFrame(() => { t.style.opacity="1"; t.style.transform="translateX(-50%) translateY(0)"; });
+  setTimeout(() => { t.style.opacity="0"; setTimeout(() => t.remove(), 300); }, 2200);
+}
+
+function abrirDetalheSessaoLore(id) {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) return;
+  const s = campanha.sessoes.find(s => s.id === id);
+  if (!s) return;
+
+  const corStatus = { completa:"#2a7a40", planejada:"#7a6020", cancelada:"#7a2020" };
+  const labelStatus = { completa:"Completa", planejada:"Planejada", cancelada:"Cancelada" };
+  const cor = corStatus[s.status] || "#7a6020";
+
+  const modal = document.createElement("div");
+  modal.style.cssText = `
+    position:fixed;inset:0;z-index:9999;
+    background:rgba(20,12,6,0.82);
+    display:flex;align-items:center;justify-content:center;
+    padding:24px;
+  `;
+  modal.innerHTML = `
+    <div style="
+      background:#1E1208;
+      border:1px solid rgba(196,169,91,0.35);
+      border-radius:14px;
+      padding:24px;
+      width:100%;max-width:420px;
+      position:relative;
+    ">
+      <button onclick="this.closest('[style*=fixed]').remove()" style="
+        position:absolute;top:12px;right:14px;
+        background:transparent;border:none;color:#7A6A50;
+        font-size:20px;cursor:pointer;line-height:1;">✕</button>
+
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <span style="
+          font-size:11px;font-weight:bold;padding:3px 10px;border-radius:20px;
+          background:${cor}22;color:${cor};border:1px solid ${cor}44;">
+          ${labelStatus[s.status] || "Planejada"}
+        </span>
+        ${s.data ? `<span style="font-size:11px;color:#7A6A50;">${s.data}</span>` : ""}
+      </div>
+
+      <h3 style="color:#C4A95B;font-size:18px;margin:0 0 12px;">${escapeHtml(s.nome)}</h3>
+
+      ${s.descricao ? `
+        <div style="
+          background:#2A1A10;border-radius:8px;padding:14px;
+          border:1px solid rgba(196,169,91,0.15);
+        ">
+          <p style="color:#D8C8AA;font-size:13px;line-height:1.7;margin:0;">${escapeHtml(s.descricao)}</p>
+        </div>` : ""}
+
+      <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
+        <button onclick="this.closest('[style*=fixed]').remove();editarSessaoLore(${s.id})" style="
+          background:transparent;border:1px solid rgba(196,169,91,0.4);
+          border-radius:8px;color:#C4A95B;padding:8px 16px;cursor:pointer;font-size:13px;">
+          ✏ Editar
+        </button>
+        <button onclick="this.closest('[style*=fixed]').remove();deletarSessaoLore(${s.id})" style="
+          background:transparent;border:1px solid rgba(143,34,34,0.4);
+          border-radius:8px;color:#8f2222;padding:8px 16px;cursor:pointer;font-size:13px;">
+          🗑 Remover
+        </button>
+      </div>
+    </div>
+  `;
+  modal.addEventListener("click", e => { if (e.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+
+function abrirDetalheEventoLore(id) {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) return;
+  const e = campanha.eventos.find(e => e.id === id);
+  if (!e) return;
+
+  const tipoInfo = {
+    batalha:  { emoji:"⚔️", cor:"#8f2222" },
+    revelacao:{ emoji:"🔍", cor:"#1a5f8f" },
+    morte:    { emoji:"💀", cor:"#4a4a4a" },
+    alianca:  { emoji:"🤝", cor:"#2a7a40" },
+    outro:    { emoji:"📌", cor:"#7a6020" },
+  };
+  const t = tipoInfo[e.tipo] || tipoInfo.outro;
+
+  const modal = document.createElement("div");
+  modal.style.cssText = `
+    position:fixed;inset:0;z-index:9999;
+    background:rgba(20,12,6,0.82);
+    display:flex;align-items:center;justify-content:center;
+    padding:24px;
+  `;
+  modal.innerHTML = `
+    <div style="
+      background:#1E1208;
+      border:1px solid rgba(196,169,91,0.35);
+      border-left:3px solid ${t.cor};
+      border-radius:14px;
+      padding:24px;
+      width:100%;max-width:420px;
+      position:relative;
+    ">
+      <button onclick="this.closest('[style*=fixed]').remove()" style="
+        position:absolute;top:12px;right:14px;
+        background:transparent;border:none;color:#7A6A50;
+        font-size:20px;cursor:pointer;line-height:1;">✕</button>
+
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+        <span style="
+          font-size:11px;font-weight:bold;padding:3px 10px;border-radius:20px;
+          background:${t.cor}22;color:${t.cor};border:1px solid ${t.cor}44;">
+          ${t.emoji} ${e.tipo || "outro"}
+        </span>
+        ${e.data ? `<span style="font-size:11px;color:#7A6A50;">${e.data}</span>` : ""}
+      </div>
+
+      <h3 style="color:#C4A95B;font-size:18px;margin:0 0 12px;">${escapeHtml(e.nome)}</h3>
+
+      ${e.descricao ? `
+        <div style="
+          background:#2A1A10;border-radius:8px;padding:14px;
+          border:1px solid rgba(196,169,91,0.15);
+        ">
+          <p style="color:#D8C8AA;font-size:13px;line-height:1.7;margin:0;">${escapeHtml(e.descricao)}</p>
+        </div>` : ""}
+
+      <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
+        <button onclick="this.closest('[style*=fixed]').remove();editarEventoLore(${e.id})" style="
+          background:transparent;border:1px solid rgba(196,169,91,0.4);
+          border-radius:8px;color:#C4A95B;padding:8px 16px;cursor:pointer;font-size:13px;">
+          ✏ Editar
+        </button>
+        <button onclick="this.closest('[style*=fixed]').remove();deletarEventoLore(${e.id})" style="
+          background:transparent;border:1px solid rgba(143,34,34,0.4);
+          border-radius:8px;color:#8f2222;padding:8px 16px;cursor:pointer;font-size:13px;">
+          🗑 Remover
+        </button>
+      </div>
+    </div>
+  `;
+  modal.addEventListener("click", e => { if (e.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+
+function renderLoreCampanha() {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) return;
+
+  const loreInput = document.getElementById("historiaPrincipalLore");
+  if (loreInput) loreInput.value = campanha.historiaPrincipal || "";
+
+  // reseta abas — mostra só História
+  document.querySelectorAll("#abaMaster-lore .mundo-secao").forEach(s => s.style.display = "none");
+  const historia = document.getElementById("loreSecaoHistoria");
+  if (historia) historia.style.display = "block";
+  document.querySelectorAll("#abaMaster-lore .mundo-tab-btn").forEach(b => b.classList.remove("active"));
+  const primeiroBtn = document.querySelector("#abaMaster-lore .mundo-tab-btn");
+  if (primeiroBtn) primeiroBtn.classList.add("active");
+
+  renderSessoesLore();
+  renderEventosLore();
+}
+
+function trocarTipoCriar(tipo, btn) {
+  document.querySelectorAll(".criar-form-panel").forEach(p => p.style.display = "none");
+  document.querySelectorAll(".criar-tipo-btn").forEach(b => b.classList.remove("active"));
+  const painel = document.getElementById("criarForm-" + tipo);
+  if (painel) painel.style.display = "block";
+  if (btn) btn.classList.add("active");
+}
+
+function enviarEntradaSessao() {
+  const entry = window._entradaSessaoAtual;
+  if (!entry) return;
+  enviarParaSessao(entry);
+}
+
+function enviarParaSessao(entry) {
+  const copia = JSON.parse(JSON.stringify(entry));
+  copia.hpAtual = copia.hpMax || 10;
+  delete copia._tipo;
+
+  combatesMestre.push(copia);
+  salvarCombatesMestreStorage();
+  renderCombatesMestre();
+
+  const sheet   = document.getElementById("sheetMonstro");
+  const overlay = document.getElementById("sheetMonstroOverlay");
+  if (sheet)   { sheet.classList.remove("aberto"); sheet.style.display = "none"; }
+  if (overlay) { overlay.style.display = "none"; }
+  document.body.classList.remove("master-sheet-aberto");
+
+  const btnCombate = document.querySelector('[onclick*="combateMaster"]');
+  trocarAbaMaster("combateMaster", btnCombate);
+
+  mostrarToastMundo("Enviado para o combate! ⚔️");
+}
+
+function adicionarNPCAoMundo() {
+  const npc = window._entradaSessaoAtual;
+  if (!npc) return;
+
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) return;
+
+  campanha.npcsMundo ||= [];
+
+  /* evita duplicata pelo id */
+  const jaExiste = campanha.npcsMundo.some(n => n.id === npc.id);
+  if (jaExiste) {
+    mostrarToastMundo("NPC já está no Mundo!");
+    return;
+  }
+
+  campanha.npcsMundo.push({
+  id:          Date.now() + Math.floor(Math.random() * 9999),
+  idOrigem:    npc.id,
+  nome:        npc.nome        || "",
+  classe:      npc.classe      || "",
+  regiao:      npc.regiao      || "",
+  relacao:     npc.relacao     || "neutro",
+  desc:        npc.personalidade || npc.observacoes || "",
+  imagem:      npc.imagem      || "",
+  hpMax:       npc.hpMax || npc.hp || 20,
+  hpAtual:     npc.hpMax || npc.hp || 20,
+  dadosCompletos: npc,
+});
+
+  salvarCampanhasMaster();
+
+  /* fecha o sheet */
+  _fecharSheetCustom();
+
+  /* vai para o Mundo */
+  const btnMundo = document.querySelector('.master-tab-btn[onclick*="mundo"]');
+  mostrarToastMundo("NPC adicionado ao Mundo! 🌍");
+}
+
+function _fecharSheetCustom() {
+  const sheet   = document.getElementById("sheetMonstro");
+  const overlay = document.getElementById("sheetMonstroOverlay");
+  if (sheet)   { sheet.classList.remove("aberto"); sheet.style.display = "none"; }
+  if (overlay) { overlay.style.display = "none"; }
+  document.body.classList.remove("master-sheet-aberto");
+}
+
+function previewImagemBoss() {
+  const input = document.getElementById("bossImagemInput");
+  const preview = document.getElementById("previewBoss");
+  if (!input?.files?.[0]) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement("canvas");
+      const scale = 500 / img.width;
+      canvas.width = 500;
+      canvas.height = img.height * scale;
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      window._imagemBossBase64 = canvas.toDataURL("image/jpeg", 0.65);
+      if (preview) { preview.src = window._imagemBossBase64; preview.style.display = "block"; }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function previewImagemNpc() {
+  const input = document.getElementById("npcImagemInput");
+  const preview = document.getElementById("previewNpc");
+  if (!input?.files?.[0]) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement("canvas");
+      const scale = 500 / img.width;
+      canvas.width = 500;
+      canvas.height = img.height * scale;
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      window._imagemNpcBase64 = canvas.toDataURL("image/jpeg", 0.65);
+      if (preview) { preview.src = window._imagemNpcBase64; preview.style.display = "block"; }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function previewImagemItem() {
+  const input = document.getElementById("itemMasterImagemInput");
+  const preview = document.getElementById("previewItemMaster");
+  if (!input?.files?.[0]) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement("canvas");
+      const scale = 500 / img.width;
+      canvas.width = 500;
+      canvas.height = img.height * scale;
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      window._imagemItemBase64 = canvas.toDataURL("image/jpeg", 0.65);
+      if (preview) { preview.src = window._imagemItemBase64; preview.style.display = "block"; }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function previewImagemEncontro() {
+  const input = document.getElementById("encontroImagemInput");
+  const preview = document.getElementById("previewEncontro");
+  if (!input?.files?.[0]) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement("canvas");
+      const scale = 500 / img.width;
+      canvas.width = 500;
+      canvas.height = img.height * scale;
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      window._imagemEncontroBase64 = canvas.toDataURL("image/jpeg", 0.65);
+      if (preview) { preview.src = window._imagemEncontroBase64; preview.style.display = "block"; }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function adicionarEtapaForm() {
+  const input = document.getElementById("mundoMissaoNovaEtapa");
+  const nome  = input?.value.trim();
+  if (!nome) return;
+
+  _etapasForm.push({ nome, feita: false });
+  input.value = "";
+  renderEtapasForm();
+}
+
+function renderEtapasForm() {
+  const lista = document.getElementById("mundoMissaoEtapasList");
+  if (!lista) return;
+
+  lista.innerHTML = _etapasForm.map((e, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:4px 0;">
+      <span style="font-size:12px;color:#b9a98c;flex:1;">${escapeHtml(e.nome)}</span>
+      <span onclick="removerEtapaForm(${i})" style="cursor:pointer;color:#8f2222;font-size:14px;">✕</span>
+    </div>`).join("");
+}
+
+function removerEtapaForm(i) {
+  _etapasForm.splice(i, 1);
+  renderEtapasForm();
+}
+
+// ===== INICIATIVA =====
+function abrirPainelIniciativa() {
+  // monta lista com monstros do combate
+  const nomesMonstros = combatesMestre.map((m, i) => ({
+    id: "monstro_" + i,
+    nome: m.nome,
+    iniciativa: m.iniciativa || 0,
+    tipo: "monstro"
+  }));
+
+  // jogadores salvos
+  const jogadores = JSON.parse(localStorage.getItem("iniciativaJogadores") || "[]");
+
+  iniciativaOrdem = [...jogadores, ...nomesMonstros];
+
+  renderPainelIniciativa();
+
+  document.getElementById("painelIniciativaOverlay").style.display = "block";
+  const painel = document.getElementById("painelIniciativa");
+  painel.style.display = "flex";
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      painel.classList.add("aberto");
+    });
+  });
+}
+
+function fecharPainelIniciativa() {
+  const painel = document.getElementById("painelIniciativa");
+  painel.classList.remove("aberto");
+  setTimeout(() => {
+    painel.style.display = "none";
+    document.getElementById("painelIniciativaOverlay").style.display = "none";
+  }, 300);
+}
+
+function renderPainelIniciativa() {
+  const lista = document.getElementById("iniciativaLista");
+  if (!lista) return;
+
+  // ordena por iniciativa decrescente
+  const ordenado = [...iniciativaOrdem].sort((a, b) => b.iniciativa - a.iniciativa);
+
+  lista.innerHTML = `
+    <div class="iniciativa-add-jogador">
+      <input id="inputNovoJogador" placeholder="Nome do jogador" />
+      <button onclick="adicionarJogadorIniciativa()">+</button>
+    </div>
+    <div class="iniciativa-separador">Ordenar por iniciativa</div>
+    ${ordenado.map((entry, i) => `
+      <div class="iniciativa-item ${iniciativaTurnoAtual === i ? "ativo" : ""}">
+        <span class="iniciativa-nome">${entry.nome}</span>
+        <input
+          class="iniciativa-input"
+          type="number"
+          value="${entry.iniciativa || ""}"
+          placeholder="0"
+          onchange="atualizarIniciativa('${entry.id}', this.value)"
+        />
+        ${entry.tipo === "jogador" ? `<button class="iniciativa-remover" onclick="removerJogadorIniciativa('${entry.id}')">✕</button>` : ""}
+      </div>
+    `).join("")}
+  `;
+}
+
+function adicionarJogadorIniciativa() {
+  const input = document.getElementById("inputNovoJogador");
+  const nome = input?.value.trim();
+  if (!nome) return;
+
+  const jogadores = JSON.parse(localStorage.getItem("iniciativaJogadores") || "[]");
+  const novo = { id: "jogador_" + Date.now(), nome, iniciativa: 0, tipo: "jogador" };
+  jogadores.push(novo);
+  localStorage.setItem("iniciativaJogadores", JSON.stringify(jogadores));
+
+  iniciativaOrdem = [...jogadores, ...combatesMestre.map((m, i) => ({
+    id: "monstro_" + i, nome: m.nome, iniciativa: m.iniciativa || 0, tipo: "monstro"
+  }))];
+
+  input.value = "";
+  renderPainelIniciativa();
+}
+
+function removerJogadorIniciativa(id) {
+  let jogadores = JSON.parse(localStorage.getItem("iniciativaJogadores") || "[]");
+  jogadores = jogadores.filter(j => j.id !== id);
+  localStorage.setItem("iniciativaJogadores", JSON.stringify(jogadores));
+
+  iniciativaOrdem = iniciativaOrdem.filter(e => e.id !== id);
+  renderPainelIniciativa();
+}
+
+function atualizarIniciativa(id, valor) {
+  const entry = iniciativaOrdem.find(e => e.id === id);
+  if (entry) entry.iniciativa = parseInt(valor) || 0;
+
+  // salva jogadores
+  const jogadores = iniciativaOrdem.filter(e => e.tipo === "jogador");
+  localStorage.setItem("iniciativaJogadores", JSON.stringify(jogadores));
+
+  // atualiza monstros
+  iniciativaOrdem.filter(e => e.tipo === "monstro").forEach(e => {
+    const i = parseInt(e.id.replace("monstro_", ""));
+    if (combatesMestre[i]) combatesMestre[i].iniciativa = e.iniciativa;
+  });
+
+  renderPainelIniciativa();
+}
+
+function proximoTurno() {
+  const ordenado = [...iniciativaOrdem].sort((a, b) => b.iniciativa - a.iniciativa);
+  iniciativaTurnoAtual = (iniciativaTurnoAtual + 1) % ordenado.length;
+  renderPainelIniciativa();
+}
