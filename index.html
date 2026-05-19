@@ -10,6 +10,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, user-scalable=no"
     />
+    
     <title>Ficha Ígnea</title>
     <link rel="stylesheet" href="css/00-base.css" />
     <link rel="stylesheet" href="css/01-player-ficha.css" />
@@ -24,6 +25,7 @@
   href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Cinzel+Decorative:wght@700&family=MedievalSharp&display=swap"
   rel="stylesheet"
 />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 
   </head>
 
@@ -77,7 +79,19 @@
   <button class="voltar" onclick="voltarTelaModo()">← Voltar</button>
 
   <header class="master-header">
-    <img src="img/logo-grimorio.png" class="master-logo-img">
+    <div class="grimorio-logo-topo">
+  <div class="grimorio-logo-area">
+    <img src="img/logo-grimorio-nova.png" class="logo-grimorio-nova">
+    <div class="grimorio-texto-logo">
+      <span class="grimorio-branco">Grimório</span>
+      <div class="igneo-linha">
+        <div class="linha-ornamento"></div>
+        <span class="grimorio-vermelho">Ígneo</span>
+        <div class="linha-ornamento"></div>
+      </div>
+    </div>
+  </div>
+</div>
     <h2>Campanhas</h2>
     <p>Organize suas mesas separadamente.</p>
   </header>
@@ -127,61 +141,172 @@
 <!-- ================= GRIMÓRIO ÍGNEO ================= -->
 <div id="masterIgnea" class="container master-page" style="display:none;">
     <div class="simbolos-bg"></div>
-    <header class="master-header">
-      <h3 id="tituloCampanhaAtual" class="titulo-campanha-atual"></h3>
-      <button class="voltar" onclick="voltarCampanhasMaster()">← Campanhas</button>
-    <img src="img/logo-grimorio.png" class="master-logo-img">
-    <h2>Grimório Ígneo</h2>
-    <p>Compêndio, criação de monstros e organização de combates.</p>
-  </header>
+   <header class="master-header-mini">
+  <button class="voltar btn-voltar-modos" onclick="voltarCampanhasMaster()">← Campanhas</button>
+</header>
 
-  <div class="master-tabs">
-  <button class="master-tab-btn active" title="Lore" onclick="trocarAbaMaster('lore', this)">
-    <span class="tab-icone">📖</span>
-  </button>
-
-  <button class="master-tab-btn" title="Mundo" onclick="trocarAbaMaster('mundo', this)">
-    <span class="tab-icone">🌍</span>
-  </button>
-
-  <button class="master-tab-btn" title="Compêndio" onclick="trocarAbaMaster('compendio', this)">
-    <span class="tab-icone">👹</span>
-  </button>
-
-  <button class="master-tab-btn" title="Criar" onclick="trocarAbaMaster('criar', this)">
-    <span class="tab-icone">✍️</span>
-  </button>
-
-  <button class="master-tab-btn" title="Combate" onclick="trocarAbaMaster('combateMaster', this)">
-    <span class="tab-icone">⚔️</span>
-  </button>
-</div>
-
-  <!-- ================= COMPÊNDIO ================= -->
-<section id="abaMaster-compendio" class="master-aba active">
-
-  <button class="voltar" onclick="voltarCampanhasMaster()">
-  ← Campanhas
-  </button>
-
-<div class="grimorio-header">
+<div class="grimorio-logo-topo">
   <div class="grimorio-logo-area">
     <img src="img/logo-grimorio-nova.png" class="logo-grimorio-nova">
-
     <div class="grimorio-texto-logo">
-      <span class="grimorio-branco">GRIMÓRIO</span>
-
+      <span class="grimorio-branco">Grimório</span>
       <div class="igneo-linha">
-        <span class="linha-ornamento"></span>
-        <span class="grimorio-vermelho">ÍGNEO</span>
-        <span class="linha-ornamento"></span>
+        <div class="linha-ornamento"></div>
+        <span class="grimorio-vermelho">Ígneo</span>
+        <div class="linha-ornamento"></div>
       </div>
     </div>
-
-    <div class="grimorio-linha"></div>
   </div>
 </div>
 
+  <div class="master-tabs">
+  <button class="master-tab-btn active" title="Lore" onclick="trocarAbaMaster('lore', this)">
+    <span class="tab-icone"><i class="ti ti-book"></i></span>
+  </button>
+  <button class="master-tab-btn" title="Mundo" onclick="trocarAbaMaster('mundo', this)">
+    <span class="tab-icone"><i class="ti ti-world"></i></span>
+  </button>
+  <button class="master-tab-btn" title="Compêndio" onclick="trocarAbaMaster('compendio', this)">
+    <span class="tab-icone"><i class="ti ti-skull"></i></span>
+  </button>
+  <button class="master-tab-btn" title="Criar" onclick="trocarAbaMaster('criar', this)">
+    <span class="tab-icone"><i class="ti ti-flame"></i></span>
+  </button>
+  <button class="master-tab-btn" title="Combate" onclick="trocarAbaMaster('combateMaster', this)">
+    <span class="tab-icone"><i class="ti ti-swords"></i></span>
+  </button>
+</div>
+
+<!-- ================= LORE ================= -->
+<section id="abaMaster-lore" class="master-aba active">
+
+  <div class="lore-header">
+    <h2 class="lore-titulo">Lore</h2>
+    <p class="master-desc">História, sessões e eventos da campanha.</p>
+  </div>
+
+  <!-- MINI-ABAS -->
+  <div class="mundo-tabs">
+    <button class="mundo-tab-btn active" onclick="trocarAbaLore('historia', this)">História</button>
+    <button class="mundo-tab-btn" onclick="trocarAbaLore('sessoes', this)">Sessões</button>
+    <button class="mundo-tab-btn" onclick="trocarAbaLore('eventos', this)">Eventos</button>
+  </div>
+
+  <!-- HISTÓRIA -->
+  <div id="loreSecaoHistoria" class="mundo-secao" style="display:block;">
+    <textarea id="historiaPrincipalLore" class="textarea-lore-grande"
+      placeholder="Lore principal da campanha, guerras, profecias, deuses, eras..."
+      oninput="salvarHistoriaPrincipalLore()"></textarea>
+  </div>
+
+  <!-- SESSÕES -->
+  <div id="loreSecaoSessoes" class="mundo-secao" style="display:none;">
+    <div class="secao-toggle" style="margin-bottom:12px;">
+      <h3 class="titulo-toggle" onclick="toggleSecao('boxLoreSessoes', this)">
+        <span>+ Nova Sessão</span><span class="setinha">▼</span>
+      </h3>
+      <div id="boxLoreSessoes" class="conteudo-toggle">
+        <div class="lore-form-inline">
+          <input id="sessaoNome" placeholder="Nome da sessão">
+          <select id="sessaoStatus">
+            <option value="planejada">🟡 Planejada</option>
+            <option value="completa">✅ Completa</option>
+            <option value="cancelada">❌ Cancelada</option>
+          </select>
+          <textarea id="sessaoDescricao" placeholder="Resumo, acontecimentos, decisões, mortes, loot..."></textarea>
+          <button class="btn-master-principal" onclick="salvarSessaoLore()">+ Salvar sessão</button>
+        </div>
+      </div>
+    </div>
+    <div id="listaSessoesLore" class="lista-lore-sempre-visivel"></div>
+  </div>
+
+  <!-- EVENTOS -->
+  <div id="loreSecaoEventos" class="mundo-secao" style="display:none;">
+    <div class="secao-toggle" style="margin-bottom:12px;">
+      <h3 class="titulo-toggle" onclick="toggleSecao('boxLoreEventos', this)">
+        <span>+ Novo Evento</span><span class="setinha">▼</span>
+      </h3>
+      <div id="boxLoreEventos" class="conteudo-toggle">
+        <div class="lore-form-inline">
+          <input id="eventoNome" placeholder="Nome do evento">
+          <select id="eventoTipo">
+            <option value="batalha">⚔️ Batalha</option>
+            <option value="revelacao">🔍 Revelação</option>
+            <option value="morte">💀 Morte</option>
+            <option value="alianca">🤝 Aliança</option>
+            <option value="outro">📌 Outro</option>
+          </select>
+          <textarea id="eventoDescricao" placeholder="Detalhe o evento..."></textarea>
+          <button class="btn-master-principal" onclick="salvarEventoLore()">+ Salvar evento</button>
+        </div>
+      </div>
+    </div>
+    <div id="listaEventosLore" class="lista-lore-sempre-visivel"></div>
+  </div>
+
+</section>
+
+<!-- ================= MUNDO ================= -->
+<section id="abaMaster-mundo" class="master-aba" style="display:none;">
+
+  <div class="lore-header">
+    <h2 class="lore-titulo"> Mundo</h2>
+    <p class="master-desc">Missões, NPCs e encontros da campanha.</p>
+  </div>
+
+  <!-- MINI-ABAS -->
+<div class="mundo-tabs">
+  <button class="mundo-tab-btn active" onclick="trocarAbaMundo('missoes', this)">Missões</button>
+  <button class="mundo-tab-btn" onclick="trocarAbaMundo('npcs', this)"> NPCs</button>
+  <button class="mundo-tab-btn" onclick="trocarAbaMundo('encontros', this)"> Encontros</button>
+
+</div>
+
+  <!-- MISSÕES -->
+  <div id="mundoSecaoMissoes" class="mundo-secao">
+    <div class="lore-form-inline" style="margin-bottom:16px;">
+      <input id="mundoMissaoNome" placeholder="Nome da missão">
+      <select id="mundoMissaoPrioridade">
+        <option value="andamento">🟡 Em andamento</option>
+        <option value="concluida">✅ Concluída</option>
+        <option value="abandonada">❌ Abandonada</option>
+      </select>
+      <select id="mundoMissaoDificuldade">
+        <option value="facil">🟢 Fácil</option>
+        <option value="medio">🟡 Médio</option>
+        <option value="dificil">🔴 Difícil</option>
+        <option value="epico">💀 Épico</option>
+      </select>
+      <div id="mundoMissaoEtapasWrapper">
+        <div id="mundoMissaoEtapasList"></div>
+        <div style="display:flex;gap:8px;margin-top:6px;">
+          <input id="mundoMissaoNovaEtapa" placeholder="Nome da etapa...">
+          <button type="button" class="btn-master-principal" style="width:auto;white-space:nowrap;padding:8px 12px;" onclick="adicionarEtapaForm()">+ Etapa</button>
+        </div>
+      </div>
+      <textarea id="mundoMissaoDesc" placeholder="Objetivo, envolvidos, recompensa..."></textarea>
+      <button class="btn-master-principal" onclick="salvarMissaoMundo()">+ Adicionar Missão</button>
+    </div>
+    <div id="mundoMissaoLista"></div>
+  </div>
+
+  <!-- NPCs -->
+  <div id="mundoSecaoNpcs" class="mundo-secao" style="display:none;">
+    <div id="mundoNPCLista"></div>
+  </div>
+
+  <!-- ENCONTROS -->
+<div id="mundoSecaoEncontros" class="mundo-secao" style="display:none;">
+  <div id="mundoEncontroLista"></div>
+</div>
+
+</section>
+
+  <!-- ================= COMPÊNDIO ================= -->
+<section id="abaMaster-compendio" class="master-aba" style="display:none;">
+
+<h2 class="Compendio-titulo">Compendio</h2>
 <p class="master-desc">
   Todos os monstros criados aparecem aqui.
 </p>
@@ -207,87 +332,250 @@
     <div id="listaMonstrosMestre" class="compendio-grid"></div>
   </section>
 
-  <!-- ================= CRIAR MONSTRO ================= -->
-  <section id="abaMaster-criar" class="master-aba" style="display:none;">
-    <section class="master-form-box">
-      <h3 id="tituloFormMonstro">Criar Monstro</h3>
+<section id="abaMaster-criar" class="master-aba" style="display:none;">
 
-      <input id="monstroNome" placeholder="Nome do monstro">
-      <input id="monstroTipo" placeholder="Tipo / espécie">
-      <input id="monstroRegiao" placeholder="Região">
-
-      <div class="master-linha-3">
-        <input id="monstroHpMax" type="number" placeholder="HP máximo">
-        <input id="monstroHpAtual" type="number" placeholder="HP atual">
-        <input id="monstroCa" type="number" placeholder="CA">
-      </div>
-
-      <h4>Status base</h4>
-      <div class="master-status-grid">
-
-  <div class="status-monstro-box">
-    <span>FOR</span>
-    <input id="monstroFor" type="number" value="10" oninput="atualizarModsMonstro()">
-    <div id="modMonstroFor" class="mod-monstro">+0</div>
+  <div class="lore-header">
+    <h2 class="lore-titulo"> Forjar</h2>
+    <p class="master-desc">Escolha o que deseja criar para sua campanha.</p>
   </div>
 
-  <div class="status-monstro-box">
-    <span>DES</span>
-    <input id="monstroDes" type="number" value="10" oninput="atualizarModsMonstro()">
-    <div id="modMonstroDes" class="mod-monstro">+0</div>
-  </div>
-
-  <div class="status-monstro-box">
-    <span>CON</span>
-    <input id="monstroCon" type="number" value="10" oninput="atualizarModsMonstro()">
-    <div id="modMonstroCon" class="mod-monstro">+0</div>
-  </div>
-
-  <div class="status-monstro-box">
-    <span>INT</span>
-    <input id="monstroInt" type="number" value="10" oninput="atualizarModsMonstro()">
-    <div id="modMonstroInt" class="mod-monstro">+0</div>
-  </div>
-
-  <div class="status-monstro-box">
-    <span>SAB</span>
-    <input id="monstroSab" type="number" value="10" oninput="atualizarModsMonstro()">
-    <div id="modMonstroSab" class="mod-monstro">+0</div>
-  </div>
-
-  <div class="status-monstro-box">
-    <span>CAR</span>
-    <input id="monstroCar" type="number" value="10" oninput="atualizarModsMonstro()">
-    <div id="modMonstroCar" class="mod-monstro">+0</div>
-  </div>
-
+  <!-- SELETOR DE TIPO -->
+  <div class="criar-tipo-grid">
+  <button class="criar-tipo-btn active" onclick="trocarTipoCriar('monstro', this)">
+   <span>Monstro</span>
+  </button>
+  <button class="criar-tipo-btn" onclick="trocarTipoCriar('boss', this)">
+    <span>Boss</span>
+  </button>
+  <button class="criar-tipo-btn" onclick="trocarTipoCriar('npc', this)">
+    <span>NPC</span>
+  </button>
+  <button class="criar-tipo-btn" onclick="trocarTipoCriar('item', this)">
+    <span>Item</span>
+  </button>
+  <button class="criar-tipo-btn" onclick="trocarTipoCriar('encontro', this)">
+  <span>Encontro</span>
+  </button>
 </div>
 
-      <textarea id="monstroLore" placeholder="Lore do bicho"></textarea>
-      <textarea id="monstroHabilidades" placeholder="Habilidades especiais"></textarea>
-      <textarea id="monstroDialogos" placeholder="Diálogos possíveis, um por linha"></textarea>
-      <textarea id="monstroEncontros" placeholder="Pontos de encontro / locais onde pode aparecer"></textarea>
+  <!-- FORMULÁRIOS -->
 
-      <label class="master-upload">
-        Escolher imagem do monstro
-        <input id="monstroImagemInput" type="file" accept="image/*" onchange="previewImagemMonstro()">
-      </label>
-
-      <img id="previewMonstro" class="preview-monstro" src="" alt="Preview do monstro" style="display:none;">
-
-      <div class="master-form-acoes">
-        <button class="btn-master-principal" onclick="salvarMonstroMestre()">Salvar monstro</button>
-        <button class="btn-master-secundario" onclick="limparFormMonstro()">Limpar</button>
+  <!-- ===== MONSTRO ===== -->
+  <div id="criarForm-monstro" class="criar-form-panel">
+    <div class="criar-form-titulo">Criar Monstro</div>
+    <div class="form-master-limpo">
+      <input id="monstroNome" placeholder="Nome">
+      <div class="criar-campos-duplos">
+        <input id="monstroTipo" placeholder="Tipo / Classe">
+        <input id="monstroRegiao" placeholder="Região">
       </div>
-    </section>
-  </section>
+      <div class="criar-campos-duplos">
+        <input id="monstroIdade" placeholder="Idade">
+        <input id="monstroLocalizacao" placeholder="Localização">
+      </div>
+      <input id="monstroPontoEncontro" placeholder="Ponto de encontro">
+      <div class="criar-hp-ca">
+        <div><label>HP Máx</label><input id="monstroHpMax" type="number" value="10"></div>
+        <div><label>HP Atual</label><input id="monstroHpAtual" type="number" value="10"></div>
+        <div><label>CA</label><input id="monstroCa" type="number" value="10"></div>
+      </div>
+      <div class="status-grid-master">
+        <div class="status-attr"><label>FOR</label><input id="monstroFor" type="number" value="10" oninput="atualizarModsMaster('monstro')"><span id="monstroModFor">+0</span></div>
+        <div class="status-attr"><label>DES</label><input id="monstroDes" type="number" value="10" oninput="atualizarModsMaster('monstro')"><span id="monstroModDes">+0</span></div>
+        <div class="status-attr"><label>CON</label><input id="monstroCon" type="number" value="10" oninput="atualizarModsMaster('monstro')"><span id="monstroModCon">+0</span></div>
+        <div class="status-attr"><label>INT</label><input id="monstroInt" type="number" value="10" oninput="atualizarModsMaster('monstro')"><span id="monstroModInt">+0</span></div>
+        <div class="status-attr"><label>SAB</label><input id="monstroSab" type="number" value="10" oninput="atualizarModsMaster('monstro')"><span id="monstroModSab">+0</span></div>
+        <div class="status-attr"><label>CAR</label><input id="monstroCar" type="number" value="10" oninput="atualizarModsMaster('monstro')"><span id="monstroModCar">+0</span></div>
+      </div>
+      <textarea id="monstroLore" placeholder="Lore / história"></textarea>
+      <textarea id="monstroHabilidades" placeholder="Habilidades especiais"></textarea>
+      <textarea id="monstroAtaques" placeholder="Ataques (ex: Garra: 2d6+4 | Mordida: 3d8+6)"></textarea>
+      <textarea id="monstroReacoes" placeholder="Reações (ex: Aparar — reduz 1d6+2 de dano)"></textarea>
+      <textarea id="monstroResistencias" placeholder="Resistências / Imunidades / Vulnerabilidades"></textarea>
+      <textarea id="monstroDialogos" placeholder="Diálogos (um por linha)"></textarea>
+      <textarea id="monstroEncontros" placeholder="Pontos de encontro"></textarea>
+      <label class="master-upload">📷 Imagem do monstro<input id="monstroImagemInput" type="file" accept="image/*" onchange="previewImagemMonstro()"></label>
+      <img id="previewMonstro" class="preview-monstro" src="" style="display:none;">
+      <button class="btn-master-principal" onclick="salvarMonstroMestre()">⚡ Salvar Monstro</button>
+    </div>
+  </div>
+
+  <!-- ===== BOSS ===== -->
+  <div id="criarForm-boss" class="criar-form-panel" style="display:none;">
+    <div class="criar-form-titulo">Criar Boss</div>
+    <div class="form-master-limpo">
+      <input id="bossNome" placeholder="Nome">
+      <input id="bossTitulo" placeholder="Título / Epíteto">
+      <div class="criar-campos-duplos">
+        <input id="bossTipo" placeholder="Tipo / Classe">
+        <input id="bossRegiao" placeholder="Região">
+      </div>
+      <div class="criar-campos-duplos">
+        <input id="bossIdade" placeholder="Idade">
+        <input id="bossLocalizacao" placeholder="Localização">
+      </div>
+      <div class="criar-hp-ca">
+        <div><label>HP Máx</label><input id="bossHpMax" type="number" value="100"></div>
+        <div><label>HP Atual</label><input id="bossHpAtual" type="number" value="100"></div>
+        <div><label>CA</label><input id="bossCa" type="number" value="15"></div>
+      </div>
+      <div class="status-grid-master">
+        <div class="status-attr"><label>FOR</label><input id="bossFor" type="number" value="10" oninput="atualizarModsMaster('boss')"><span id="bossModFor">+0</span></div>
+        <div class="status-attr"><label>DES</label><input id="bossDes" type="number" value="10" oninput="atualizarModsMaster('boss')"><span id="bossModDes">+0</span></div>
+        <div class="status-attr"><label>CON</label><input id="bossCon" type="number" value="10" oninput="atualizarModsMaster('boss')"><span id="bossModCon">+0</span></div>
+        <div class="status-attr"><label>INT</label><input id="bossInt" type="number" value="10" oninput="atualizarModsMaster('boss')"><span id="bossModInt">+0</span></div>
+        <div class="status-attr"><label>SAB</label><input id="bossSab" type="number" value="10" oninput="atualizarModsMaster('boss')"><span id="bossModSab">+0</span></div>
+        <div class="status-attr"><label>CAR</label><input id="bossCar" type="number" value="10" oninput="atualizarModsMaster('boss')"><span id="bossModCar">+0</span></div>
+      </div>
+      <textarea id="bossFases" placeholder="Fases do boss (ex: Fase 1 — 100% HP...)"></textarea>
+      <textarea id="bossMecanicas" placeholder="Mecânicas especiais"></textarea>
+      <textarea id="bossAtaques" placeholder="Ataques lendários"></textarea>
+      <textarea id="bossFraquezas" placeholder="Fraquezas"></textarea>
+      <textarea id="bossReacoes" placeholder="Reações lendárias"></textarea>
+      <textarea id="bossResistencias" placeholder="Resistências / Imunidades / Vulnerabilidades"></textarea>
+      <textarea id="bossLore" placeholder="Lore / história"></textarea>
+      <label class="master-upload" style="display:block; margin-bottom:8px;">📷 Imagem do boss<input id="bossImagemInput" type="file" accept="image/*" onchange="previewImagemBoss()"></label>
+      <img id="previewBoss" class="preview-monstro" src="" style="display:none;">
+      <button class="btn-master-principal" onclick="salvarBossMestre()">⚡ Salvar Boss</button>
+    </div>
+  </div>
+
+  <!-- ===== NPC ===== -->
+  <div id="criarForm-npc" class="criar-form-panel" style="display:none;">
+    <div class="criar-form-titulo">Criar NPC</div>
+    <div class="form-master-limpo">
+      <input id="npcNome" placeholder="Nome">
+      <div class="criar-campos-duplos">
+        <input id="npcRaca" placeholder="Raça">
+        <input id="npcClasse" placeholder="Classe / Profissão">
+      </div>
+      <div class="criar-campos-duplos">
+        <input id="npcIdade" placeholder="Idade">
+        <input id="npcReligiao" placeholder="Religião">
+      </div>
+      <div class="criar-campos-duplos">
+        <input id="npcRegiao" placeholder="Região">
+        <input id="npcLocalizacao" placeholder="Localização">
+      </div>
+      <div class="status-grid-master">
+        <div class="status-attr"><label>FOR</label><input id="npcFor" type="number" value="10" oninput="atualizarModsMaster('npc')"><span id="npcModFor">+0</span></div>
+        <div class="status-attr"><label>DES</label><input id="npcDes" type="number" value="10" oninput="atualizarModsMaster('npc')"><span id="npcModDes">+0</span></div>
+        <div class="status-attr"><label>CON</label><input id="npcCon" type="number" value="10" oninput="atualizarModsMaster('npc')"><span id="npcModCon">+0</span></div>
+        <div class="status-attr"><label>INT</label><input id="npcInt" type="number" value="10" oninput="atualizarModsMaster('npc')"><span id="npcModInt">+0</span></div>
+        <div class="status-attr"><label>SAB</label><input id="npcSab" type="number" value="10" oninput="atualizarModsMaster('npc')"><span id="npcModSab">+0</span></div>
+        <div class="status-attr"><label>CAR</label><input id="npcCar" type="number" value="10" oninput="atualizarModsMaster('npc')"><span id="npcModCar">+0</span></div>
+      </div>
+      <textarea id="npcPericias" placeholder="Perícias"></textarea>
+      <textarea id="npcPersonalidade" placeholder="Personalidade (bordão, trejeitos, voz...)"></textarea>
+      <textarea id="npcRelacoes" placeholder="Relações com outros personagens"></textarea>
+      <textarea id="npcSegredo" placeholder="Segredo (o que esconde dos jogadores)"></textarea>
+      <textarea id="npcObservacoes" placeholder="Observações do mestre"></textarea>
+
+      <!-- COMBATE -->
+      <div class="criar-form-titulo" style="font-size:13px;margin:10px 0 6px;opacity:0.7;">⚔️ Dados de Combate</div>
+      <div class="criar-campos-duplos">
+        <input id="npcHpMax" type="number" placeholder="HP Máximo" value="20">
+        <input id="npcCa" type="number" placeholder="CA" value="10">
+      </div>
+      <div class="criar-campos-duplos">
+        <input id="npcVelocidade" placeholder="Velocidade (ex: 9m)">
+        <input id="npcDesafio" placeholder="Nível de Desafio (ND)">
+      </div>
+      <textarea id="npcHabilidades" placeholder="Habilidades especiais (ex: Ataque Furtivo, Resistência Mágica...)"></textarea>
+      <textarea id="npcAcoes" placeholder="Ações de combate (ex: Espada Longa +5, 1d8+3)"></textarea>
+      <textarea id="npcReacoes" placeholder="Reações (ex: Aparar — reduz 1d6+2 de dano)"></textarea>
+      <textarea id="npcResistencias" placeholder="Resistências / Imunidades / Vulnerabilidades"></textarea>
+
+      <label class="master-upload" style="display:block; margin-bottom:8px;">📷 Imagem do NPC<input id="npcImagemInput" type="file" accept="image/*" onchange="previewImagemNpc()"></label>
+      <img id="previewNPC" class="preview-monstro" src="" style="display:none;">
+      <button class="btn-master-principal" onclick="salvarNPCMestre()">⚡ Salvar NPC</button>
+    </div>
+  </div>
+
+  <!-- ===== ITEM ===== -->
+  <div id="criarForm-item" class="criar-form-panel" style="display:none;">
+    <div class="criar-form-titulo">Criar Item</div>
+    <div class="form-master-limpo">
+      <input id="itemMasterNome" placeholder="Nome do item">
+      <div class="criar-campos-duplos">
+        <input id="itemMasterTipo" placeholder="Tipo (arma, armadura...)">
+        <select id="itemMasterRaridade">
+          <option value="normal">Normal</option>
+          <option value="incomum">Incomum</option>
+          <option value="raro">Raro</option>
+          <option value="reliquia">Relíquia</option>
+        </select>
+      </div>
+      <select id="itemMasterSintonia">
+        <option value="nao">Sem sintonização</option>
+        <option value="sim">Requer sintonização</option>
+      </select>
+      <textarea id="itemMasterEfeito" placeholder="Efeito / habilidade"></textarea>
+      <textarea id="itemMasterDescricao" placeholder="Descrição visual"></textarea>
+      <textarea id="itemMasterHistoria" placeholder="História do item"></textarea>
+      <textarea id="itemMasterOrigem" placeholder="Origem / onde encontrar"></textarea>
+      <label class="master-upload" style="display:block; margin-bottom:8px;">📷 Imagem do item<input id="itemMasterImagemInput" type="file" accept="image/*" onchange="previewImagemItem()"></label>
+      <img id="previewItemMaster" class="preview-monstro" src="" style="display:none;">
+      <button class="btn-master-principal" onclick="salvarItemMestre()">⚡ Salvar Item</button>
+    </div>
+  </div>
+
+  <!-- ===== ENCONTRO ===== -->
+  <div id="criarForm-encontro" class="criar-form-panel" style="display:none;">
+    <div class="criar-form-titulo">Criar Encontro</div>
+    <div class="form-master-limpo">
+      <input id="encontroNome" placeholder="Nome do encontro" autocomplete="off">
+      <div class="criar-campos-duplos">
+        <input id="mundoEncontroRegiao" placeholder="Região" autocomplete="off">
+        <input id="encontroLocalizacao" placeholder="Localização">
+      </div>
+      <div class="criar-dificuldade-grid">
+        <button type="button" class="criar-dif-btn dif-facil"    onclick="selecionarDificuldade('facil', this)">Fácil</button>
+        <button type="button" class="criar-dif-btn dif-medio"    onclick="selecionarDificuldade('medio', this)">Médio</button>
+        <button type="button" class="criar-dif-btn dif-dificil"  onclick="selecionarDificuldade('dificil', this)">Difícil</button>
+        <button type="button" class="criar-dif-btn dif-lendario" onclick="selecionarDificuldade('lendario', this)">Lendário</button>
+      </div>
+      <input type="hidden" id="encontroDificuldade" value="">
+      <textarea id="encontroEnvolvidos" placeholder="Quem está envolvido (NPCs, monstros, facções...)"></textarea>
+      <textarea id="encontroObjetivo" placeholder="Objetivo da cena"></textarea>
+      <textarea id="encontroGatilho" placeholder="Gatilho do encontro"></textarea>
+      <textarea id="encontroAmbiente" placeholder="Clima / ambiente"></textarea>
+      <textarea id="encontroConsequencias" placeholder="Consequências possíveis"></textarea>
+      <textarea id="encontroLoot" placeholder="Loot / recompensa"></textarea>
+      <textarea id="encontroNotas" placeholder="Anotações do mestre"></textarea>
+      <label class="master-upload" style="display:block; margin-bottom:8px;">📷 Imagem do encontro<input id="encontroImagemInput" type="file" accept="image/*" onchange="previewImagemEncontro()"></label>
+      <img id="previewEncontro" class="preview-monstro" src="" style="display:none;">
+      <button class="btn-master-principal" onclick="salvarEncontroMundo()">⚡ Salvar Encontro</button>
+    </div>
+  </div>
+
+</section>
+ 
 
   <!-- ================= COMBATE MASTER ================= -->
   <section id="abaMaster-combateMaster" class="master-aba" style="display:none;">
-    <h3 class="titulo-secao">Combate</h3>
-    <p class="master-desc">Envie monstros do compêndio para organizar a sessão.</p>
-    <div id="listaCombateMestre" class="combate-master-lista"></div>
-  </section>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+    <div>
+      <h3 class="titulo-secao" style="margin:0;">Combate</h3>
+      <p class="master-desc" style="margin:0;">Envie monstros do compêndio para organizar a sessão.</p>
+    </div>
+    <button class="btn-iniciativa-abrir" onclick="abrirPainelIniciativa()">☰</button>
+  </div>
+  <div id="listaCombateMestre" class="combate-master-lista"></div>
+</section>
+</div>
+
+<!-- PAINEL INICIATIVA -->
+<div id="painelIniciativaOverlay" class="iniciativa-overlay" style="display:none;" onclick="fecharPainelIniciativa()"></div>
+<div id="painelIniciativa" class="iniciativa-painel" style="display:none;">
+  <div class="iniciativa-header">
+    <span class="iniciativa-titulo">Iniciativa</span>
+    <button onclick="fecharPainelIniciativa()" class="iniciativa-fechar">✕</button>
+  </div>
+  <div id="iniciativaLista"></div>
+  <button class="btn-master-principal" style="width:100%;margin-top:12px;" onclick="proximoTurno()">
+    Próximo turno
+  </button>
 </div>
 
 <!-- ================= SHEET DE DETALHES DO MONSTRO ================= -->
@@ -1428,6 +1716,14 @@
   deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+import {
+  getStorage,
+  ref,
+  uploadString,
+  getDownloadURL,
+  deleteObject
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
   const firebaseConfig = {
     apiKey: "AIzaSyCRbpNWige23ErKLRzt5BYNF3ltCYaRw24",
     authDomain: "ficha-ignea.firebaseapp.com",
@@ -1443,7 +1739,15 @@
   const db = getFirestore(app);
 
   window.db = db;
+  const storage = getStorage(app);
+  window.storage = storage;
+  window.storageRef = ref;
+  window.uploadString = uploadString;
+  window.getDownloadURL = getDownloadURL;
+  window.deleteObject = deleteObject;
   window.doc = doc;
+  window.setDoc = setDoc;
+  window.getDoc = getDoc;
   window.deleteDoc = deleteDoc;
 
   await setPersistence(auth, browserLocalPersistence);
@@ -1811,6 +2115,7 @@ window.carregarMonstrosDaNuvem = carregarMonstrosDaNuvem;
 
     await carregarFichasDaNuvem();
     await carregarMonstrosDaNuvem();
+    await carregarCampanhasMasterFirebase();
 
   }  else {
   window.usuarioAtual = null;
