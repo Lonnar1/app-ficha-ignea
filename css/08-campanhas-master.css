@@ -64,9 +64,9 @@
   margin:        18px 0 0;
   padding:       7px 14px;
   border-radius: 999px;
-  border:        1px solid var(--gi-borda-burg);
-  background:    var(--gi-burg-soft);
-  color:         var(--gi-burg);
+  border:     1px solid var(--gi-borda-burg);
+  background: var(--gi-burg-soft);
+  color:      var(--gi-burg);
   font-size:     13px;
   font-weight:   700;
   cursor:        pointer;
@@ -74,7 +74,7 @@
 }
 
 #telaCampanhasMaster .voltar:hover {
-  background: rgba(123, 30, 40, 0.20);
+  background: linear-gradient(180deg, #c8a662, #8a6e3a) !important;
 }
 
 /* ─────────────────────────────────────────────
