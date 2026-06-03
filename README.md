@@ -1,6 +1,4 @@
-<div align="center">
 
-<img src="./logo-ficha-ignea.png" width="800"/>
 
 # 🔥 Ficha Ígnea
 
