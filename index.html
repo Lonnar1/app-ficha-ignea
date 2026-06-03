@@ -140,11 +140,18 @@
 
     <!-- BOTÃO ENTRAR -->
     <button id="tmBtnEntrar" disabled onclick="tmConfirm()"
-  style="width:90%;max-width:380px;padding:18px 32px;border-radius:9999px;border:1px solid rgba(196,169,91,0.25);background:rgba(196,169,91,0.08);color:rgba(196,169,91,0.35);font-family:'Cinzel',serif;font-size:18px;font-weight:700;letter-spacing:0.18em;cursor:not-allowed;transition:all 0.4s ease;margin:0 auto 28px auto;display:block;text-align:center;overflow:hidden;">
+  style="width:90%;max-width:380px;padding:18px 32px;border-radius:9999px;border:1px solid rgba(196,169,91,0.4);background:transparent;color:rgba(232,204,128,0.5);font-family:'Cinzel',serif;font-size:18px;font-weight:700;letter-spacing:0.18em;cursor:not-allowed;transition:all 0.4s ease;margin:0 auto 28px auto;display:block;text-align:center;overflow:hidden;">
   Adentrar
 </button>
 
 <!-- BOTÃO SAIR -->
+<button onclick="abrirTelaPlanos()"
+  style="background:linear-gradient(135deg,rgba(196,169,91,0.25),rgba(196,169,91,0.12));border:1px solid rgba(196,169,91,0.75);color:#E8CC80;font-family:'Cinzel',serif;font-size:10px;font-weight:700;letter-spacing:0.14em;padding:8px 20px;border-radius:100px;cursor:pointer;transition:all 0.3s ease;margin-top:20px;display:block;width:auto;text-transform:uppercase;box-shadow:0 0 20px rgba(196,169,91,0.2),inset 0 1px 0 rgba(255,255,255,0.06);text-shadow:0 0 12px rgba(196,169,91,0.5);">
+  ✦ Plano Gratuito · Ver Planos
+</button>
+
+<div style="height:24px;"></div>
+
 <button onclick="sairConta()"
   style="background:transparent;border:none;color:rgba(154,138,112,0.6);font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.1em;padding:4px 12px;border-radius:100px;cursor:pointer;transition:all 0.3s ease;margin-top:8px;">
   Sair da conta
@@ -564,12 +571,30 @@
         <div class="status-attr"><label>CAR</label><input id="monstroCar" type="number" value="10" oninput="atualizarModsMaster('monstro')"><span id="monstroModCar">+0</span></div>
       </div>
       <textarea id="monstroLore" placeholder="Lore / história"></textarea>
-      <textarea id="monstroHabilidades" placeholder="Habilidades especiais"></textarea>
-      <textarea id="monstroAtaques" placeholder="Ataques (ex: Garra: 2d6+4 | Mordida: 3d8+6)"></textarea>
+
+      <!-- HABILIDADES -->
+      <div class="criar-form-titulo" style="font-size:13px;margin:10px 0 6px;opacity:0.7;">Habilidades Especiais</div>
+      <div id="monstroHabilidadesList" style="margin-bottom:6px;"></div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <input id="monstroHabilidadeNome" placeholder="Nome (ex: Regeneração)" style="flex:1;">
+        <input id="monstroHabilidadeDesc" placeholder="Descrição (ex: recupera 10 HP)" style="flex:2;">
+        <button type="button" onclick="adicionarHabilidadeMonstro()" style="background:#7B1E28;border:none;border-radius:8px;color:#fff;padding:8px 12px;cursor:pointer;font-size:18px;flex-shrink:0;">+</button>
+      </div>
+      <input type="hidden" id="monstroHabilidades">
+
+      <!-- ATAQUES -->
+      <div class="criar-form-titulo" style="font-size:13px;margin:10px 0 6px;opacity:0.7;">Ataques</div>
+      <div id="monstroAtaquesList" style="margin-bottom:6px;"></div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <input id="monstroAtaqueNome" placeholder="Nome (ex: Garra)" style="flex:1;">
+        <input id="monstroAtaqueDesc" placeholder="Descrição (ex: +5, 2d6+4 cortante)" style="flex:2;">
+        <button type="button" onclick="adicionarAtaqueMonstro()" style="background:#7B1E28;border:none;border-radius:8px;color:#fff;padding:8px 12px;cursor:pointer;font-size:18px;flex-shrink:0;">+</button>
+      </div>
+      <input type="hidden" id="monstroAtaques">
+
       <textarea id="monstroReacoes" placeholder="Reações (ex: Aparar — reduz 1d6+2 de dano)"></textarea>
       <textarea id="monstroResistencias" placeholder="Resistências / Imunidades / Vulnerabilidades"></textarea>
       <textarea id="monstroDialogos" placeholder="Diálogos (um por linha)"></textarea>
-      <textarea id="monstroEncontros" placeholder="Pontos de encontro"></textarea>
       <label class="master-upload">📷 Imagem do monstro<input id="monstroImagemInput" type="file" accept="image/*" onchange="previewImagemMonstro()"></label>
       <img id="previewMonstro" class="preview-monstro" src="" style="display:none;">
       <button class="btn-master-principal" onclick="salvarMonstroMestre()">⚡ Salvar Monstro</button>
@@ -603,13 +628,34 @@
         <div class="status-attr"><label>SAB</label><input id="bossSab" type="number" value="10" oninput="atualizarModsMaster('boss')"><span id="bossModSab">+0</span></div>
         <div class="status-attr"><label>CAR</label><input id="bossCar" type="number" value="10" oninput="atualizarModsMaster('boss')"><span id="bossModCar">+0</span></div>
       </div>
-      <textarea id="bossFases" placeholder="Fases do boss (ex: Fase 1 — 100% HP...)"></textarea>
+      <textarea id="bossLore" placeholder="Lore / história"></textarea>
+      <textarea id="bossFases" placeholder="Fases (ex: Fase 1 — 100% HP...)"></textarea>
       <textarea id="bossMecanicas" placeholder="Mecânicas especiais"></textarea>
-      <textarea id="bossAtaques" placeholder="Ataques lendários"></textarea>
+
+      <!-- HABILIDADES BOSS -->
+      <div class="criar-form-titulo" style="font-size:13px;margin:10px 0 6px;opacity:0.7;">Habilidades Especiais</div>
+      <div id="bossHabilidadesList" style="margin-bottom:6px;"></div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <input id="bossHabilidadeNome" placeholder="Nome" style="flex:1;">
+        <input id="bossHabilidadeDesc" placeholder="Descrição" style="flex:2;">
+        <button type="button" onclick="adicionarHabilidadeBoss()" style="background:#7B1E28;border:none;border-radius:8px;color:#fff;padding:8px 14px;cursor:pointer;font-weight:bold;flex-shrink:0;">+</button>
+      </div>
+      <input type="hidden" id="bossHabilidades">
+
+      <!-- ATAQUES BOSS -->
+      <div class="criar-form-titulo" style="font-size:13px;margin:10px 0 6px;opacity:0.7;">Ataques</div>
+      <div id="bossAtaquesList" style="margin-bottom:6px;"></div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <input id="bossAtaqueNome" placeholder="Nome" style="flex:1;">
+        <input id="bossAtaqueDesc" placeholder="Descrição" style="flex:2;">
+        <button type="button" onclick="adicionarAtaqueBoss()" style="background:#7B1E28;border:none;border-radius:8px;color:#fff;padding:8px 14px;cursor:pointer;font-weight:bold;flex-shrink:0;">+</button>
+      </div>
+      <input type="hidden" id="bossAtaques">
+
       <textarea id="bossFraquezas" placeholder="Fraquezas"></textarea>
       <textarea id="bossReacoes" placeholder="Reações lendárias"></textarea>
       <textarea id="bossResistencias" placeholder="Resistências / Imunidades / Vulnerabilidades"></textarea>
-      <textarea id="bossLore" placeholder="Lore / história"></textarea>
+      <input id="bossPontoEncontro" placeholder="Ponto de encontro">
       <label class="master-upload" style="display:block; margin-bottom:8px;">📷 Imagem do boss<input id="bossImagemInput" type="file" accept="image/*" onchange="previewImagemBoss()"></label>
       <img id="previewBoss" class="preview-monstro" src="" style="display:none;">
       <button class="btn-master-principal" onclick="salvarBossMestre()">⚡ Salvar Boss</button>
@@ -648,7 +694,7 @@
       <textarea id="npcObservacoes" placeholder="Observações do mestre"></textarea>
 
       <!-- COMBATE -->
-      <div class="criar-form-titulo" style="font-size:13px;margin:10px 0 6px;opacity:0.7;">⚔️ Dados de Combate</div>
+      <div class="criar-form-titulo" style="font-size:13px;margin:10px 0 6px;opacity:0.7;">Dados de Combate</div>
       <div class="criar-campos-duplos">
         <input id="npcHpMax" type="number" placeholder="HP Máximo" value="20">
         <input id="npcCa" type="number" placeholder="CA" value="10">
@@ -657,8 +703,27 @@
         <input id="npcVelocidade" placeholder="Velocidade (ex: 9m)">
         <input id="npcDesafio" placeholder="Nível de Desafio (ND)">
       </div>
-      <textarea id="npcHabilidades" placeholder="Habilidades especiais (ex: Ataque Furtivo, Resistência Mágica...)"></textarea>
-      <textarea id="npcAcoes" placeholder="Ações de combate (ex: Espada Longa +5, 1d8+3)"></textarea>
+
+      <!-- HABILIDADES NPC -->
+      <div class="criar-form-titulo" style="font-size:13px;margin:10px 0 6px;opacity:0.7;">Habilidades Especiais</div>
+      <div id="npcHabilidadesList" style="margin-bottom:6px;"></div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <input id="npcHabilidadeNome" placeholder="Nome" style="flex:1;">
+        <input id="npcHabilidadeDesc" placeholder="Descrição" style="flex:2;">
+        <button type="button" onclick="adicionarHabilidadeNpc()" style="background:#7B1E28;border:none;border-radius:8px;color:#fff;padding:8px 14px;cursor:pointer;font-weight:bold;flex-shrink:0;">+</button>
+      </div>
+      <input type="hidden" id="npcHabilidades">
+
+      <!-- ATAQUES NPC -->
+      <div class="criar-form-titulo" style="font-size:13px;margin:10px 0 6px;opacity:0.7;">Ações de Combate</div>
+      <div id="npcAcoesList" style="margin-bottom:6px;"></div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <input id="npcAcaoNome" placeholder="Nome" style="flex:1;">
+        <input id="npcAcaoDesc" placeholder="Descrição" style="flex:2;">
+        <button type="button" onclick="adicionarAcaoNpc()" style="background:#7B1E28;border:none;border-radius:8px;color:#fff;padding:8px 14px;cursor:pointer;font-weight:bold;flex-shrink:0;">+</button>
+      </div>
+      <input type="hidden" id="npcAcoes">
+
       <textarea id="npcReacoes" placeholder="Reações (ex: Aparar — reduz 1d6+2 de dano)"></textarea>
       <textarea id="npcResistencias" placeholder="Resistências / Imunidades / Vulnerabilidades"></textarea>
 
@@ -1842,6 +1907,106 @@
         </div>
       </div>
     </div>
+
+    <!-- ===== TELA PLANOS ===== -->
+<div id="tela-planos" style="display:none; position:fixed; inset:0; z-index:6000; overflow-y:auto; background:#100D0A;">
+  <div class="planos-page">
+
+    <button class="planos-voltar" onclick="fecharTelaPlanos()">← Voltar</button>
+
+    <div class="planos-header">
+      <div class="planos-brand">⚔ Ficha Ígnea</div>
+      <h1 class="planos-titulo">Escolha seu Plano</h1>
+      <p class="planos-subtitulo">Desbloqueie todo o poder da mesa.</p>
+      <div class="planos-divisor">
+        <div class="planos-divisor-linha"></div>
+        <div class="planos-divisor-gem"></div>
+        <div class="planos-divisor-linha"></div>
+      </div>
+    </div>
+
+    <div class="planos-lista">
+
+      <!-- COMPLETO -->
+      <div class="plano-card plano-destaque">
+        <div class="plano-badge">✦ Mais popular</div>
+        <div class="plano-topo">
+          <span class="plano-icone">⚔</span>
+          <div class="plano-meta">
+            <div class="plano-para">Para quem faz os dois</div>
+            <div class="plano-nome">Completo</div>
+            <div class="plano-tagline">Jogue e mestre sem nenhum limite</div>
+          </div>
+          <div class="plano-preco-box">
+            <div class="plano-preco"><span class="plano-cifrao">R$</span>10<span class="plano-centavos">,99</span></div>
+            <div class="plano-periodo">por mês</div>
+            <span class="plano-economia">Economize R$3</span>
+          </div>
+        </div>
+        <div class="plano-sep"></div>
+        <ul class="plano-features">
+          <li><span class="plano-dot">◆</span> Fichas de personagem ilimitadas</li>
+          <li><span class="plano-dot">◆</span> Campanhas ilimitadas no Grimório</li>
+          <li><span class="plano-dot">◆</span> Todos os sistemas suportados</li>
+          <li><span class="plano-dot">◆</span> Acesso em qualquer dispositivo</li>
+        </ul>
+        <button class="plano-btn plano-btn-gold" onclick="assinarPlano('completo')">Assinar Completo</button>
+      </div>
+
+      <!-- PLAYER -->
+      <div class="plano-card">
+        <div class="plano-topo">
+          <span class="plano-icone">🎲</span>
+          <div class="plano-meta">
+            <div class="plano-para">Para quem joga</div>
+            <div class="plano-nome">Player</div>
+            <div class="plano-tagline">Fichas sem limite, prontas para a batalha</div>
+          </div>
+          <div class="plano-preco-box">
+            <div class="plano-preco"><span class="plano-cifrao">R$</span>6<span class="plano-centavos">,99</span></div>
+            <div class="plano-periodo">por mês</div>
+          </div>
+        </div>
+        <div class="plano-sep"></div>
+        <ul class="plano-features">
+          <li><span class="plano-dot">◆</span> Fichas de personagem ilimitadas</li>
+          <li><span class="plano-dot">◆</span> Todos os sistemas suportados</li>
+          <li><span class="plano-dot">◆</span> Acesso em qualquer dispositivo</li>
+          <li class="plano-locked"><span class="plano-dot">◆</span> Múltiplas campanhas (Mestre)</li>
+        </ul>
+        <button class="plano-btn plano-btn-ghost" onclick="assinarPlano('player')">Assinar Player</button>
+      </div>
+
+      <!-- MASTER -->
+      <div class="plano-card">
+        <div class="plano-topo">
+          <span class="plano-icone">📖</span>
+          <div class="plano-meta">
+            <div class="plano-para">Para quem mestra</div>
+            <div class="plano-nome">Master</div>
+            <div class="plano-tagline">Grimório sem limites para suas aventuras</div>
+          </div>
+          <div class="plano-preco-box">
+            <div class="plano-preco"><span class="plano-cifrao">R$</span>6<span class="plano-centavos">,99</span></div>
+            <div class="plano-periodo">por mês</div>
+          </div>
+        </div>
+        <div class="plano-sep"></div>
+        <ul class="plano-features">
+          <li><span class="plano-dot">◆</span> Campanhas ilimitadas no Grimório</li>
+          <li><span class="plano-dot">◆</span> Organize NPCs, mapas e sessões</li>
+          <li><span class="plano-dot">◆</span> Acesso em qualquer dispositivo</li>
+          <li class="plano-locked"><span class="plano-dot">◆</span> Fichas ilimitadas (Player)</li>
+        </ul>
+        <button class="plano-btn plano-btn-ghost" onclick="assinarPlano('master')">Assinar Master</button>
+      </div>
+
+    </div>
+
+    <p class="planos-free-note">Plano gratuito: 1 ficha e 1 campanha.</p>
+
+  </div>
+</div>
 
     <div id="popup" class="popup" style="display: none">
       <div class="popup-content">
