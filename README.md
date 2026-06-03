@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="./assets/1Tela-inicial.jpeg" width="220"/>
+<img src="./assets/logo.png" width="320"/>
 
 # 🔥 Ficha Ígnea
 
