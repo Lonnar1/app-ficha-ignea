@@ -64,7 +64,7 @@ Hoje o Ficha Ígnea é uma **Progressive Web App** moderna, instalável no celul
 | Problema comum | Solução do Ficha Ígnea |
 |---|---|
 | Ficha de papel se perde ou danifica | Dados salvos localmente e exportáveis |
-| Apps limitados ou pagos | Versão gratuita completa |
+| Apps limitados ou pagos | Plano gratuito disponível + plano premium opcional |
 | Dificuldade de uso no celular | Interface mobile-first e responsiva |
 | Amigos iniciantes com dificuldade na ficha | Cálculos automáticos e interface intuitiva |
 | Mestre sem ferramenta para gerenciar sessões | Modo Grimório com compêndio e combate |
