@@ -201,11 +201,34 @@ body {
 
 .btn-acao-ficha,
 .voltar,
+.voltar,
 .btn-voltar-modos {
   background: linear-gradient(180deg, rgba(56, 52, 47, 0.95), rgba(34, 31, 28, 0.95));
   color: var(--ignea-text);
   border: 1px solid rgba(216, 181, 106, 0.25);
   border-radius: 12px;
+}
+
+#tela-inicial .btn-voltar-modos {
+  background: transparent !important;
+  color: #d7b46a !important;
+  border: 1px solid #d7b46a !important;
+  font-weight: bold !important;
+  font-size: 13px !important;
+  padding: 6px 12px !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
+}
+
+#ficha .voltar {
+  background: transparent !important;
+  color: #d7b46a !important;
+  border: 1px solid #d7b46a !important;
+  font-weight: bold !important;
+  font-size: 13px !important;
+  padding: 8px 16px !important;
+  border-radius: 12px !important;
+  box-shadow: none !important;
 }
 
 /* ========================= 05. FICHA DO PERSONAGEM ========================= */
@@ -1613,4 +1636,378 @@ body:has(#masterIgnea[style*="block"]) .popup-box p {
   display: block !important;
   margin: 0 auto 28px auto !important;
   letter-spacing: 0.18em !important;
+}
+
+/* ===== COMBATE — CORREÇÕES DE LAYOUT E COR ===== */
+
+/* Status grid no card de combate */
+#masterIgnea .combate-detalhes .sheet-status-grid {
+  margin: 10px 0 !important;
+}
+
+#masterIgnea .combate-detalhes .sheet-status-grid div {
+  background: #E8E0CC !important;
+  border: 1px solid rgba(196, 169, 91, 0.35) !important;
+  border-radius: 10px !important;
+  padding: 8px 4px !important;
+  text-align: center !important;
+  font-size: 12px !important;
+  font-weight: bold !important;
+  color: #2A1A10 !important;
+  line-height: 1.3 !important;
+}
+
+#masterIgnea .combate-detalhes .sheet-status-grid div small {
+  display: block !important;
+  font-size: 11px !important;
+  color: #7B3A20 !important;
+  font-weight: 700 !important;
+}
+
+/* Blocos lore/habilidades/ataques dentro do combate */
+#masterIgnea .combate-detalhes .sheet-bloco {
+  background: #E8E0CC !important;
+  border: 1px solid rgba(196, 169, 91, 0.35) !important;
+  border-radius: 14px !important;
+  padding: 10px 14px !important;
+  margin: 8px 0 !important;
+  overflow: hidden !important;
+}
+
+#masterIgnea .combate-detalhes .sheet-bloco strong {
+  color: #4A3728 !important;
+  font-size: 11px !important;
+  letter-spacing: 1.5px !important;
+  margin-bottom: 8px !important;
+}
+
+#masterIgnea .combate-detalhes .sheet-bloco p {
+  color: #2A1A10 !important;
+  font-size: 13px !important;
+  line-height: 1.55 !important;
+  margin: 0 !important;
+}
+
+#masterIgnea .combate-topo strong {
+  display: block !important;
+  font-family: 'Cinzel', serif !important;
+  font-size: 13px !important;
+  color: #662b20 !important;
+  line-height: 1.2 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+#masterIgnea .combate-topo small {
+  display: block !important;
+  font-size: 11px !important;
+  color: var(--grim-muted) !important;
+  margin-top: 2px !important;
+}
+
+/* HP inline */
+#masterIgnea .combate-hp {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 12px !important;
+  color: #c9503a !important;
+  flex-wrap: wrap !important;
+  margin-top: 4px !important;
+}
+
+/* Barra HP */
+#masterIgnea .combate-hp-barra {
+  width: 100% !important;
+  height: 5px !important;
+  background: rgba(255,255,255,0.08) !important;
+  border-radius: 999px !important;
+  overflow: hidden !important;
+  display: block !important;
+  margin: 4px 0 0 !important;
+}
+
+/* Botão minimizar */
+#masterIgnea .btn-minimizar-combate {
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 50% !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 13px !important;
+  padding: 0 !important;
+}
+
+/* Inputs manuais */
+#masterIgnea .combate-manual input {
+  text-align: center !important;
+  font-size: 14px !important;
+}
+
+/* Remove ::before que sobrepõe conteúdo */
+#masterIgnea .combate-card::before {
+  display: none !important;
+}
+
+.popup-form .popup-label {
+  padding-top: 14px !important;
+  border-top: 1px solid rgba(200, 169, 107, 0.18) !important;
+  display: block !important;
+  margin-top: 4px !important;
+}
+
+.popup-form .popup-label:first-child {
+  border-top: none !important;
+  padding-top: 0 !important;
+}
+
+#popup .popup-form input,
+#popup .popup-form textarea,
+#popup .popup-form select {
+  background: #5a4b3f !important;
+  border: none !important;
+}
+
+/* ===== TELA PLANOS ===== */
+.planos-page {
+  max-width: 430px;
+  margin: 0 auto;
+  padding: 48px 18px 80px;
+  position: relative;
+}
+
+.planos-voltar {
+  background: transparent !important;
+  color: #d7b46a !important;
+  border: 1px solid #d7b46a !important;
+  border-radius: 12px !important;
+  padding: 8px 18px !important;
+  font-weight: bold !important;
+  font-size: 14px !important;
+  margin-bottom: 28px !important;
+  display: inline-block !important;
+  box-shadow: none !important;
+}
+
+.planos-header { text-align: center; margin-bottom: 32px; }
+
+.planos-brand {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: #FF6B1A;
+  margin-bottom: 12px;
+}
+
+.planos-titulo {
+  font-family: 'Cinzel', serif !important;
+  font-size: 26px !important;
+  font-weight: 900 !important;
+  color: #F5ECD7 !important;
+  margin-bottom: 8px !important;
+  text-shadow: 0 0 24px rgba(255,100,26,0.28) !important;
+}
+
+.planos-subtitulo {
+  font-size: 14px;
+  color: #C8B99A;
+  font-style: italic;
+}
+
+.planos-divisor {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px auto;
+  max-width: 200px;
+}
+
+.planos-divisor-linha {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, transparent, #C9A84C, transparent);
+  opacity: 0.35;
+}
+
+.planos-divisor-gem {
+  width: 7px;
+  height: 7px;
+  background: #FF6B1A;
+  transform: rotate(45deg);
+  box-shadow: 0 0 10px #FF4500;
+  flex-shrink: 0;
+}
+
+.planos-lista { display: flex; flex-direction: column; gap: 14px; }
+
+.plano-card {
+  background: #1A1612;
+  border: 1px solid rgba(201,168,76,0.14);
+  border-radius: 6px;
+  padding: 22px 18px;
+  position: relative;
+}
+
+.plano-destaque {
+  background: linear-gradient(155deg, #2A2018 0%, #1E1A13 55%, #231F17 100%);
+  border-color: rgba(201,168,76,0.42);
+  box-shadow: 0 0 0 1px rgba(201,168,76,0.08), 0 8px 32px rgba(0,0,0,0.5);
+}
+
+.plano-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, #FF4500, #FFA040);
+  color: #100D0A;
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 4px 14px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.plano-topo {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.plano-icone {
+  font-size: 24px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.plano-meta { flex: 1; }
+
+.plano-para {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #FF6B1A;
+  margin-bottom: 2px;
+}
+
+.plano-nome {
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
+  font-weight: 900;
+  color: #F5ECD7;
+  line-height: 1.1;
+  margin-bottom: 2px;
+}
+
+.plano-destaque .plano-nome { color: #E8C87A; }
+
+.plano-tagline {
+  font-size: 12px;
+  font-style: italic;
+  color: #6B5D4F;
+  line-height: 1.4;
+}
+
+.plano-preco-box { text-align: right; flex-shrink: 0; }
+
+.plano-preco {
+  font-family: 'Cinzel', serif;
+  font-size: 24px;
+  font-weight: 900;
+  color: #F5ECD7;
+  line-height: 1;
+}
+
+.plano-destaque .plano-preco { color: #E8C87A; }
+
+.plano-cifrao { font-size: 12px; font-weight: 400; vertical-align: super; opacity: 0.7; }
+.plano-centavos { font-size: 15px; }
+
+.plano-periodo {
+  font-size: 11px;
+  color: #6B5D4F;
+  font-style: italic;
+  text-align: right;
+}
+
+.plano-economia {
+  display: inline-block;
+  margin-top: 4px;
+  background: rgba(255,69,0,0.14);
+  border: 1px solid rgba(255,69,0,0.28);
+  color: #FFA040;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+.plano-sep {
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(201,168,76,0.18), transparent);
+  margin-bottom: 14px;
+}
+
+.plano-features {
+  list-style: none;
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.plano-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: #C8B99A;
+  line-height: 1.4;
+}
+
+.plano-dot { color: #FF6B1A; font-size: 9px; margin-top: 4px; flex-shrink: 0; }
+
+.plano-locked { opacity: 0.35; text-decoration: line-through; }
+
+.plano-btn {
+  display: block;
+  width: 100%;
+  padding: 11px;
+  border-radius: 4px !important;
+  font-family: 'Cinzel', serif !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.15em !important;
+  text-transform: uppercase !important;
+  cursor: pointer !important;
+  border: none !important;
+}
+
+.plano-btn-ghost {
+  background: transparent !important;
+  border: 1px solid rgba(201,168,76,0.22) !important;
+  color: #C8B99A !important;
+}
+
+.plano-btn-gold {
+  background: linear-gradient(135deg, #C9A84C, #E8C87A) !important;
+  color: #100D0A !important;
+  box-shadow: 0 4px 18px rgba(201,168,76,0.28) !important;
+}
+
+.planos-free-note {
+  text-align: center;
+  margin-top: 28px;
+  font-size: 13px;
+  color: #6B5D4F !important;
+  font-style: italic;
 }
