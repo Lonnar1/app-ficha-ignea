@@ -1,3 +1,68 @@
+
+// ===== SISTEMA DE PLANOS =====
+const EMAILS_VIP = [
+  "fichaignea@gmail.com",
+  "l1onnar321@gmail.com"
+];
+
+function getPlanoUsuario() {
+  const email = window.usuarioAtual?.email?.toLowerCase();
+  if (!email) return "free";
+  if (EMAILS_VIP.includes(email)) return "completo";
+  return "free"; // futuramente lerá do Firestore
+}
+
+function podeCriarFicha() {
+  const plano = getPlanoUsuario();
+  if (plano === "completo" || plano === "player") return true;
+  return personagens.length < 1;
+}
+
+function podeCriarCampanha() {
+  const plano = getPlanoUsuario();
+  if (plano === "completo" || plano === "master") return true;
+  return campanhasMaster.length < 1;
+}
+
+function abrirPopupBloqueio(tipo) {
+  const titulo = tipo === "ficha" ? "Ficha Bloqueada" : "Campanha Bloqueada";
+  const planoNecessario = tipo === "ficha"
+    ? "<strong>Player</strong> ou <strong>Completo</strong>"
+    : "<strong>Master</strong> ou <strong>Completo</strong>";
+  const isMaster = tipo === "campanha";
+
+  abrirPopup(titulo, "", false, null);
+
+  setTimeout(() => {
+    const tituloEl = document.getElementById("popup-titulo");
+    if (tituloEl) {
+      tituloEl.style.textAlign = "center";
+      tituloEl.style.width = "100%";
+    }
+
+    const el = document.getElementById("popup-texto");
+    if (el) el.innerHTML = `
+      <div style="text-align:center;padding:4px 0;">
+        <div style="
+          background:${isMaster ? 'linear-gradient(180deg,rgba(123,30,40,0.18),rgba(80,15,20,0.25))' : 'linear-gradient(180deg,rgba(60,40,20,0.35),rgba(40,25,10,0.45))'};
+          border:1px solid ${isMaster ? 'rgba(180,55,42,0.3)' : 'rgba(196,169,91,0.2)'};
+          border-radius:12px;
+          padding:16px 14px;
+          margin-bottom:16px;
+        ">
+          <p style="font-size:15px;margin-bottom:10px;color:#f0dfcb;">
+            ${tipo === "ficha" ? "Esta ficha está bloqueada" : "Esta campanha está bloqueada"} no plano gratuito.
+          </p>
+          <p style="font-size:13px;color:${isMaster ? '#c9736e' : '#c8b99a'};line-height:1.5;">
+            Assine o plano ${planoNecessario} para ter acesso ilimitado.
+          </p>
+        </div>
+        <button class="popup-salvar-btn" style="${isMaster ? 'background:linear-gradient(180deg,#9e2f24,#4a0d0b);' : ''}" onclick="fecharPopup(); abrirTelaPlanos();">Ver planos</button>
+      </div>
+    `;
+  }, 10);
+}
+
 let morte = {
   sucessos: [false, false, false],
   falhas: [false, false, false],
@@ -273,6 +338,10 @@ function renderCampanhasMaster() {
 }
 
 function criarCampanhaMaster() {
+  if (!podeCriarCampanha()) {
+    abrirPopupBloqueio("campanha");
+    return;
+  }
   const nome = document.getElementById("novaCampanhaNome").value.trim();
   const sistema = document.getElementById("novaCampanhaSistema").value.trim();
   const descricao = document.getElementById("novaCampanhaDescricao").value.trim();
@@ -316,6 +385,12 @@ function criarCampanhaMaster() {
 }
 
 function entrarCampanhaMaster(index) {
+  const plano = getPlanoUsuario();
+  const limiteAtingido = (plano === "free") && (index >= 1);
+  if (limiteAtingido) {
+    abrirTelaPlanos();
+    return;
+  }
   campanhaAtualMaster = index;
   salvarCampanhasMaster();
 
@@ -1418,6 +1493,12 @@ function renderPersonagens() {
         return;
       }
 
+      const plano = getPlanoUsuario();
+      const limiteAtingido = (plano === "free") && (i >= 1);
+      if (limiteAtingido) {
+        abrirPopupBloqueio("ficha");
+        return;
+      }
       personagemAtual = i;
       carregarPersonagem(i);
     };
@@ -1643,6 +1724,10 @@ function adicionarAliado() {
 }
 
 function criarPersonagem() {
+  if (!podeCriarFicha()) {
+    abrirTelaPlanos();
+    return;
+  }
   const novo = {
     nome: "",
     classe: "",
@@ -1905,7 +1990,7 @@ function verArmadura(index) {
     <div class="popup-bloco">
       <div>
         <span class="popup-label">CA</span>
-        <div class="popup-descricao">${armadura.ca || "Sem CA"}</div>
+        <div class="popup-descricao-pequena">${armadura.ca || "Sem CA"}</div>
       </div>
 
       <div style="margin-top: 12px;">
@@ -1918,6 +2003,20 @@ function verArmadura(index) {
   abrirPopup(armadura.nome || "Sem nome", html, true, () =>
     editarArmadura(index),
   );
+}
+
+function abrirTelaPlanos() {
+  const tela = document.getElementById("tela-planos");
+  if (tela) tela.style.display = "block";
+}
+
+function fecharTelaPlanos() {
+  const tela = document.getElementById("tela-planos");
+  if (tela) tela.style.display = "none";
+}
+
+function assinarPlano(plano) {
+  alert("Em breve! O sistema de pagamento estará disponível no lançamento.");
 }
 
 function editarArmadura(index) {
@@ -3703,18 +3802,19 @@ function animarTrocaPoder(origem, destino, grupo) {
 
 const npcsPadrao = [
   {
-    id: "npc-padrao-leon",
+    id: "npc-padrao-leonardo",
     _tipo: "npc",
     origem: "padrao",
-    nome: "Leon, o Taverneiro Sombrio",
+    nome: "Leonardo, o Taverneiro Sombrio",
     tipo: "Humano",
     relacao: "neutro",
-    personalidade: "Sombrio, direto e misterioso. Fala pouco mas sabe de tudo. Nunca sorri, mas tampouco engana. mas Muito dificil de tirar do serio caso tire tome cuidado.",
-    lore: "Ninguém sabe de onde Leon veio. Ele simplesmente apareceu certa noite, comprou a taverna com moedas de origem desconhecida e nunca mais saiu de trás do balcão. Dizem que já serviu reis, assassinos e deuses — e tratou todos com a mesma indiferença.",
-    observacoes: "🎭 EASTER EGG — Se algum jogador pedir 'carne de javali', Leon para, olha fixo e responde em voz baixa: '...Você sabe o nome proibido. Poucos sabem que este mundo não nasceu de magia antiga — nasceu de linhas de código, numa tela às três da manhã. O arquiteto ainda caminha entre vocês. Mas não pergunte seu nome.'",
+    personalidade: "Carismático, brincalhão e sempre disposto a ouvir uma boa história. Leonardo demonstra um carinho incomum por tudo que existe ao seu redor, desde os maiores heróis até as criaturas mais insignificantes. Enfrenta qualquer situação com serenidade e bom humor, como se soubesse exatamente como cada história termina.",
+    lore: "Ninguém sabe de onde Leonardo veio. Ele simplesmente apareceu certa noite, comprou a taverna com moedas de origem desconhecida e nunca mais saiu de trás do balcão. Dizem que já serviu reis, assassinos e deuses — e tratou todos com a mesma indiferença.",
+    observacoes: "'Caso algum jogador perguntar do 'CRIADOR' Leonardo responde: O Criador ? Leonardo ri e toma um gole da caneca. Dizem que era um homem teimoso demais para desistir daquilo que começou. Ele sorri. Se existe alguém assim, espero que esteja se divertindo tanto quanto eu.",
     hpMax: 1000, hpAtual: 1000, ca: 100,
-    habilidades: "Deletar: pode simplesmente te deletar do mundo sem mais nem menos, mas para isso precisa deslogar",
-    fraquezas: "Falta de intenet",
+    ataques: "Punho cortante:  +15 para acertar, alcance 3m, 6d6+20 de dano. | Linhas do destino: Abre um livro e começa a escrever como se fosse afetar a linha temporal, 8d8 de dano Psiquico.",
+    habilidades: "Deletar: pode simplesmente te deletar do mundo sem mais nem menos, | Entre as Linhas: qualquer ataque direcionado a Leonardo desacelera antes de atingi-lo. Ataques corpo a corpo falham automaticamente, a menos que o atacante passe em CD 30 Sab. ",
+    fraquezas: "Nenhuma.",
     status: { for: 30, des: 30, con: 30, int: 30, sab: 30, car: 30 },
     imagem: "img/Npc/Leonardo.jpeg"
   }
@@ -3843,7 +3943,10 @@ const bossesPadrao = [
     lore: "Um antigo senhor da guerra que fez um pacto com forças das trevas para escapar da morte. Governa um exército de mortos-vivos nas catacumbas sob a cidade esquecida.",
     habilidades: "Drenar Vida: ao acertar um golpe, recupera 10 HP. Aura de Terror: criaturas a até 10m fazem teste de sabedoria ou ficam amedrontadas.",
     fraquezas: "Luz sagrada causa dano dobrado. Fica enfraquecido ao amanhecer.",
-    imagem: "img/Boss/Senhor-das-sombras.jpg"
+    imagem: "img/Boss/Senhor-das-sombras.jpg",
+    ataques: "Espada das Sombras: +8 para acertar, alcance 1,5m, 2d8+5 cortante. | Drenar Vida (ação bônus): +6 para acertar, 2d6 necrótico — recupera o mesmo em HP.",
+    reacoes: "Escudo das Trevas: quando acertado, reduz 1d8 de dano.",
+    resistencias: "Resistente a necrótico e veneno. Imune a medo e charme."
   },
   {
     id: "boss-padrao-2", _tipo: "boss", origem: "padrao",
@@ -3855,7 +3958,10 @@ const bossesPadrao = [
     lore: "Uma entidade antiga que tece o destino dos mortais como fios. Habita o coração de uma floresta corrompida, manipulando os habitantes locais há séculos.",
     habilidades: "Fios do Destino: pode reescrever o resultado de um dado uma vez por rodada. Marionetes: controla até 3 humanoides simultaneamente.",
     fraquezas: "Seus fios podem ser cortados com lâminas abençoadas. Perde poderes longe da floresta.",
-    imagem: "img/Boss/A-Tecela.jpg"
+    imagem: "img/Boss/A-Tecela.jpg",
+    ataques: "Fios Cortantes: +7 para acertar, alcance 3m, 2d6+4 cortante. | Lançar Marionete: CD 15 Sab ou força alvo a atacar um aliado.",
+    reacoes: "Reescrever o Fado: cancela um acerto crítico sofrido uma vez por rodada.",
+    resistencias: "Resistente a dano psíquico. Imune a encantamento."
   },
   {
     id: "boss-padrao-3", _tipo: "boss", origem: "padrao",
@@ -3867,7 +3973,10 @@ const bossesPadrao = [
     lore: "Um gigante de pedra exilado de seu clã por ser considerado cruel demais até para os seus. Constrói uma fortaleza nas montanhas usando trabalho forçado de aldeões capturados.",
     habilidades: "Golpe Devastador: causa 4d10 de dano e joga o alvo 6m para trás. Arremesso de Rocha: ataque à distância de 30m causando 3d8.",
     fraquezas: "Lento e previsível. Ataques em seus joelhos reduzem sua velocidade pela metade.",
-    imagem: "img/Boss/Kargoth-o-Devastador.jpg"
+    imagem: "img/Boss/Kargoth-o-Devastador.jpg",
+    ataques: "Golpe Devastador: +10 para acertar, 4d10+7 contundente — empurra 6m. | Arremesso de Rocha: +8 para acertar, alcance 30m, 3d8+7 contundente.",
+    reacoes: "Bloquear com o Corpo: reduz 2d10 de um ataque físico.",
+    resistencias: "Resistente a dano físico não mágico. Vulnerável a raio."
   },
   {
     id: "boss-padrao-4", _tipo: "boss", origem: "padrao",
@@ -3879,7 +3988,10 @@ const bossesPadrao = [
     lore: "Uma ex-conselheira real que foi banida por praticar magia proibida. Passou décadas aperfeiçoando feitiços de controle mental e busca vingança contra a coroa.",
     habilidades: "Dominação: controla um inimigo por 1 minuto. Contramagia: pode cancelar qualquer feitiço uma vez por rodada.",
     fraquezas: "Fisicamente fraca. Tem dificuldade em combate próximo e depende de seus lacaios.",
-    imagem: "img/Boss/Vespera.jpg"
+    imagem: "img/Boss/Vespera.jpg",
+    ataques: "Cajado Arcano: +6 para acertar, 1d6+2 contundente. | Bola de Fogo: área 6m, CD 16 Des ou 8d6 fogo. | Raio Controlador: +8 para acertar, 4d6 raio — alvo atordoado.",
+    reacoes: "Contramagia: cancela feitiço de 5º círculo ou menos.",
+    resistencias: "Resistente a raio e força. Imune a medo."
   },
   {
     id: "boss-padrao-5", _tipo: "boss", origem: "padrao",
@@ -3891,7 +4003,10 @@ const bossesPadrao = [
     lore: "Um golem colossal criado por uma civilização desaparecida para proteger seus segredos eternamente. Não tem vontade própria — apenas cumpre sua programação sem parar.",
     habilidades: "Imune a charme e medo. Regenera 15 HP por rodada a menos que tome dano de raio.",
     fraquezas: "Raio danifica seus mecanismos internos. Tem um símbolo de controle gravado nas costas.",
-    imagem: "img/Boss/O-Guardião-Sem-Nome.jpg"
+    imagem: "img/Boss/O-Guardião-Sem-Nome.jpg",
+    ataques: "Punho de Pedra: +9 para acertar, 3d8+6 contundente. | Soco em Área: todos a 3m, CD 17 Des ou 2d10+6 contundente.",
+    reacoes: "Estrutura Implacável: quando reduzido a 0 HP, teste CD 15 Con — se passar fica com 1 HP.",
+    resistencias: "Imune a veneno, doença, charme e medo. Resistente a dano não mágico."
   }
 ];
 
@@ -3926,7 +4041,10 @@ const compendioPadrao = [
     habilidades: "Táticas de grupo: perigoso quando luta ao lado de aliados.",
     dialogos: ["O mestre dragão vai saber disso!", "Armadilha! Armadilha!", "Pequeno, mas mortal!"],
     encontros: "Minas abandonadas, túneis estreitos e covis subterrâneos.",
-    imagem: "img/monstros/Kobold.jpg"
+    imagem: "img/monstros/Kobold.jpg",
+    ataques: "Cimitarra: +4 para acertar, 1d6+2 cortante. | Arco Curto: +4 para acertar, alcance 18/72m, 1d6+2 perfurante.",
+    reacoes: "Fuga Ágil: usa Esconder ou Correr como ação bônus.",
+    resistencias: "Sem resistências especiais."
   },
   {
     id: "padrao-bandit",
@@ -3942,7 +4060,10 @@ const compendioPadrao = [
     habilidades: "Ataque coordenado quando está em grupo.",
     dialogos: ["Passe a bolsa e ninguém se machuca.", "Isso aqui é nosso território.", "Peguem eles!"],
     encontros: "Estradas perigosas, tavernas suspeitas e acampamentos de saqueadores.",
-    imagem: "img/monstros/Bandido.jpg"
+    imagem: "img/monstros/Bandido.jpg",
+    ataques: "Espada Curta: +3 para acertar, 1d6+1 perfurante. | Besta Leve: +3 para acertar, alcance 24/96m, 1d8+1 perfurante.",
+    reacoes: "Sem reações especiais.",
+    resistencias: "Sem resistências especiais."
   },
   {
     id: "padrao-skeleton",
@@ -3958,7 +4079,10 @@ const compendioPadrao = [
     habilidades: "Não sente medo, dor ou cansaço.",
     dialogos: ["...", "Clac... clac...", "A morte... permanece..."],
     encontros: "Tumbas antigas, catacumbas e templos abandonados.",
-    imagem: "img/monstros/Esqueleto.jpg"
+    imagem: "img/monstros/Esqueleto.jpg",
+    ataques: "Espada Curta: +4 para acertar, 1d6+2 perfurante. | Arco Curto: +4 para acertar, alcance 24/96m, 1d6+2 perfurante.",
+    reacoes: "Sem reações especiais.",
+    resistencias: "Vulnerável a dano contundente. Imune a veneno e doença."
   },
   {
     id: "padrao-zombie",
@@ -3974,7 +4098,10 @@ const compendioPadrao = [
     habilidades: "Resistência morta-viva: pode continuar de pé mesmo após golpes fatais.",
     dialogos: ["Uuurgh...", "Carne...", "Aaah..."],
     encontros: "Cemitérios profanados, vilas amaldiçoadas e campos de batalha antigos.",
-    imagem: "img/monstros/Zumbi.jpg"
+    imagem: "img/monstros/Zumbi.jpg",
+    ataques: "Soco: +3 para acertar, 1d6+1 contundente.",
+    reacoes: "Resistência Morta-viva: quando reduzido a 0 HP, teste CD 5 + dano recebido Con — se passar fica com 1 HP.",
+    resistencias: "Imune a veneno e doença. Resistente a dano necrótico."
   },
   {
     id: "padrao-wolf",
@@ -3990,7 +4117,10 @@ const compendioPadrao = [
     habilidades: "Tática de matilha: luta melhor ao lado de outros lobos.",
     dialogos: ["Grrrr...", "Auuuu!", "Rosna mostrando os dentes."],
     encontros: "Florestas escuras, trilhas nevadas e montanhas isoladas.",
-    imagem: "img/monstros/Lobo.jpg"
+    imagem: "img/monstros/Lobo.jpg",
+    ataques: "Mordida: +4 para acertar, 2d4+2 perfurante — alvo CD 11 For ou fica derrubado.",
+    reacoes: "Sem reações especiais.",
+    resistencias: "Sem resistências especiais."
   },
   {
     id: "padrao-giant-rat",
@@ -4006,7 +4136,10 @@ const compendioPadrao = [
     habilidades: "Mordida infecciosa e movimentação rápida em locais apertados.",
     dialogos: ["Squeak!", "Chiado agressivo.", "Fareja comida ou sangue."],
     encontros: "Esgotos, depósitos abandonados e masmorras úmidas.",
-    imagem: "img/monstros/Rato-Gigante.jpg"
+    imagem: "img/monstros/Rato-Gigante.jpg",
+    ataques: "Mordida: +4 para acertar, 1d4+2 perfurante — CD 10 Con ou fica envenenado por 1 hora.",
+    reacoes: "Sem reações especiais.",
+    resistencias: "Sem resistências especiais."
   },
   {
     id: "padrao-orc",
@@ -4022,7 +4155,10 @@ const compendioPadrao = [
     habilidades: "Avanço agressivo: aproxima-se rapidamente do inimigo.",
     dialogos: ["Vou quebrar seus ossos!", "Fraco!", "Pelo clã!"],
     encontros: "Fortalezas tribais, campos de batalha e acampamentos de guerra.",
-    imagem: "img/monstros/Orc.jpg"
+    imagem: "img/monstros/Orc.jpg",
+    ataques: "Machadão: +5 para acertar, 1d12+3 cortante. | Lança: +5 para acertar, 1d6+3 perfurante.",
+    reacoes: "Sem reações especiais.",
+    resistencias: "Sem resistências especiais."
   },
   {
     id: "padrao-gnoll",
@@ -4038,7 +4174,10 @@ const compendioPadrao = [
     habilidades: "Frenesi: fica mais perigoso quando derruba uma presa.",
     dialogos: ["Hahaha! Carne fresca!", "Rasgar! Morder!", "A caça começou!"],
     encontros: "Campos de batalha, vilas saqueadas e regiões selvagens.",
-    imagem: "img/monstros/Gnoll.jpg"
+    imagem: "img/monstros/Gnoll.jpg",
+    ataques: "Lança: +4 para acertar, 1d6+2 perfurante. | Mordida: +4 para acertar, 1d4+2 perfurante.",
+    reacoes: "Frenesi Sanguinário: ao derrubar um inimigo, faz um ataque extra como ação bônus.",
+    resistencias: "Sem resistências especiais."
   },
   {
     id: "padrao-bugbear",
@@ -4054,7 +4193,10 @@ const compendioPadrao = [
     habilidades: "Ataque surpresa: causa grande dano quando pega o alvo desprevenido.",
     dialogos: ["Silêncio... agora morra.", "Você não me viu chegando.", "Pequenos ossos quebram fácil."],
     encontros: "Cavernas escuras, ruínas tomadas por goblins e fortalezas escondidas.",
-    imagem: "img/monstros/Bugbear.jpg"
+    imagem: "img/monstros/Bugbear.jpg",
+    ataques: "Maça: +4 para acertar, 2d8+2 contundente. | Ataque Surpresa: +2d6 de dano extra no primeiro ataque.",
+    reacoes: "Sem reações especiais.",
+    resistencias: "Sem resistências especiais."
   },
   {
     id: "padrao-hobgoblin",
@@ -4070,7 +4212,10 @@ const compendioPadrao = [
     habilidades: "Vantagem marcial: aproveita aliados próximos para atacar melhor.",
     dialogos: ["Formação!", "Sem recuar!", "Pelo comandante!"],
     encontros: "Postos militares, fortalezas e patrulhas organizadas.",
-    imagem: "img/monstros/Hobgoblin.jpg"
+    imagem: "img/monstros/Hobgoblin.jpg",
+    ataques: "Espada Longa: +3 para acertar, 1d8+1 cortante. | Arco Longo: +3 para acertar, alcance 45/180m, 1d8+1 perfurante.",
+    reacoes: "Sem reações especiais.",
+    resistencias: "Sem resistências especiais."
   },
   {
     id: "padrao-giant-spider",
@@ -4086,7 +4231,10 @@ const compendioPadrao = [
     habilidades: "Teia e veneno: pode imobilizar e envenenar suas presas.",
     dialogos: ["Som de patas nas paredes.", "A criatura observa em silêncio.", "Teias se movem ao redor."],
     encontros: "Cavernas, ruínas tomadas por teias e florestas antigas.",
-    imagem: "img/monstros/Aranha-Gigante.jpg"
+    imagem: "img/monstros/Aranha-Gigante.jpg",
+    ataques: "Mordida: +5 para acertar, 1d8+3 perfurante — CD 11 Con ou 2d8 veneno. | Teia (recarga 5-6): alcance 9/18m, CD 12 Des ou fica imobilizado.",
+    reacoes: "Sem reações especiais.",
+    resistencias: "Imune a veneno."
   },
 
   {
@@ -4103,7 +4251,10 @@ const compendioPadrao = [
     habilidades: "Onda de vitamina, Suquinho natural de banana",
     dialogos: ["Som de liquidificador", "A criatura observa em silêncio.", "Cascas de banana se movem ao redor."],
     encontros: "florestas antigas.",
-    imagem: "img/monstros/Bananao.png"
+    imagem: "img/monstros/Bananao.png",
+    ataques: "Rasteira de Casca: +8 para acertar, alcance 3m, 3d8+5 — alvo cai derrubado. | Esguicho de Vitamina C: cone 6m, CD 16 Des ou 4d6 ácido.",
+    reacoes: "Casca Escorregadia: atacante corpo a corpo CD 12 Des ou cai.",
+    resistencias: "Imune a dano ácido. Resistente a dano contundente."
   },
 
   {
@@ -4120,7 +4271,10 @@ const compendioPadrao = [
     habilidades: "Golpes pesados capazes de derrubar aventureiros despreparados.",
     dialogos: ["Eu esmagar!", "Pequeno demais!", "Comida?"],
     encontros: "Cavernas grandes, pontes abandonadas e fortalezas destruídas.",
-    imagem: "img/monstros/Ogro.jpg"
+    imagem: "img/monstros/Ogro.jpg",
+    ataques: "Clava: +6 para acertar, 2d8+4 contundente. | Arremesso: +6 para acertar, alcance 9/18m, 2d8+4 contundente.",
+    reacoes: "Sem reações especiais.",
+    resistencias: "Sem resistências especiais."
   },
   {
     id: "padrao-troll",
@@ -4136,7 +4290,10 @@ const compendioPadrao = [
     habilidades: "Regeneração: recupera vida rapidamente, exceto contra fogo ou ácido.",
     dialogos: ["Arrancar braços!", "Fome! Fome!", "Você queima... eu odeio fogo!"],
     encontros: "Pontes antigas, pântanos, cavernas úmidas e florestas amaldiçoadas.",
-    imagem: "img/monstros/Troll.jpg"
+    imagem: "img/monstros/Troll.jpg",
+    ataques: "Mordida: +7 para acertar, 1d6+4 perfurante. | Garra (2 ataques): +7 para acertar, 2d6+4 cortante cada.",
+    reacoes: "Sem reações especiais.",
+    resistencias: "Regenera 10 HP por rodada — exceto contra fogo ou ácido. Vulnerável a fogo e ácido."
   }
 ];
 
@@ -4180,7 +4337,7 @@ function abrirTelaModo() {
     if (ckj) { ckj.style.opacity = '0'; ckj.style.transform = 'scale(0.5)'; }
     if (ckg) { ckg.style.opacity = '0'; ckg.style.transform = 'scale(0.5)'; }
     const btn = document.getElementById('tmBtnEntrar');
-    if (btn) { btn.disabled = true; btn.style.cssText = ''; }
+    if (btn) { btn.disabled = true; btn.style.cssText = 'width:90%;max-width:380px;padding:18px 32px;border-radius:9999px;border:1px solid rgba(78, 78, 78, 0.4);background:transparent;color:rgba(100, 100, 100, 0.5);font-family:Cinzel,serif;font-size:18px;font-weight:700;letter-spacing:0.18em;cursor:not-allowed;transition:all 0.4s ease;margin:0 auto 28px auto;display:block;text-align:center;overflow:hidden;'; }
     const desc = document.getElementById('tmDesc');
     if (desc) desc.innerHTML = '<p style="font-style:italic;font-size:13px;color:rgba(154,138,112,0.45);">Toque em um caminho para revelar seu destino…</p>';
     document.getElementById('tmBgJornada').style.opacity = '0';
@@ -4454,7 +4611,8 @@ async function salvarMonstroMestre() {
     habilidades: document.getElementById("monstroHabilidades")?.value.trim() || "",
     ataques:     document.getElementById("monstroAtaques")?.value.trim()     || "",
     reacoes:     document.getElementById("monstroReacoes")?.value.trim()     || "",
-    resistencias:document.getElementById("monstroResistencias")?.value.trim() || "",
+    resistencias: document.getElementById("monstroResistencias")?.value.trim() || "",
+    pontoEncontro: document.getElementById("bossPontoEncontro")?.value.trim() || "",
 
     dialogos: (document.getElementById("monstroDialogos")?.value || "")
       .split("\n")
@@ -4481,9 +4639,133 @@ async function salvarMonstroMestre() {
   trocarAbaMaster("compendio", btnCompendio);
 }
 
+
+
+// ===== BOSS =====
+let _bossAtaquesForm = [];
+let _bossHabilidadesForm = [];
+
+function adicionarAtaqueBoss() {
+  const nome = document.getElementById("bossAtaqueNome")?.value.trim();
+  const desc = document.getElementById("bossAtaqueDesc")?.value.trim();
+  if (!nome) return;
+  _bossAtaquesForm.push({ nome, desc });
+  document.getElementById("bossAtaqueNome").value = "";
+  document.getElementById("bossAtaqueDesc").value = "";
+  _renderItemForm("bossAtaquesList", _bossAtaquesForm, "removerAtaqueBoss", "bossAtaques");
+}
+function removerAtaqueBoss(i) {
+  _bossAtaquesForm.splice(i, 1);
+  _renderItemForm("bossAtaquesList", _bossAtaquesForm, "removerAtaqueBoss", "bossAtaques");
+}
+function adicionarHabilidadeBoss() {
+  const nome = document.getElementById("bossHabilidadeNome")?.value.trim();
+  const desc = document.getElementById("bossHabilidadeDesc")?.value.trim();
+  if (!nome) return;
+  _bossHabilidadesForm.push({ nome, desc });
+  document.getElementById("bossHabilidadeNome").value = "";
+  document.getElementById("bossHabilidadeDesc").value = "";
+  _renderItemForm("bossHabilidadesList", _bossHabilidadesForm, "removerHabilidadeBoss", "bossHabilidades");
+}
+function removerHabilidadeBoss(i) {
+  _bossHabilidadesForm.splice(i, 1);
+  _renderItemForm("bossHabilidadesList", _bossHabilidadesForm, "removerHabilidadeBoss", "bossHabilidades");
+}
+
+// ===== NPC =====
+let _npcAcoesForm = [];
+let _npcHabilidadesForm = [];
+
+function adicionarAcaoNpc() {
+  const nome = document.getElementById("npcAcaoNome")?.value.trim();
+  const desc = document.getElementById("npcAcaoDesc")?.value.trim();
+  if (!nome) return;
+  _npcAcoesForm.push({ nome, desc });
+  document.getElementById("npcAcaoNome").value = "";
+  document.getElementById("npcAcaoDesc").value = "";
+  _renderItemForm("npcAcoesList", _npcAcoesForm, "removerAcaoNpc", "npcAcoes");
+}
+function removerAcaoNpc(i) {
+  _npcAcoesForm.splice(i, 1);
+  _renderItemForm("npcAcoesList", _npcAcoesForm, "removerAcaoNpc", "npcAcoes");
+}
+function adicionarHabilidadeNpc() {
+  const nome = document.getElementById("npcHabilidadeNome")?.value.trim();
+  const desc = document.getElementById("npcHabilidadeDesc")?.value.trim();
+  if (!nome) return;
+  _npcHabilidadesForm.push({ nome, desc });
+  document.getElementById("npcHabilidadeNome").value = "";
+  document.getElementById("npcHabilidadeDesc").value = "";
+  _renderItemForm("npcHabilidadesList", _npcHabilidadesForm, "removerHabilidadeNpc", "npcHabilidades");
+}
+function removerHabilidadeNpc(i) {
+  _npcHabilidadesForm.splice(i, 1);
+  _renderItemForm("npcHabilidadesList", _npcHabilidadesForm, "removerHabilidadeNpc", "npcHabilidades");
+}
+
+// ===== HELPER GENÉRICO =====
+function _renderItemForm(listaId, arr, fnRemover, hiddenId) {
+  const lista = document.getElementById(listaId);
+  if (!lista) return;
+  lista.innerHTML = arr.map((a, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#F0EBD8;border-radius:8px;margin-bottom:4px;border:1px solid rgba(196,169,91,0.2);">
+      <span style="font-size:13px;flex:1;color:#2A1A10;"><strong>${escapeHtml(a.nome)}</strong>${a.desc ? ` — <span style="color:#7A6A50;">${escapeHtml(a.desc)}</span>` : ""}</span>
+      <span onclick="${fnRemover}(${i})" style="cursor:pointer;color:#8f2222;font-size:16px;font-weight:bold;">✕</span>
+    </div>`).join("");
+  const hidden = document.getElementById(hiddenId);
+  if (hidden) hidden.value = arr.map(a => a.desc ? `${a.nome}: ${a.desc}` : a.nome).join(" | ");
+}
+
+// ===== SISTEMA DE ATAQUES E HABILIDADES DO FORM =====
+
+let _monstroAtaquesForm = [];
+let _monstroHabilidadesForm = [];
+
+function adicionarAtaqueMonstro() {
+  const nome = document.getElementById("monstroAtaqueNome")?.value.trim();
+  const desc = document.getElementById("monstroAtaqueDesc")?.value.trim();
+  if (!nome) return;
+  _monstroAtaquesForm.push({ nome, desc });
+  document.getElementById("monstroAtaqueNome").value = "";
+  document.getElementById("monstroAtaqueDesc").value = "";
+  renderAtaquesForm();
+}
+
+function removerAtaqueMonstro(i) {
+  _monstroAtaquesForm.splice(i, 1);
+  renderAtaquesForm();
+}
+
+function renderAtaquesForm() {
+  _renderItemForm("monstroAtaquesList", _monstroAtaquesForm, "removerAtaqueMonstro", "monstroAtaques");
+}
+
+function adicionarHabilidadeMonstro() {
+  const nome = document.getElementById("monstroHabilidadeNome")?.value.trim();
+  const desc = document.getElementById("monstroHabilidadeDesc")?.value.trim();
+  if (!nome) return;
+  _monstroHabilidadesForm.push({ nome, desc });
+  document.getElementById("monstroHabilidadeNome").value = "";
+  document.getElementById("monstroHabilidadeDesc").value = "";
+  renderHabilidadesForm();
+}
+
+function removerHabilidadeMonstro(i) {
+  _monstroHabilidadesForm.splice(i, 1);
+  renderHabilidadesForm();
+}
+
+function renderHabilidadesForm() {
+  _renderItemForm("monstroHabilidadesList", _monstroHabilidadesForm, "removerHabilidadeMonstro", "monstroHabilidades");
+}
+
 function limparFormMonstro() {
   editandoMonstroMestre = -1;
   imagemMonstroBase64 = "";
+  _monstroAtaquesForm = [];
+  _monstroHabilidadesForm = [];
+  renderAtaquesForm();
+  renderHabilidadesForm();
 
   const campos = [
     "monstroNome",
@@ -4613,12 +4895,12 @@ function renderMonstrosMestre() {
     card.onclick = () => {
       const tipo = entry._tipo;
       if (!tipo) {
-      const idxReal = monstrosMestre.findIndex(m => m.id === entry.id);
-      abrirSheetMonstroPorObjeto(entry, idxReal, listaFiltrada);
+      const idxNaLista = listaFiltrada.findIndex(e => e.id === entry.id);
+      abrirSheetMonstroPorObjeto(entry, idxNaLista, listaFiltrada);
       }
-      else if (tipo === "boss") _abrirPopupBossCompendio(entry);
-      else if (tipo === "item") _abrirPopupItemCompendio(entry);
-      else if (tipo === "npc")  _abrirPopupNPCCompendio(entry);
+      else if (tipo === "boss") { sheetMonstroIndexAtual = index; listaSheetCompendio = listaFiltrada; _abrirPopupBossCompendio(entry); }
+      else if (tipo === "item") { sheetMonstroIndexAtual = index; listaSheetCompendio = listaFiltrada; _abrirPopupItemCompendio(entry); }
+      else if (tipo === "npc")  { sheetMonstroIndexAtual = index; listaSheetCompendio = listaFiltrada; _abrirPopupNPCCompendio(entry); }
     };
 
     const badge = { boss:"💀 Boss", item:"⚔️ Item", npc:"🧙 NPC" }[entry._tipo] || "👹 Criatura";
@@ -4678,14 +4960,26 @@ async function excluirEntradaCompendio(tipo, id) {
     const idx = monstrosMestre.findIndex(m => m.id === id);
     if (idx !== -1) {
       await deletarImagem(monstrosMestre[idx].imagemDeleteUrl);
+      // deleta do Firebase também
+      if (window.usuarioAtual) {
+        try { deleteDoc(doc(db, "usuarios", window.usuarioAtual.uid, "monstros", String(id))); } catch(e) {}
+      }
       monstrosMestre.splice(idx, 1);
       salvarMonstrosMestreStorage();
     }
   } else if (tipo === "boss") {
-    const boss = (campanha.bosses || []).find(b => b.id === id);
-    await deletarImagem(boss?.imagemDeleteUrl);
-    campanha.bosses = (campanha.bosses || []).filter(b => b.id !== id);
-    salvarCampanhasMaster();
+    // Verifica se é boss da campanha ou cópia em monstrosMestre
+    const idxMonstro = monstrosMestre.findIndex(m => m.id === id);
+    if (idxMonstro !== -1) {
+      await deletarImagem(monstrosMestre[idxMonstro].imagemDeleteUrl);
+      monstrosMestre.splice(idxMonstro, 1);
+      salvarMonstrosMestreStorage();
+    } else {
+      const boss = (campanha.bosses || []).find(b => b.id === id);
+      await deletarImagem(boss?.imagemDeleteUrl);
+      campanha.bosses = (campanha.bosses || []).filter(b => b.id !== id);
+      salvarCampanhasMaster();
+    }
   } else if (tipo === "item") {
     const item = (campanha.itensMaster || []).find(i => i.id === id);
     await deletarImagem(item?.imagemDeleteUrl);
@@ -4749,13 +5043,19 @@ function _abrirPopupBossCompendio(boss) {
     </div>` : ""}
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
       <button style="background:#7B1E28!important;border:none!important;border-radius:8px;color:#fff!important;padding:10px;font-size:13px;cursor:pointer;" onclick='enviarMonstroPadraoParaCombate(${JSON.stringify(boss)})'>⚔️ Enviar para combate</button>
+      ${boss.origem !== "padrao" ? `` : `<button style="background:rgba(196,169,91,0.2)!important;border:1px solid rgba(196,169,91,0.4)!important;border-radius:8px;color:#C4A95B!important;padding:10px;font-size:13px;cursor:pointer;" onclick='criarCopiaEditavelMonstroPadrao(${JSON.stringify(boss)})'>✏️ Criar cópia editável</button>`}
     </div>
     ${boss.fases     ? bloco("Fases", escapeHtml(boss.fases)) : ""}
     ${boss.mecanicas ? bloco("Mecânicas", escapeHtml(boss.mecanicas)) : ""}
-    ${boss.ataques   ? bloco("Ataques", escapeHtml(boss.ataques)) : ""}
-    ${boss.fraquezas ? bloco("Fraquezas", escapeHtml(boss.fraquezas)) : ""}
     ${boss.lore      ? bloco("Lore", escapeHtml(boss.lore)) : ""}
-    <button style="width:100%;margin-top:4px;background:rgba(143,34,34,0.8)!important;border:none!important;border-radius:8px;color:#fff!important;padding:10px;font-size:13px;cursor:pointer;" onclick="excluirEntradaCompendio('boss',${boss.id})">🗑 Excluir Boss</button>
+    ${renderHabilidades(boss.habilidades)}
+    ${renderAtaques(boss.ataques)}
+    ${boss.reacoes     ? bloco("Reações", escapeHtml(boss.reacoes)) : ""}
+    ${boss.resistencias ? bloco("Resistências / Imunidades", escapeHtml(boss.resistencias)) : ""}
+    ${boss.fraquezas ? bloco("Fraquezas", escapeHtml(boss.fraquezas)) : ""}
+    ${boss.dialogos?.length ? bloco("Diálogos", boss.dialogos.map(f => `"${escapeHtml(f)}"`).join("<br>")) : ""}
+    ${boss.encontros ? bloco("Pontos de Encontro", escapeHtml(boss.encontros)) : ""}
+    <button style="width:100%;margin-top:4px;background:rgba(143,34,34,0.8)!important;border:none!important;border-radius:8px;color:#fff!important;padding:10px;font-size:13px;cursor:pointer;" onclick="excluirEntradaCompendio('${boss.origem === 'padrao' ? 'boss' : 'monstro'}',${boss.id})">🗑 Excluir Boss</button>
   `;
   _abrirSheetCustom(conteudo);
 }
@@ -4814,7 +5114,12 @@ function _abrirPopupNPCCompendio(npc) {
     ${npc.relacoes      ? bloco("Relações", escapeHtml(npc.relacoes)) : ""}
     ${npc.pericias      ? bloco("Perícias", escapeHtml(npc.pericias)) : ""}
     ${npc.religiao      ? bloco("Religião", escapeHtml(npc.religiao)) : ""}
+    ${renderAtaques(npc.ataques)}
+    ${renderHabilidades(npc.habilidades)}
     ${npc.observacoes   ? bloco("Observações", escapeHtml(npc.observacoes)) : ""}
+    ${npc.reacoes     ? bloco("Reações", escapeHtml(npc.reacoes)) : ""}
+    ${npc.resistencias ? bloco("Resistências / Imunidades", escapeHtml(npc.resistencias)) : ""}
+    ${npc.fraquezas   ? bloco("Fraquezas", escapeHtml(npc.fraquezas)) : ""}
     <button style="width:100%;margin-top:4px;background:rgba(143,34,34,0.8)!important;border:none!important;border-radius:8px;color:#fff!important;padding:10px;font-size:13px;cursor:pointer;" onclick="excluirEntradaCompendio('npc',${npc.id})">🗑 Excluir NPC</button>
   `;
   _abrirSheetCustom(conteudo);
@@ -4842,6 +5147,7 @@ function criarCopiaEditavelMonstroPadrao(monstro) {
   copia.id = Date.now();
   copia.origem = "usuario";
   copia.nome = `${monstro.nome} personalizado`;
+  delete copia._tipo; // remove _tipo para não confundir com boss/npc/item
 
   monstrosMestre.push(copia);
   salvarMonstrosMestreStorage();
@@ -4858,6 +5164,10 @@ function abrirSheetMonstroPadrao(monstro) {
   const estavaAberto = sheet.classList.contains("aberto");
   const estavaFull   = sheet.classList.contains("full");
   if (!overlay || !sheet || !conteudo) return;
+  conteudo.innerHTML = "";
+
+  // Limpa antes de renderizar para evitar flash do conteúdo antigo
+  conteudo.innerHTML = "";
 
   const imagem = monstro.imagem || "";
   const bloco  = (titulo, texto) => `
@@ -4869,7 +5179,7 @@ function abrirSheetMonstroPadrao(monstro) {
     </div>`;
 
   conteudo.innerHTML = `
-    ${imagem ? `<img class="sheet-img" src="${imagem}" alt="${escapeHtml(monstro.nome)}" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin-bottom:12px;">` : ""}
+    ${imagem ? `<img class="sheet-img" src="${imagem}" alt="${escapeHtml(monstro.nome)}" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin-bottom:12px;transition:opacity 0.3s ease;" onload="this.style.opacity='1'" style="opacity:0">` : ""}
 
     <h2 class="sheet-titulo" style="text-align:center;margin-bottom:4px;">${escapeHtml(monstro.nome)}</h2>
     <div class="sheet-meta" style="text-align:center;margin-bottom:8px;">${escapeHtml(monstro.tipo || "Tipo não definido")} · ${escapeHtml(monstro.regiao || "Região não definida")}</div>
@@ -4890,7 +5200,21 @@ function abrirSheetMonstroPadrao(monstro) {
     </div>
 
     ${bloco("Lore", formatarTexto(monstro.lore || "Sem lore cadastrada."))}
-    ${bloco("Habilidades Especiais", formatarTexto(monstro.habilidades || "Sem habilidades cadastradas."))}
+    ${renderHabilidades(monstro.habilidades)}
+    ${renderAtaques(monstro.ataques)}
+    ${monstro.reacoes ? `<div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
+      <div style="background:#D4C9A8;padding:7px 12px;text-align:center;">
+        <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">Reações</span>
+      </div>
+      <div style="padding:10px 14px;font-size:13px;color:#2A1A10;line-height:1.6;">${formatarTexto(monstro.reacoes)}</div>
+    </div>` : ""}
+    ${monstro.resistencias ? `<div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
+      <div style="background:#D4C9A8;padding:7px 12px;text-align:center;">
+        <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">Resistências / Imunidades</span>
+      </div>
+      <div style="padding:10px 14px;font-size:13px;color:#2A1A10;line-height:1.6;">${formatarTexto(monstro.resistencias)}</div>
+    </div>` : ""}
+    ${monstro.fraquezas ? `<div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);"><div style="background:#D4C9A8;padding:7px 12px;text-align:center;"><span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">Fraquezas</span></div><div style="padding:10px 14px;font-size:13px;color:#2A1A10;line-height:1.6;">${formatarTexto(monstro.fraquezas)}</div></div>` : ""}
     ${bloco("Diálogos", monstro.dialogos?.length ? monstro.dialogos.map(f => `"${escapeHtml(f)}"`).join("<br>") : "Sem falas cadastradas.")}
     ${bloco("Pontos de Encontro", formatarTexto(monstro.encontros || "Sem pontos de encontro cadastrados."))}
     ${monstro.origem !== "padrao" ? `<button style="width:100%;margin-top:4px;background:rgba(143,34,34,0.8)!important;border:none!important;border-radius:8px;color:#fff!important;padding:10px;font-size:13px;cursor:pointer;" onclick="excluirMonstroMestre(sheetMonstroIndexAtual)">🗑️ Excluir Monstro</button>` : ""}
@@ -4904,10 +5228,10 @@ function abrirSheetMonstroPadrao(monstro) {
   overlay.style.display = "block";
   sheet.style.display   = "block";
 
-  if (!estavaAberto) sheet.classList.remove("full", "aberto");
-  if (estavaFull)    sheet.classList.add("full");
+  sheet.classList.remove("full", "aberto");
+  if (estavaFull) sheet.classList.add("full");
 
-  setTimeout(() => sheet.classList.add("aberto"), 10);
+  requestAnimationFrame(() => setTimeout(() => sheet.classList.add("aberto"), 10));
   document.body.classList.add("master-sheet-aberto");
   ativarGestosSheetMonstro();
 }
@@ -4960,9 +5284,23 @@ function abrirSheetMonstro(index) {
     </div>
 
     ${bloco("Lore", formatarTexto(monstro.lore || "Sem lore cadastrada."))}
-    ${bloco("Habilidades Especiais", formatarTexto(monstro.habilidades || "Sem habilidades cadastradas."))}
-    ${bloco("Diálogos", monstro.dialogos?.length ? monstro.dialogos.map(f => `"${escapeHtml(f)}"`).join("<br>") : "Sem falas cadastradas.")}
-    ${bloco("Pontos de Encontro", formatarTexto(monstro.encontros || "Sem pontos de encontro cadastrados."))}
+    ${renderHabilidades(monstro.habilidades)}
+    ${renderAtaques(monstro.ataques)}
+    ${monstro.reacoes ? `<div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
+      <div style="background:#D4C9A8;padding:7px 12px;text-align:center;">
+        <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">Reações</span>
+      </div>
+      <div style="padding:10px 14px;font-size:13px;color:#2A1A10;line-height:1.6;">${formatarTexto(monstro.reacoes)}</div>
+    </div>` : ""}
+    ${monstro.resistencias ? `<div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
+      <div style="background:#D4C9A8;padding:7px 12px;text-align:center;">
+        <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">Resistências / Imunidades</span>
+      </div>
+      <div style="padding:10px 14px;font-size:13px;color:#2A1A10;line-height:1.6;">${formatarTexto(monstro.resistencias)}</div>
+    </div>` : ""}
+${monstro.fraquezas ? `<div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);"><div style="background:#D4C9A8;padding:7px 12px;text-align:center;"><span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">Fraquezas</span></div><div style="padding:10px 14px;font-size:13px;color:#2A1A10;line-height:1.6;">${formatarTexto(monstro.fraquezas)}</div></div>` : ""}
+${bloco("Diálogos", monstro.dialogos?.length ? monstro.dialogos.map(f => `"${escapeHtml(f)}"`).join("<br>") : "Sem falas cadastradas.")}
+${bloco("Pontos de Encontro", formatarTexto(monstro.encontros || "Sem pontos de encontro cadastrados."))}
     <button style="width:100%;margin-top:4px;background:rgba(143,34,34,0.8)!important;border:none!important;border-radius:8px;color:#fff!important;padding:10px;font-size:13px;cursor:pointer;" onclick="excluirMonstroMestre(${index})">🗑️ Excluir Monstro</button>
   `;
 
@@ -5006,19 +5344,16 @@ function iniciarDragSheet(e) {
 
   const ponto = pegarPontoEvento(e);
 
-  // Em fullscreen, só inicia drag se tocar nos primeiros 60px (topo/handle)
+  sheetDragInicioX = ponto.clientX;
+  sheetDragInicioY = ponto.clientY;
+
   if (sheet.classList.contains("full")) {
     const rect = sheet.getBoundingClientRect();
     const toqueRelativo = ponto.clientY - rect.top;
-    if (toqueRelativo > 60) {
-      sheetArrastando = false;
-      return; // deixa o scroll nativo acontecer
-    }
+    sheetArrastando = toqueRelativo <= 60 ? "full-topo" : "full-conteudo";
+  } else {
+    sheetArrastando = true;
   }
-
-  sheetDragInicioX = ponto.clientX;
-  sheetDragInicioY = ponto.clientY;
-  sheetArrastando = true;
 
   sheet.style.transition = "none";
 }
@@ -5064,8 +5399,11 @@ async function salvarBossMestre() {
   salvarCampanhasMaster();
   renderMonstrosMestre();
 
+  _bossAtaquesForm = []; _bossHabilidadesForm = [];
+  _renderItemForm("bossAtaquesList",[],"removerAtaqueBoss","bossAtaques");
+  _renderItemForm("bossHabilidadesList",[],"removerHabilidadeBoss","bossHabilidades");
   ["bossNome","bossTipo","bossRegiao","bossHpMax","bossHpAtual","bossCa",
-   "bossLore","bossHabilidades","bossFraquezas","bossAtaques","bossReacoes","bossResistencias"].forEach(id => {
+   "bossLore","bossHabilidades","bossFraquezas","bossAtaques","bossReacoes","bossResistencias", "bossPontoEncontro"].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = "";
   });
   const preview = document.getElementById("previewBoss");
@@ -5114,7 +5452,7 @@ async function salvarItemMestre() {
 }
 
 function moverDragSheet(e) {
-  if (!sheetArrastando) return; // scroll nativo acontece
+  if (!sheetArrastando) return;
 
   const sheet = document.getElementById("sheetMonstro");
   if (!sheet) return;
@@ -5126,15 +5464,22 @@ function moverDragSheet(e) {
 
   const movimentoHorizontal = Math.abs(diffX) > Math.abs(diffY);
 
+  if (sheetArrastando === "full-conteudo") {
+    if (movimentoHorizontal) {
+      if (e.cancelable) e.preventDefault();
+      sheet.style.transform = `translateX(${diffX}px)`;
+      sheet.style.opacity = String(1 - Math.min(Math.abs(diffX) / 500, 0.45));
+    }
+    return;
+  }
+
   if (movimentoHorizontal) {
     if (e.cancelable) e.preventDefault();
-
     sheet.style.transform = `translateX(${diffX}px)`;
     sheet.style.opacity = String(1 - Math.min(Math.abs(diffX) / 500, 0.45));
     return;
   }
 
-  // 🔥 movimento vertical fluido
   if (e.cancelable) e.preventDefault();
 
   if (diffY < 0 && !sheet.classList.contains("full")) {
@@ -5159,17 +5504,20 @@ function finalizarDragSheet(e) {
   const diffX = ponto.clientX - sheetDragInicioX;
   const diffY = ponto.clientY - sheetDragInicioY;
 
+  const wasFullConteudo = sheetArrastando === "full-conteudo";
   sheetArrastando = false;
 
   sheet.style.transition =
     "transform 0.28s ease, opacity 0.22s ease, height 0.25s ease";
 
   if (Math.abs(diffX) > 90 && Math.abs(diffX) > Math.abs(diffY)) {
-    if (diffX < 0) {
-      trocarMonstroSheet(1);
-    } else {
-      trocarMonstroSheet(-1);
-    }
+    diffX < 0 ? trocarMonstroSheet(1) : trocarMonstroSheet(-1);
+    return;
+  }
+
+  if (wasFullConteudo) {
+    sheet.style.transform = "";
+    sheet.style.opacity = "";
     return;
   }
 
@@ -5192,7 +5540,10 @@ function finalizarDragSheet(e) {
 function trocarMonstroSheet(direcao) {
   if (!listaSheetCompendio.length) return;
 
-  let novoIndex = sheetMonstroIndexAtual + direcao;
+  // Encontrar o índice atual correto na lista
+  const indexNaLista = listaSheetCompendio.findIndex((_, i) => i === sheetMonstroIndexAtual);
+  let base = indexNaLista >= 0 ? indexNaLista : 0;
+  let novoIndex = base + direcao;
 
   if (novoIndex < 0) novoIndex = listaSheetCompendio.length - 1;
   if (novoIndex >= listaSheetCompendio.length) novoIndex = 0;
@@ -5309,6 +5660,17 @@ function editarMonstroMestre(index) {
   document.getElementById("monstroCar").value = monstro.status?.car || 10;
 
   document.getElementById("monstroLore").value = monstro.lore || "";
+
+  // Popular listas de ataques e habilidades
+  _monstroAtaquesForm = (monstro.ataques || "").split("|").map(a => a.trim()).filter(Boolean).map(a => {
+    const partes = a.split(":"); return { nome: partes[0]?.trim() || a, desc: partes.slice(1).join(":").trim() };
+  });
+  _monstroHabilidadesForm = (monstro.habilidades || "").split("|").map(h => h.trim()).filter(Boolean).map(h => {
+    const partes = h.split(":"); return { nome: partes[0]?.trim() || h, desc: partes.slice(1).join(":").trim() };
+  });
+  renderAtaquesForm();
+  renderHabilidadesForm();
+
   const elHab = document.getElementById("monstroHabilidades");
 if (elHab) elHab.value = monstro.habilidades || "";
 const elDia = document.getElementById("monstroDialogos");
@@ -5400,6 +5762,53 @@ function toggleMinimizarCombate(index) {
   }
 
   salvarCombatesMestreStorage();
+}
+
+
+function renderAtaques(texto) {
+  if (!texto) return "";
+  const itens = texto.split("|").map(a => a.trim()).filter(Boolean);
+  const linhas = itens.map(ataque => {
+    const partes = ataque.split(":");
+    const nome = partes[0]?.trim() || ataque;
+    const desc = partes.slice(1).join(":").trim();
+    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid rgba(196,169,91,0.12);">
+      <span style="font-size:14px;flex-shrink:0;margin-top:1px;">⚔️</span>
+      <div>
+        <div style="font-size:13px;font-weight:bold;color:#2A1A10;">${escapeHtml(nome)}</div>
+        ${desc ? `<div style="font-size:12px;color:#7A6A50;margin-top:2px;">${escapeHtml(desc)}</div>` : ""}
+      </div>
+    </div>`;
+  }).join("");
+  return `<div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
+    <div style="background:#D4C9A8;padding:7px 12px;display:flex;align-items:center;gap:6px;justify-content:center;">
+      <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">Ataques</span>
+    </div>
+    <div style="padding:4px 12px 4px;">${linhas}</div>
+  </div>`;
+}
+
+function renderHabilidades(texto) {
+  if (!texto) return "";
+  const itens = texto.split("|").map(a => a.trim()).filter(Boolean);
+  const linhas = itens.map(hab => {
+    const partes = hab.split(":");
+    const nome = partes[0]?.trim() || hab;
+    const desc = partes.slice(1).join(":").trim();
+    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid rgba(196,169,91,0.12);">
+      <span style="font-size:14px;flex-shrink:0;margin-top:1px;">✨</span>
+      <div>
+        <div style="font-size:13px;font-weight:bold;color:#2A1A10;">${escapeHtml(nome)}</div>
+        ${desc ? `<div style="font-size:12px;color:#7A6A50;margin-top:2px;">${escapeHtml(desc)}</div>` : ""}
+      </div>
+    </div>`;
+  }).join("");
+  return `<div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
+    <div style="background:#D4C9A8;padding:7px 12px;text-align:center;">
+      <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">Habilidades Especiais</span>
+    </div>
+    <div style="padding:4px 12px 4px;">${linhas}</div>
+  </div>`;
 }
 
 function renderCombatesMestre() {
@@ -5590,13 +5999,7 @@ function renderCombatesMestre() {
           </div>
         ` : ""}
 
-        <!-- HABILIDADES -->
-        ${monstro.habilidades ? `
-          <div class="sheet-bloco">
-            <strong>Habilidades especiais</strong>
-            <p>${formatarTexto(monstro.habilidades)}</p>
-          </div>
-        ` : ""}
+        ${renderHabilidades(monstro.habilidades)}
 
         <!-- ENCONTROS -->
         ${monstro.encontros ? `
@@ -5607,17 +6010,12 @@ function renderCombatesMestre() {
         ` : ""}
 
         <!-- ATAQUES -->
-        ${monstro.ataques ? `
-          <div class="sheet-bloco" style="border-left:3px solid #8f2222;">
-            <strong>⚔️ Ataques</strong>
-            <p style="white-space:pre-line;">${formatarTexto(monstro.ataques)}</p>
-          </div>
-        ` : ""}
+        ${renderAtaques(monstro.ataques)}
 
         <!-- REAÇÕES -->
         ${monstro.reacoes ? `
           <div class="sheet-bloco">
-            <strong>🛡️ Reações</strong>
+            <strong>Reações</strong>
             <p style="white-space:pre-line;">${formatarTexto(monstro.reacoes)}</p>
           </div>
         ` : ""}
@@ -5625,18 +6023,13 @@ function renderCombatesMestre() {
         <!-- RESISTÊNCIAS -->
         ${monstro.resistencias ? `
           <div class="sheet-bloco">
-            <strong>💎 Resistências / Imunidades</strong>
+            <strong>Resistências / Imunidades</strong>
             <p>${formatarTexto(monstro.resistencias)}</p>
           </div>
         ` : ""}
 
         <!-- FRAQUEZAS (boss) -->
-        ${monstro.fraquezas ? `
-          <div class="sheet-bloco">
-            <strong>💀 Fraquezas</strong>
-            <p>${formatarTexto(monstro.fraquezas)}</p>
-          </div>
-        ` : ""}
+        ${monstro.fraquezas ? `<div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);"><div style="background:#D4C9A8;padding:7px 12px;text-align:center;"><span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">Fraquezas</span></div><div style="padding:10px 14px;font-size:13px;color:#2A1A10;line-height:1.6;">${formatarTexto(monstro.fraquezas)}</div></div>` : ""}
 
           <!-- LOG -->
 ${monstro.log && monstro.log.length > 0 ? `
@@ -5854,6 +6247,29 @@ function salvarSessaoLore() {
   document.getElementById("sessaoNome").value = "";
   document.getElementById("sessaoDescricao").value = "";
   renderSessoesLore();
+}
+
+function renderHabilidades(texto) {
+  if (!texto) return "";
+  const itens = texto.split("|").map(a => a.trim()).filter(Boolean);
+  const linhas = itens.map(hab => {
+    const partes = hab.split(":");
+    const nome = partes[0]?.trim() || hab;
+    const desc = partes.slice(1).join(":").trim();
+    return `<div style="display:flex;align-items:flex-start;gap:8px;padding:7px 0;border-bottom:1px solid rgba(196,169,91,0.12);">
+      <span style="font-size:14px;flex-shrink:0;margin-top:1px;">✨</span>
+      <div>
+        <div style="font-size:13px;font-weight:bold;color:#2A1A10;">${escapeHtml(nome)}</div>
+        ${desc ? `<div style="font-size:12px;color:#7A6A50;margin-top:2px;">${escapeHtml(desc)}</div>` : ""}
+      </div>
+    </div>`;
+  }).join("");
+  return `<div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
+    <div style="background:#D4C9A8;padding:7px 12px;text-align:center;">
+      <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">Habilidades Especiais</span>
+    </div>
+    <div style="padding:4px 12px 4px;">${linhas}</div>
+  </div>`;
 }
 
 function salvarEventoLore() {
@@ -6553,6 +6969,9 @@ async function salvarNPCMestre() {
   salvarCampanhasMaster();
 
   /* limpa o form */
+  _npcAcoesForm = []; _npcHabilidadesForm = [];
+  _renderItemForm("npcAcoesList",[],"removerAcaoNpc","npcAcoes");
+  _renderItemForm("npcHabilidadesList",[],"removerHabilidadeNpc","npcHabilidades");
   ["npcNome","npcRaca","npcIdade","npcClasse","npcRegiao","npcReligiao",
    "npcLocalizacao","npcPericias","npcPersonalidade","npcRelacoes","npcObservacoes",
    "npcHabilidades","npcAcoes","npcReacoes","npcResistencias","npcVelocidade","npcDesafio"]
@@ -6619,12 +7038,15 @@ function renderNPCsMundo() {
         <span class="npc-toggle-seta" style="margin-left:auto;color:#7A6A50;font-size:12px;">▼</span>
       </div>
       <small style="color:#7A6A50;font-size:11px;">${[escapeHtml(n.classe||""), escapeHtml(n.regiao||"")].filter(Boolean).join(" · ")}</small>
-      <div style="display:flex;align-items:center;gap:8px;margin-top:6px;">
-        <span id="npcHpCoracao_${n.id}" style="font-size:11px;color:${hpCor};font-weight:bold;">❤ ${hpAtual}/${hpMax}</span>
-        <div style="flex:1;height:6px;background:rgba(0,0,0,0.1);border-radius:4px;overflow:hidden;">
-          <div id="npcHpBarra_${n.id}" style="height:100%;width:${hpPct}%;background:${hpCor};border-radius:4px;transition:width 0.3s ease;"></div>
-        </div>
-      </div>
+      <div style="margin-top:6px;">
+  <div style="display:flex;align-items:center;gap:8px;">
+    <span id="npcHpCoracao_${n.id}" style="font-size:11px;color:${hpCor};font-weight:bold;">❤ ${hpAtual}/${hpMax}</span>
+    <div style="flex:1;height:6px;background:rgba(0,0,0,0.1);border-radius:4px;overflow:hidden;">
+      <div id="npcHpBarra_${n.id}" style="height:100%;width:${hpPct}%;background:${hpCor};border-radius:4px;transition:width 0.3s ease;"></div>
+    </div>
+  </div>
+  ${d.ca ? `<div style="font-size:11px;color:#7A6A50;font-weight:bold;margin-top:3px;">🛡️ CA ${d.ca}</div>` : ""}
+</div>
     </div>
   </div>
 
@@ -6659,17 +7081,16 @@ function renderNPCsMundo() {
       ${bloco("Religião", d.religiao)}
       ${bloco("Observações", d.observacoes)}
 
-      ${(d.ca || d.velocidade || d.desafio) ? `
+      ${(d.velocidade || d.desafio) ? `
       <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
-        ${d.ca ? `<span style="background:#F0EBD8;border:1px solid rgba(196,169,91,0.3);border-radius:8px;padding:5px 10px;font-size:12px;color:#2A1A10;"><strong>CA</strong> ${d.ca}</span>` : ""}
         ${d.velocidade ? `<span style="background:#F0EBD8;border:1px solid rgba(196,169,91,0.3);border-radius:8px;padding:5px 10px;font-size:12px;color:#2A1A10;"><strong>Vel</strong> ${escapeHtml(d.velocidade)}</span>` : ""}
         ${d.desafio ? `<span style="background:#F0EBD8;border:1px solid rgba(196,169,91,0.3);border-radius:8px;padding:5px 10px;font-size:12px;color:#2A1A10;"><strong>ND</strong> ${escapeHtml(d.desafio)}</span>` : ""}
       </div>` : ""}
 
       ${bloco("⚔️ Habilidades Especiais", d.habilidades)}
       ${bloco("🎯 Ações", d.acoes)}
-      ${bloco("🛡️ Reações", d.reacoes)}
-      ${bloco("💎 Resistências / Imunidades", d.resistencias)}
+      ${bloco("Reações", d.reacoes)}
+      ${bloco("Resistências / Imunidades", d.resistencias)}
 
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:8px;">
         <button onclick="event.stopPropagation();enviarNPCParaCombate(${n.id})" style="flex:1;background:#8f2222!important;border:none!important;border-radius:8px;color:#fff!important;padding:8px;font-size:12px;cursor:pointer;font-weight:bold;">⚔️ Enviar para Combate</button>
@@ -6765,7 +7186,7 @@ function toggleNPCMundo(id) {
     detalhes.style.opacity   = "0";
     detalhes.setAttribute("data-aberto", "1");
     requestAnimationFrame(() => {
-      detalhes.style.maxHeight = "600px";
+      detalhes.style.maxHeight = "2000px";
       detalhes.style.opacity   = "1";
     });
   }
