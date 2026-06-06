@@ -2,7 +2,7 @@
 // ===== SISTEMA DE PLANOS =====
 const EMAILS_VIP = [
   "fichaignea@gmail.com",
-  "lonnar321@gmail.com",
+  "lonnar321@gmail.com"
 ];
 
 function getPlanoUsuario() {
