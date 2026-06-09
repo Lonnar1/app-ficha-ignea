@@ -1,3 +1,42 @@
+/* ================= SEGURANÇA XSS ================= */
+function esc(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;")
+    .replace(/\//g, "&#x2F;");
+}
+
+function limparTags(str) {
+  if (!str) return str;
+  return String(str).replace(/<[^>]*>/g, "");
+}
+
+function sanitizarPersonagem(p) {
+  if (!p) return p;
+  const textos = ["nome","classe","raca","idade","altura","antecedentes","idiomas","resistencias","diario","proficienciasExtras","nomeRacaCustom"];
+  textos.forEach(c => { if (p[c]) p[c] = limparTags(p[c]); });
+  if (Array.isArray(p.inventario)) p.inventario.forEach(i => { i.nome = limparTags(i.nome); i.desc = limparTags(i.desc); });
+  if (Array.isArray(p.armaduras))  p.armaduras.forEach(a  => { a.nome = limparTags(a.nome);  a.desc = limparTags(a.desc); a.ca = limparTags(a.ca); });
+  if (Array.isArray(p.armas))      p.armas.forEach(a      => { a.nome = limparTags(a.nome);  a.desc = limparTags(a.desc); a.dano = limparTags(a.dano); });
+  if (Array.isArray(p.poderes))    p.poderes.forEach(p2   => { p2.nome = limparTags(p2.nome); p2.desc = limparTags(p2.desc); p2.dano = limparTags(p2.dano); });
+  if (Array.isArray(p.mapas))      p.mapas.forEach(m      => { m.nome = limparTags(m.nome);  m.desc = limparTags(m.desc); });
+  if (p.aliados && Array.isArray(p.aliados)) p.aliados.forEach(a => { a.nome = limparTags(a.nome); a.desc = limparTags(a.desc); a.local = limparTags(a.local); });
+  return p;
+}
+
+function sanitizarCampanha(c) {
+  if (!c) return c;
+  ["nome","sistema","descricao"].forEach(k => { if (c[k]) c[k] = limparTags(c[k]); });
+  if (Array.isArray(c.sessoes))   c.sessoes.forEach(s   => { s.nome = limparTags(s.nome); s.descricao = limparTags(s.descricao); });
+  if (Array.isArray(c.eventos))   c.eventos.forEach(e   => { e.nome = limparTags(e.nome); e.descricao = limparTags(e.descricao); });
+  if (Array.isArray(c.npcsMundo)) c.npcsMundo.forEach(n => { n.nome = limparTags(n.nome); n.classe = limparTags(n.classe); n.regiao = limparTags(n.regiao); });
+  if (Array.isArray(c.encontrosPlanejados)) c.encontrosPlanejados.forEach(e => { e.nome = limparTags(e.nome); e.regiao = limparTags(e.regiao); e.objetivo = limparTags(e.objetivo); });
+  return c;
+}
 
 // ===== SISTEMA DE PLANOS =====
 const EMAILS_VIP = [
@@ -332,16 +371,16 @@ function renderCampanhasMaster() {
     onclick="entrarCampanhaMaster(${index})"
     style="${
       campanha.imagem
-        ? `background-image: linear-gradient(rgba(8,5,5,0.45), rgba(8,5,5,0.88)), url('${campanha.imagem}')`
+        ? `background-image: linear-gradient(rgba(8,5,5,0.45), rgba(8,5,5,0.88)), url('${campanha.imagem.replace(/'/g,"").replace(/"/g,"")}')`
         : ""
     }"
   >
     <div class="campanha-card-conteudo">
-      <h3>${campanha.nome}</h3>
+      <h3>${esc(campanha.nome)}</h3>
 
-      <span>${campanha.sistema || "Sistema não definido"}</span>
+      <span>${esc(campanha.sistema) || "Sistema não definido"}</span>
 
-      <p>${campanha.descricao || "Sem descrição ainda."}</p>
+      <p>${esc(campanha.descricao) || "Sem descrição ainda."}</p>
     </div>
   </div>
 
@@ -412,6 +451,7 @@ function entrarCampanhaMaster(index) {
     return;
   }
   campanhaAtualMaster = index;
+  sanitizarCampanha(campanhasMaster[index]);
   salvarCampanhasMaster();
 
   document.getElementById("telaCampanhasMaster").style.display = "none";
@@ -1406,7 +1446,6 @@ function trocarAba(id, btn = null) {
 
   setTimeout(() => {
     if (id === "personagem") {
-      ativarDragEditorImagem();
     }
   }, 100);
 }
@@ -1486,8 +1525,8 @@ function renderPersonagens() {
 
     card.innerHTML = `
       <div class="card-info">
-        <span class="card-nome">${p.nome || "Sem nome"}</span>
-        <span class="card-classe">${p.classe || "Sem classe"}</span>
+        <span class="card-nome">${esc(p.nome) || "Sem nome"}}</span>
+        <span class="card-classe">${esc(p.classe) || "Sem classe"}</span>
       </div>
 
       <div class="card-acoes">
@@ -1603,10 +1642,10 @@ function renderAliados() {
 
     li.innerHTML = `
       <div class="item-info">
-        <strong class="item-nome">${aliado.nome || "Sem nome"}</strong>
-        ${aliado.local ? `<div class="aliado-local">📍 ${aliado.local}</div>` : ""}
+        <strong class="item-nome">${esc(aliado.nome) || "Sem nome"}</strong>
+        ${aliado.local ? `<div class="aliado-local">📍 ${esc(aliado.local)}</div>` : ""}
         <p class="item-preview">
-          ${aliado.desc ? aliado.desc.substring(0, 80) + (aliado.desc.length > 80 ? "..." : "") : "Sem descrição"}
+          ${aliado.desc ? esc(aliado.desc).substring(0, 80) + (aliado.desc.length > 80 ? "..." : "") : "Sem descrição"}
         </p>
       </div>
 
@@ -1969,10 +2008,10 @@ function renderArmaduras() {
 
     li.innerHTML = `
       <div class="armadura-info" onclick="verArmadura(${index})">
-        <strong class="armadura-nome">${armadura.nome || "Sem nome"}</strong>
-        <p class="armadura-ca-preview">CA: ${armadura.ca || "Sem CA"}</p>
+        <strong class="armadura-nome">${esc(armadura.nome) || "Sem nome"}</strong>
+        <p class="armadura-ca-preview">CA: ${esc(armadura.ca) || "Sem CA"}</p>
         <p class="armadura-desc-preview">
-          ${armadura.desc ? armadura.desc.substring(0, 60) + (armadura.desc.length > 60 ? "..." : "") : "Sem descrição"}
+          ${armadura.desc ? esc(armadura.desc).substring(0, 60) + (armadura.desc.length > 60 ? "..." : "") : "Sem descrição"}
         </p>
         ${cargasHTML}
       </div>
@@ -2009,12 +2048,12 @@ function verArmadura(index) {
     <div class="popup-bloco">
       <div>
         <span class="popup-label">CA</span>
-        <div class="popup-descricao-pequena">${armadura.ca || "Sem CA"}</div>
+        <div class="popup-descricao-pequena">${esc(armadura.ca) || "Sem CA"}</div>
       </div>
 
       <div style="margin-top: 12px;">
         <span class="popup-label">Descrição</span>
-        <div class="popup-descricao">${armadura.desc || "Sem descrição"}</div>
+        <div class="popup-descricao">${esc(armadura.desc) || "Sem descrição"}</div>
       </div>
     </div>
   `;
@@ -2159,6 +2198,7 @@ function carregarPersonagem(index) {
   const p = personagens[index];
   if (!p) return;
 
+  sanitizarPersonagem(p);
   document.getElementById("classe").value = p.classe || "";
   document.getElementById("nome").value = p.nome || "";
   const racaSelect = document.getElementById("racaSelect");
@@ -2288,7 +2328,6 @@ function carregarPersonagem(index) {
   renderArmaduras();
 
   setTimeout(() => {
-    ativarDragEditorImagem();
   }, 100);
 }
 
@@ -2596,7 +2635,7 @@ function renderInv() {
       <div class="item-info" onclick="verItem(${index})">
         <div class="item-topo-linha">
           <strong class="item-nome">
-            ${item.nome || "Sem nome"}
+            ${item.nome ? esc(item.nome) : "Sem nome"}
             ${item.requerSintonia ? `<span class="item-tag-sintonia">${item.sintonizado ? "Sint." : "Req. Sint."}</span>` : ""}
           </strong>
 
@@ -2609,7 +2648,7 @@ function renderInv() {
         </div>
 
         <p class="item-preview">
-          ${item.desc ? item.desc.substring(0, 60) + (item.desc.length > 60 ? "..." : "") : "Sem descrição"}
+          ${item.desc ? esc(item.desc).substring(0, 60) + (item.desc.length > 60 ? "..." : "") : "Sem descrição"}
         </p>
       </div>
 
@@ -2815,10 +2854,10 @@ function renderArmas() {
 
     li.innerHTML = `
       <div class="arma-info" onclick="verArma(${index})">
-        <strong class="arma-nome">${arma.nome || "Sem nome"}</strong>
-        <p class="arma-dano-preview">${arma.dano || "Sem dano"}</p>
+        <strong class="arma-nome">${esc(arma.nome) || "Sem nome"}</strong>
+        <p class="arma-dano-preview">${esc(arma.dano) || "Sem dano"}</p>
         <p class="arma-desc-preview">
-          ${arma.desc ? arma.desc.substring(0, 60) + (arma.desc.length > 60 ? "..." : "") : "Sem descrição"}
+          ${arma.desc ? esc(arma.desc).substring(0, 60) + (arma.desc.length > 60 ? "..." : "") : "Sem descrição"}
         </p>
         ${cargasHTML}
       </div>
@@ -3013,20 +3052,20 @@ function renderPoderes() {
 
     li.innerHTML = `
       <div class="poder-info" onclick="verPoder(${index})">
-        <strong class="poder-nome">${icone} ${poder.nome || "Sem nome"}</strong>
+        <strong class="poder-nome">${icone} ${esc(poder.nome) || "Sem nome"}</strong>
 
         ${
           poder.dano
             ? `
           <div class="poder-tags">
-            <span class="tag-dano">${poder.dano}</span>
+            <span class="tag-dano">${esc(poder.dano)}</span>
           </div>
         `
             : ""
         }
 
         <p class="poder-preview">
-          ${poder.desc ? poder.desc.substring(0, 70) + (poder.desc.length > 70 ? "..." : "") : "Sem descrição"}
+          ${poder.desc ? esc(poder.desc).substring(0, 70) + (poder.desc.length > 70 ? "..." : "") : "Sem descrição"}
         </p>
 
         ${cargasHTML}
@@ -3095,6 +3134,18 @@ function importarFichaArquivo(e) {
   const file = e.target.files[0];
   if (!file) return;
 
+  if (!file.name.endsWith(".json")) {
+    alert("Apenas arquivos .json são aceitos.");
+    e.target.value = "";
+    return;
+  }
+
+  if (file.size > 2 * 1024 * 1024) {
+    alert("Arquivo muito grande. Máximo permitido: 2MB.");
+    e.target.value = "";
+    return;
+  }
+
   const reader = new FileReader();
 
   reader.onload = async function (event) {
@@ -3104,13 +3155,20 @@ function importarFichaArquivo(e) {
       let personagensSalvos =
         JSON.parse(localStorage.getItem("personagens")) || [];
 
+      const validar = (p) => p && (p.nome || p.classe || p.raca);
+
       if (Array.isArray(dadosImportados)) {
-        dadosImportados.forEach((p) => {
+        const validos = dadosImportados.filter(validar);
+        if (!validos.length) throw new Error("Nenhuma ficha válida encontrada.");
+        validos.forEach((p) => {
           p.imagem = "";
+          sanitizarPersonagem(p);
           personagensSalvos.push(p);
         });
       } else {
+        if (!validar(dadosImportados)) throw new Error("Arquivo não parece ser uma ficha válida.");
         dadosImportados.imagem = "";
+        sanitizarPersonagem(dadosImportados);
         personagensSalvos.push(dadosImportados);
       }
 
@@ -5064,8 +5122,8 @@ function renderMapas() {
     li.innerHTML = `
       ${thumbHTML}
       <div class="mapa-card-info" onclick="verMapa(${index})">
-        <div class="mapa-card-nome">${mapa.nome}</div>
-        <div class="mapa-card-desc">${mapa.desc || "Sem descrição"}</div>
+        <div class="mapa-card-nome">${esc(mapa.nome)}</div>
+        <div class="mapa-card-desc">${esc(mapa.desc) || "Sem descrição"}</div>
         <div class="mapa-card-desc" style="color:#b89654;margin-top:4px">${(mapa.anotacoes||[]).length}/30 anotações</div>
       </div>
       <div class="mapa-card-acoes">
@@ -8643,7 +8701,7 @@ function renderPainelIniciativa() {
     <div class="iniciativa-separador">Ordenar por iniciativa</div>
     ${ordenado.map((entry, i) => `
       <div class="iniciativa-item ${iniciativaTurnoAtual === i ? "ativo" : ""}">
-        <span class="iniciativa-nome">${entry.nome}</span>
+        <span class="iniciativa-nome">${escapeHtml(entry.nome)}</span>
         <input
           class="iniciativa-input"
           type="number"
