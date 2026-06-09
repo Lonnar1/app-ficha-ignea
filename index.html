@@ -980,32 +980,24 @@
 
       <!-- ================= EDITOR DE IMAGEM (GLOBAL) ================= -->
       <div id="editorImagemInline" class="editor-inline fechado">
-        <div class="editor-container">
-          <h3 class="editor-titulo">Ajustar imagem</h3>
+  <div class="editor-container">
+    <div class="editor-viewport">
+      <canvas id="editorCanvas"></canvas>
+      <div class="editor-mascara-circular"></div>
+    </div>
 
-          <div class="editor-box">
-            <img id="previewEditor" src="" />
-          </div>
+    <div class="editor-slider-row">
+      <span class="editor-zoom-icon">−</span>
+      <input type="range" id="editorZoom" min="0.5" max="3" step="0.01" value="1" oninput="atualizarZoomEditor()" />
+      <span class="editor-zoom-icon">+</span>
+    </div>
 
-          <div class="editor-acoes">
-            <button
-              type="button"
-              class="botao-upload"
-              onclick="fecharEditorImagem()"
-            >
-              Cancelar
-            </button>
-
-            <button
-              type="button"
-              class="botao-upload"
-              onclick="salvarEditorImagem()"
-            >
-              Salvar
-            </button>
-          </div>
-        </div>
-      </div>
+    <div class="editor-acoes">
+      <button type="button" class="editor-btn-secundario" onclick="fecharEditorImagem()">Cancelar</button>
+      <button type="button" class="editor-btn-principal" onclick="salvarEditorImagem()">Cortar foto</button>
+    </div>
+  </div>
+</div>
 
       <!-- ================= ATRIBUTOS ================= -->
       <div class="aba" id="atributos" style="display: none">
@@ -1499,8 +1491,76 @@
           </div>
 
           <ul id="lista" class="lista-sempre-visivel"></ul>
+          
+          <div class="secao-toggle">
+        <h2 class="titulo-secao titulo-toggle" onclick="toggleSecao('boxMapasForm', this)">
+          <span>Mapas</span>
+          <span class="setinha">▼</span>
+        </h2>
+        <div id="boxMapasForm" class="conteudo-toggle aberto">
+          <div class="mapa-add">
+            <input id="mapaNome" placeholder="Nome do mapa" />
+            <textarea id="mapaDesc" placeholder="Descrição do mapa"></textarea>
+            <label class="botao-upload mapa-upload-label">
+              Escolher imagem
+              <input type="file" id="mapaImagem" accept="image/*" onchange="previewMapaImagem()" style="display:none" />
+            </label>
+            <div id="mapaPreviewBox" style="display:none">
+              <img id="mapaPreview" class="mapa-preview-thumb" />
+            </div>
+            <div class="add-linha">
+              <button class="inv-add-btn" onclick="addMapa()">+</button>
+            </div>
+          </div>
+        </div>
+        <ul id="listaMapas" class="lista-sempre-visivel"></ul>
+      </div>
         </div>
       </div>
+
+
+      <!-- VISUALIZADOR DE MAPA FULLSCREEN -->
+      <div id="mapaViewer" class="mapa-viewer fechado">
+        <div class="mapa-viewer-topo">
+          <span id="mapaViewerNome" class="mapa-viewer-titulo"></span>
+          <button class="mapa-viewer-fechar" onclick="fecharMapaViewer()">✕</button>
+        </div>
+        <canvas id="mapaCanvas"></canvas>
+        <div class="mapa-viewer-toolbar">
+          <div class="mapa-toolbar-cores">
+            <div class="mapa-cor ativa" style="background:#ef4444" data-cor="#ef4444" onclick="selecionarCorMapa(this)"></div>
+            <div class="mapa-cor" style="background:#3b82f6" data-cor="#3b82f6" onclick="selecionarCorMapa(this)"></div>
+            <div class="mapa-cor" style="background:#22c55e" data-cor="#22c55e" onclick="selecionarCorMapa(this)"></div>
+            <div class="mapa-cor" style="background:#000000" data-cor="#000000" onclick="selecionarCorMapa(this)"></div>
+            <div class="mapa-cor" style="background:#ffffff" data-cor="#ffffff" onclick="selecionarCorMapa(this)"></div>
+          </div>
+          <div class="mapa-toolbar-ferramentas">
+            <button class="mapa-tool ativa" data-tool="pincel" onclick="selecionarFerramentaMapa(this)" title="Pincel">✏</button>
+            <button class="mapa-tool" data-tool="texto" onclick="selecionarFerramentaMapa(this)" title="Texto">T</button>
+            <button class="mapa-tool" data-tool="seta" onclick="selecionarFerramentaMapa(this)" title="Seta">↗</button>
+            <button class="mapa-tool" data-tool="x" onclick="selecionarFerramentaMapa(this)" title="X">✗</button>
+            <button class="mapa-tool" data-tool="caveira" onclick="selecionarFerramentaMapa(this)" title="Caveira">☠</button>
+            <button class="mapa-tool" data-tool="pergaminho" onclick="selecionarFerramentaMapa(this)" title="Pergaminho">📜</button>
+            <button class="mapa-tool" data-tool="interrogacao" onclick="selecionarFerramentaMapa(this)" title="?">?</button>
+            <button class="mapa-tool" data-tool="pan" onclick="selecionarFerramentaMapa(this)" title="Mover">✋</button>
+            <button class="mapa-tool" data-tool="borracha" onclick="selecionarFerramentaMapa(this)" title="Borracha">⌫</button>
+          </div>
+          <div class="mapa-toolbar-acoes">
+            <button class="mapa-tool-acao" onclick="desfazerMapaAnotacao()" title="Desfazer">↩</button>
+            <button class="mapa-tool-acao mapa-zoom-in" onclick="zoomMapa(0.2)" title="Zoom +">+</button>
+            <button class="mapa-tool-acao mapa-zoom-out" onclick="zoomMapa(-0.2)" title="Zoom −">−</button>
+            <button class="mapa-tool-acao mapa-salvar" onclick="salvarAnotacoesMapa()" title="Salvar">Salvar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- INPUT TEXTO MAPA -->
+      <div id="mapaInputTexto" class="mapa-input-texto fechado">
+        <input id="mapaTextoValor" placeholder="Digite a anotação..." />
+        <button onclick="confirmarTextoMapa()">OK</button>
+        <button onclick="cancelarTextoMapa()">✕</button>
+      </div>
+
 
       <!-- ================= PODERES ================= -->
       <div class="aba" id="poderes" style="display: none">
@@ -2161,6 +2221,7 @@ import {
     ficha.nome?.trim() ||
     ficha.classe?.trim() ||
     ficha.raca?.trim() ||
+    ficha.imagem ||
     ficha.imagemBase64
   )
 );
