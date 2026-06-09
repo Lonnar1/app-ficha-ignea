@@ -3,7 +3,7 @@
 const EMAILS_VIP = [
   "fichaignea@gmail.com",
   "lonnar321@gmail.com",
-  "niviciusedney@gmail.com"
+  "niviciusedney@gmail.com" 
 ];
 
 function getPlanoUsuario() {
@@ -171,6 +171,25 @@ let poderes = [];
 let profs = {};
 let saves = {};
 let imagemBase64 = "";
+let imagemOriginalBase64 = "";
+let mapas = [];
+let mapaAtual = null;
+let mapaZoom = 1;
+let mapaOffsetX = 0;
+let mapaOffsetY = 0;
+let mapaFerramentaAtiva = "pincel";
+let mapaCorAtiva = "#ef4444";
+let mapaPintando = false;
+let mapaUltimoX = 0;
+let mapaUltimoY = 0;
+let mapaAnotacoes = [];
+let mapaHistorico = [];
+let mapaImagemObj = null;
+let mapaTextoX = 0;
+let mapaTextoY = 0;
+let mapaPanUltimoX = 0;
+let mapaPanUltimoY = 0;
+let mapaBase64Temp = "";
 let exaustao = 0;
 let armaduras = [];
 let editandoArmadura = -1;
@@ -1341,7 +1360,6 @@ function trocarAba(id, btn = null) {
     }
 
     setTimeout(() => {
-      ativarDragEditorImagem();
     }, 100);
 
     atualizarEstadoLowHP();
@@ -2197,6 +2215,7 @@ function carregarPersonagem(index) {
 
   document.getElementById("preview").src = p.imagem || "";
   imagemBase64 = p.imagem || "";
+  imagemOriginalBase64 = p.imagemOriginal || p.imagem || "";
 
   const nomeArquivo = document.getElementById("nome-arquivo");
   if (nomeArquivo) {
@@ -2221,6 +2240,8 @@ function carregarPersonagem(index) {
   poderes = p.poderes || [];
   profs = p.profs || {};
   armaduras = p.armaduras || [];
+  mapas = p.mapas || [];
+  renderMapas();
   nomeRacaCustom = p.nomeRacaCustom || "";
   atualizarNomeOpcaoCustom();
   gastosCirculos = p.gastosCirculos || {
@@ -2291,9 +2312,11 @@ function salvarTudo() {
   p.antecedentes = document.getElementById("antecedentes")?.value || "";
   p.idiomas = document.getElementById("idiomas").value;
   p.armaduras = armaduras;
+  p.mapas = mapas;
   p.proficienciasExtras =
     document.getElementById("proficienciasExtras")?.value || "";
   p.imagem = imagemBase64;
+  p.imagemOriginal = imagemOriginalBase64;
   p.imagemPosX = imagemPosX;
   p.imagemPosY = imagemPosY;
   const resistenciasEl = document.getElementById("resistencias");
@@ -2366,6 +2389,7 @@ function previewImagem() {
   const reader = new FileReader();
   reader.onload = function (e) {
     imagemBase64 = e.target.result;
+    imagemOriginalBase64 = e.target.result;
     imagemPosX = 50;
     imagemPosY = 50;
 
@@ -2379,25 +2403,94 @@ function previewImagem() {
   reader.readAsDataURL(file);
 }
 
+let editorZoom = 1;
+let editorOffsetX = 0;
+let editorOffsetY = 0;
+let editorDragging = false;
+let editorLastX = 0;
+let editorLastY = 0;
+let editorImg = new Image();
+
 function abrirEditorImagem() {
   if (!imagemBase64) {
     alert("Escolha uma imagem primeiro.");
     return;
   }
-  
 
   const editorWrap = document.getElementById("editorImagemInline");
-  const editor = document.getElementById("previewEditor");
+  if (!editorWrap) return;
 
-  if (!editorWrap || !editor) return;
+  editorZoom = 1;
+  editorOffsetX = 0;
+  editorOffsetY = 0;
+  document.getElementById("editorZoom").value = 1;
 
-  
-  editor.src = imagemBase64;
-  editor.style.objectPosition = `${imagemPosX}% ${imagemPosY}%`;
+  editorImg = new Image();
+  editorImg.onload = function () {
+    desenharEditorCanvas();
+    ativarDragEditorCanvas();
+  };
+  editorImg.src = imagemOriginalBase64 || imagemBase64;
 
   editorWrap.classList.remove("fechado");
-  delete editor.dataset.dragAtivo;
-  ativarDragEditorImagem();
+}
+
+function desenharEditorCanvas() {
+  const canvas = document.getElementById("editorCanvas");
+  if (!canvas || !editorImg.width) return;
+
+  const size = canvas.offsetWidth;
+  canvas.width = size;
+  canvas.height = size;
+
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, size, size);
+
+  const scale = editorZoom;
+  const imgW = editorImg.width * scale;
+  const imgH = editorImg.height * scale;
+
+  const baseScale = Math.max(size / editorImg.width, size / editorImg.height);
+  const finalW = editorImg.width * baseScale * editorZoom;
+  const finalH = editorImg.height * baseScale * editorZoom;
+
+  const x = size / 2 - finalW / 2 + editorOffsetX;
+  const y = size / 2 - finalH / 2 + editorOffsetY;
+
+  ctx.drawImage(editorImg, x, y, finalW, finalH);
+}
+
+function atualizarZoomEditor() {
+  editorZoom = parseFloat(document.getElementById("editorZoom").value);
+  desenharEditorCanvas();
+}
+
+function ativarDragEditorCanvas() {
+  const canvas = document.getElementById("editorCanvas");
+  if (!canvas) return;
+
+  canvas.onmousedown = (e) => { editorDragging = true; editorLastX = e.clientX; editorLastY = e.clientY; };
+  document.onmousemove = (e) => {
+    if (!editorDragging) return;
+    editorOffsetX += e.clientX - editorLastX;
+    editorOffsetY += e.clientY - editorLastY;
+    editorLastX = e.clientX;
+    editorLastY = e.clientY;
+    desenharEditorCanvas();
+  };
+  document.onmouseup = () => { editorDragging = false; };
+
+  canvas.ontouchstart = (e) => { editorDragging = true; editorLastX = e.touches[0].clientX; editorLastY = e.touches[0].clientY; };
+  canvas.ontouchmove = (e) => {
+    if (!editorDragging) return;
+    e.preventDefault();
+    editorOffsetX += e.touches[0].clientX - editorLastX;
+    editorOffsetY += e.touches[0].clientY - editorLastY;
+    editorLastX = e.touches[0].clientX;
+    editorLastY = e.touches[0].clientY;
+    desenharEditorCanvas();
+  };
+  canvas.ontouchend = () => { editorDragging = false; };
 }
 
 function fecharEditorImagem() {
@@ -2408,65 +2501,31 @@ function fecharEditorImagem() {
 }
 
 function salvarEditorImagem() {
+  const canvas = document.getElementById("editorCanvas");
+  if (!canvas) return;
+
+  const outputCanvas = document.createElement("canvas");
+  outputCanvas.width = 400;
+  outputCanvas.height = 400;
+  const ctx = outputCanvas.getContext("2d");
+
+  const size = canvas.width;
+  const ratio = 400 / size;
+
+  ctx.drawImage(canvas, 0, 0, size, size, 0, 0, 400, 400);
+
+  imagemBase64 = outputCanvas.toDataURL("image/jpeg", 0.9);
+  // não sobrescreve imagemOriginalBase64 — mantém original para reedição
+
   const preview = document.getElementById("preview");
   if (preview) {
-    preview.style.objectPosition = `${imagemPosX}% ${imagemPosY}%`;
+    preview.src = imagemBase64;
+    preview.style.objectPosition = "50% 50%";
   }
 
   salvarTudo();
   renderPersonagens();
   fecharEditorImagem();
-}
-
-function ativarDragEditorImagem() {
-  const img = document.getElementById("previewEditor");
-  if (!img) return;
-
-  let arrastando = false;
-  let ultimoX = 0;
-  let ultimoY = 0;
-
-  function aplicarPosicao() {
-    imagemPosX = Math.max(0, Math.min(100, imagemPosX));
-    imagemPosY = Math.max(0, Math.min(100, imagemPosY));
-    img.style.setProperty(
-      "object-position",
-      `${imagemPosX}% ${imagemPosY}%`,
-      "important"
-    );
-  }
-
-  img.onmousedown = function (e) {
-    arrastando = true;
-    ultimoX = e.clientX;
-    ultimoY = e.clientY;
-    img.classList.add("arrastando");
-    if (e.cancelable) {
-    e.preventDefault();
-}
-  };
-
-  document.onmousemove = function (e) {
-    if (!arrastando) return;
-
-    const dx = e.clientX - ultimoX;
-    const dy = e.clientY - ultimoY;
-
-    ultimoX = e.clientX;
-    ultimoY = e.clientY;
-
-    imagemPosX -= dx * 0.35;
-    imagemPosY -= dy * 0.35;
-
-    aplicarPosicao();
-  };
-
-  document.onmouseup = function () {
-    arrastando = false;
-    img.classList.remove("arrastando");
-  };
-
-  aplicarPosicao();
 }
 
 /* ================= INVENTÁRIO ================= */
@@ -4936,6 +4995,483 @@ function selecionarDificuldade(valor, btn) {
   document.querySelectorAll('.criar-dif-btn').forEach(b => b.classList.remove('ativo'));
   btn.classList.add('ativo');
   document.getElementById('encontroDificuldade').value = valor;
+}
+
+/* ================= MAPAS ================= */
+
+function previewMapaImagem() {
+  const input = document.getElementById("mapaImagem");
+  const preview = document.getElementById("mapaPreview");
+  const box = document.getElementById("mapaPreviewBox");
+  if (!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    mapaBase64Temp = e.target.result;
+    preview.src = mapaBase64Temp;
+    box.style.display = "block";
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+async function addMapa() {
+  const nome = document.getElementById("mapaNome").value.trim();
+  const desc = document.getElementById("mapaDesc").value.trim();
+
+  if (!nome) { alert("Coloque o nome do mapa."); return; }
+  if (!mapaBase64Temp) { alert("Escolha uma imagem para o mapa."); return; }
+
+  if (mapas.length >= 15) { alert("Limite de 15 mapas por personagem."); return; }
+
+  const btn = document.querySelector("#boxMapasForm .inv-add-btn");
+  if (btn) { btn.disabled = true; btn.textContent = "..."; }
+
+  let imagemUrl = mapaBase64Temp;
+  let imagemDeleteUrl = "";
+
+  try {
+    const resultado = await uploadImagemFirebase(mapaBase64Temp, "mapa");
+    imagemUrl = resultado.url;
+    imagemDeleteUrl = resultado.deleteUrl;
+  } catch(e) { console.warn("Upload mapa falhou, usando base64"); }
+
+  mapas.push({ nome, desc, imagemUrl, imagemDeleteUrl, anotacoes: [] });
+
+  document.getElementById("mapaNome").value = "";
+  document.getElementById("mapaDesc").value = "";
+  document.getElementById("mapaImagem").value = "";
+  document.getElementById("mapaPreviewBox").style.display = "none";
+  mapaBase64Temp = "";
+
+  if (btn) { btn.disabled = false; btn.textContent = "+"; }
+
+  salvarTudo();
+  renderMapas();
+}
+
+function renderMapas() {
+  const ul = document.getElementById("listaMapas");
+  if (!ul) return;
+  ul.innerHTML = "";
+
+  mapas.forEach((mapa, index) => {
+    const li = document.createElement("li");
+    li.className = "mapa-card";
+
+    const thumbHTML = mapa.imagemUrl
+      ? `<img class="mapa-card-thumb" src="${mapa.imagemUrl}" />`
+      : `<div class="mapa-card-thumb-placeholder">🗺</div>`;
+
+    li.innerHTML = `
+      ${thumbHTML}
+      <div class="mapa-card-info" onclick="verMapa(${index})">
+        <div class="mapa-card-nome">${mapa.nome}</div>
+        <div class="mapa-card-desc">${mapa.desc || "Sem descrição"}</div>
+        <div class="mapa-card-desc" style="color:#b89654;margin-top:4px">${(mapa.anotacoes||[]).length}/30 anotações</div>
+      </div>
+      <div class="mapa-card-acoes">
+        <button class="btn-abrir-mapa" onclick="event.stopPropagation(); verMapa(${index})">Ver</button>
+        <button class="btn-remover-mapa" onclick="event.stopPropagation(); removerMapa(${index})">X</button>
+      </div>
+    `;
+
+    ul.appendChild(li);
+  });
+}
+
+function verMapa(index) {
+  const mapa = mapas[index];
+  if (!mapa) return;
+
+  const thumbHTML = mapa.imagemUrl
+    ? `<img src="${mapa.imagemUrl}" style="width:100%;max-height:180px;object-fit:cover;border-radius:12px;margin-bottom:12px;border:1px solid rgba(200,169,107,0.2)" />`
+    : "";
+
+  const html = `
+    <div class="popup-bloco">
+      ${thumbHTML}
+      <div>
+        <span class="popup-label">Descrição</span>
+        <div class="popup-descricao" style="min-height:auto;padding:10px 12px">${mapa.desc || "Sem descrição"}</div>
+      </div>
+      <div style="margin-top:14px;text-align:center">
+        <span class="popup-label" style="color:#b89654">${(mapa.anotacoes||[]).length}/30 anotações</span>
+      </div>
+      <button
+        onclick="fecharPopup(); abrirMapaViewer(${index})"
+        style="margin-top:14px;width:100%;padding:11px;border-radius:12px;background:#b89654;color:#1b1411;font-weight:bold;border:none;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:1px"
+      >
+        Abrir Mapa
+      </button>
+    </div>
+  `;
+
+  abrirPopup(mapa.nome, html, true, () => editarMapa(index));
+}
+
+function editarMapa(index) {
+  const mapa = mapas[index];
+  if (!mapa) return;
+
+  const html = `
+    <div class="popup-bloco">
+      <input id="editMapaNome" value="${mapa.nome}" placeholder="Nome do mapa" style="margin-bottom:8px" />
+      <textarea id="editMapaDesc" placeholder="Descrição">${mapa.desc || ""}</textarea>
+      <button
+        onclick="salvarEdicaoMapa(${index})"
+        style="margin-top:10px;width:100%;padding:11px;border-radius:12px;background:#b89654;color:#1b1411;font-weight:bold;border:none;cursor:pointer"
+      >
+        Salvar
+      </button>
+    </div>
+  `;
+
+  abrirPopup("Editar Mapa", html, true, null);
+}
+
+function salvarEdicaoMapa(index) {
+  const nome = document.getElementById("editMapaNome")?.value.trim();
+  const desc = document.getElementById("editMapaDesc")?.value.trim();
+  if (!nome) { alert("Nome obrigatório."); return; }
+  mapas[index].nome = nome;
+  mapas[index].desc = desc;
+  salvarTudo();
+  renderMapas();
+  fecharPopup();
+}
+
+function removerMapa(index) {
+  if (!confirm("Remover este mapa?")) return;
+  mapas.splice(index, 1);
+  salvarTudo();
+  renderMapas();
+}
+
+function abrirMapaViewer(index) {
+  mapaAtual = index;
+  const mapa = mapas[index];
+  if (!mapa) return;
+
+  document.getElementById("mapaViewerNome").textContent = mapa.nome;
+  document.getElementById("mapaViewer").classList.remove("fechado");
+  document.body.style.overflow = "hidden";
+
+  mapaZoom = 1;
+  mapaOffsetX = 0;
+  mapaOffsetY = 0;
+  mapaAnotacoes = JSON.parse(JSON.stringify(mapa.anotacoes || []));
+  mapaHistorico = [];
+
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.onload = () => {
+    mapaImagemObj = img;
+    redimensionarMapaCanvas();
+    desenharMapa();
+    ativarEventosMapaCanvas();
+  };
+  img.src = mapa.imagemUrl;
+}
+
+function fecharMapaViewer() {
+  document.getElementById("mapaViewer").classList.add("fechado");
+  document.body.style.overflow = "";
+  document.getElementById("mapaInputTexto").classList.add("fechado");
+  mapaImagemObj = null;
+  mapaAtual = null;
+}
+
+function redimensionarMapaCanvas() {
+  const canvas = document.getElementById("mapaCanvas");
+  canvas.width = canvas.offsetWidth;
+  canvas.height = canvas.offsetHeight;
+}
+
+function mapaGetTransform() {
+  const canvas = document.getElementById("mapaCanvas");
+  const W = canvas.width;
+  const H = canvas.height;
+  const escala = Math.min(W / mapaImagemObj.width, H / mapaImagemObj.height) * mapaZoom;
+  const imgW = mapaImagemObj.width * escala;
+  const imgH = mapaImagemObj.height * escala;
+  const originX = W / 2 - imgW / 2 + mapaOffsetX;
+  const originY = H / 2 - imgH / 2 + mapaOffsetY;
+  return { originX, originY, imgW, imgH, escala };
+}
+
+function mapaRelParaCanvas(rx, ry) {
+  const t = mapaGetTransform();
+  return [t.originX + rx * t.imgW, t.originY + ry * t.imgH];
+}
+
+function mapaCanvasParaRel(cx, cy) {
+  const t = mapaGetTransform();
+  return [(cx - t.originX) / t.imgW, (cy - t.originY) / t.imgH];
+}
+
+function desenharMapa() {
+  const canvas = document.getElementById("mapaCanvas");
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width;
+  const H = canvas.height;
+
+  ctx.clearRect(0, 0, W, H);
+
+  if (!mapaImagemObj) return;
+
+  const t = mapaGetTransform();
+  ctx.drawImage(mapaImagemObj, t.originX, t.originY, t.imgW, t.imgH);
+
+  mapaAnotacoes.forEach(a => {
+    ctx.save();
+    ctx.strokeStyle = a.cor;
+    ctx.fillStyle = a.cor;
+    ctx.lineWidth = 3;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+
+    if (a.tipo === "pincel" && a.pontos && a.pontos.length > 1) {
+      const [x0, y0] = mapaRelParaCanvas(a.pontos[0][0], a.pontos[0][1]);
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      for (let i = 1; i < a.pontos.length; i++) {
+        const [xi, yi] = mapaRelParaCanvas(a.pontos[i][0], a.pontos[i][1]);
+        ctx.lineTo(xi, yi);
+      }
+      ctx.stroke();
+    } else {
+      const [cx, cy] = mapaRelParaCanvas(a.x, a.y);
+      if (a.tipo === "texto") {
+        ctx.font = "bold 16px Arial";
+        ctx.fillText(a.texto, cx, cy);
+      } else if (a.tipo === "seta") {
+        desenharSetaMapa(ctx, cx, cy, a.cor);
+      } else if (a.tipo === "x") {
+        ctx.font = "bold 28px Arial";
+        ctx.fillText("✗", cx - 10, cy + 10);
+      } else if (a.tipo === "caveira") {
+        ctx.font = "26px Arial";
+        ctx.fillText("☠", cx - 10, cy + 10);
+      } else if (a.tipo === "pergaminho") {
+        ctx.font = "24px Arial";
+        ctx.fillText("📜", cx - 10, cy + 10);
+      } else if (a.tipo === "interrogacao") {
+        ctx.font = "bold 26px Arial";
+        ctx.fillText("?", cx - 6, cy + 10);
+      }
+    }
+
+    ctx.restore();
+  });
+}
+
+function desenharSetaMapa(ctx, x, y, cor) {
+  ctx.strokeStyle = cor;
+  ctx.fillStyle = cor;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(x - 15, y + 15);
+  ctx.lineTo(x + 10, y - 10);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x + 10, y - 10);
+  ctx.lineTo(x - 2, y - 10);
+  ctx.lineTo(x + 10, y + 2);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function ativarEventosMapaCanvas() {
+  const canvas = document.getElementById("mapaCanvas");
+  let tracoAtual = null;
+
+  function posCanvas(e) {
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches ? e.touches[0] : e;
+    return [touch.clientX - rect.left, touch.clientY - rect.top];
+  }
+
+  function iniciar(e) {
+    const [x, y] = posCanvas(e);
+    if (mapaFerramentaAtiva === "pan") {
+      mapaPintando = true;
+      mapaPanUltimoX = x;
+      mapaPanUltimoY = y;
+      return;
+    }
+    if (mapaFerramentaAtiva === "texto") {
+      mapaTextoX = x;
+      mapaTextoY = y;
+      document.getElementById("mapaInputTexto").classList.remove("fechado");
+      document.getElementById("mapaTextoValor").focus();
+      return;
+    }
+    if (mapaFerramentaAtiva === "borracha") {
+      const clicado = mapaAnotacoes.findIndex(a => {
+        if (a.tipo === "pincel") {
+          return a.pontos.some(([px, py]) => {
+            const [cx, cy] = mapaRelParaCanvas(px, py);
+            return Math.hypot(cx - x, cy - y) < 18;
+          });
+        } else {
+          const [cx, cy] = mapaRelParaCanvas(a.x, a.y);
+          return Math.hypot(cx - x, cy - y) < 40;
+        }
+      });
+      if (clicado !== -1) {
+        mapaHistorico.push(JSON.parse(JSON.stringify(mapaAnotacoes)));
+        mapaAnotacoes.splice(clicado, 1);
+        desenharMapa();
+      }
+      return;
+    }
+
+    if (["seta","x","caveira","pergaminho","interrogacao"].includes(mapaFerramentaAtiva)) {
+      if (mapaAnotacoes.length >= 30) { alert("Limite de 30 anotações atingido."); return; }
+      mapaHistorico.push(JSON.parse(JSON.stringify(mapaAnotacoes)));
+      const [rx, ry] = mapaCanvasParaRel(x, y);
+      mapaAnotacoes.push({ tipo: mapaFerramentaAtiva, x: rx, y: ry, cor: mapaCorAtiva });
+      desenharMapa();
+      return;
+    }
+    if (mapaFerramentaAtiva === "pincel") {
+      if (mapaAnotacoes.length >= 30) { alert("Limite de 30 anotações atingido."); return; }
+      mapaPintando = true;
+      tracoAtual = { tipo: "pincel", pontos: [[x, y]], cor: mapaCorAtiva };
+      mapaHistorico.push(JSON.parse(JSON.stringify(mapaAnotacoes)));
+    }
+  }
+
+  function mover(e) {
+    if (!mapaPintando) return;
+    e.preventDefault();
+    const [x, y] = posCanvas(e);
+    if (mapaFerramentaAtiva === "pan") {
+      mapaOffsetX += x - mapaPanUltimoX;
+      mapaOffsetY += y - mapaPanUltimoY;
+      mapaPanUltimoX = x;
+      mapaPanUltimoY = y;
+      desenharMapa();
+      return;
+    }
+    if (tracoAtual) {
+      tracoAtual.pontos.push([x, y]);
+      desenharMapa();
+      // desenha traço atual em tempo real
+      const ctx = canvas.getContext("2d");
+      ctx.strokeStyle = tracoAtual.cor;
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.beginPath();
+      const pts = tracoAtual.pontos;
+      ctx.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+      ctx.stroke();
+    }
+  }
+
+  function finalizar() {
+    if (!mapaPintando) return;
+    mapaPintando = false;
+    if (tracoAtual) {
+      // simplifica pontos para economizar espaço
+      tracoAtual.pontos = simplificarPontos(tracoAtual.pontos, 4).map(([px, py]) => mapaCanvasParaRel(px, py));
+      mapaAnotacoes.push(tracoAtual);
+      tracoAtual = null;
+      desenharMapa();
+    }
+  }
+
+  canvas.onmousedown = iniciar;
+  canvas.onmousemove = mover;
+  canvas.onmouseup = finalizar;
+  canvas.ontouchstart = (e) => { e.preventDefault(); iniciar(e); };
+  canvas.ontouchmove = (e) => { e.preventDefault(); mover(e); };
+  canvas.ontouchend = finalizar;
+
+  // pinch zoom
+  let pinchDist = null;
+  canvas.addEventListener("touchstart", (e) => {
+    if (e.touches.length === 2) {
+      pinchDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+    }
+  }, { passive: false });
+  canvas.addEventListener("touchmove", (e) => {
+    if (e.touches.length === 2 && pinchDist !== null) {
+      e.preventDefault();
+      const d = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      mapaZoom = Math.max(0.5, Math.min(5, mapaZoom * (d / pinchDist)));
+      pinchDist = d;
+      desenharMapa();
+    }
+  }, { passive: false });
+  canvas.addEventListener("touchend", () => { pinchDist = null; });
+}
+
+function simplificarPontos(pontos, tolerancia) {
+  if (pontos.length <= 2) return pontos;
+  const resultado = [pontos[0]];
+  for (let i = 1; i < pontos.length; i++) {
+    const prev = resultado[resultado.length - 1];
+    const dist = Math.hypot(pontos[i][0] - prev[0], pontos[i][1] - prev[1]);
+    if (dist >= tolerancia) resultado.push(pontos[i]);
+  }
+  resultado.push(pontos[pontos.length - 1]);
+  return resultado;
+}
+
+function zoomMapa(delta) {
+  mapaZoom = Math.max(0.5, Math.min(5, mapaZoom + delta));
+  desenharMapa();
+}
+
+function selecionarCorMapa(el) {
+  document.querySelectorAll(".mapa-cor").forEach(c => c.classList.remove("ativa"));
+  el.classList.add("ativa");
+  mapaCorAtiva = el.dataset.cor;
+}
+
+function selecionarFerramentaMapa(el) {
+  document.querySelectorAll(".mapa-tool").forEach(t => t.classList.remove("ativa"));
+  el.classList.add("ativa");
+  mapaFerramentaAtiva = el.dataset.tool;
+}
+
+function confirmarTextoMapa() {
+  const texto = document.getElementById("mapaTextoValor").value.trim();
+  if (!texto) { cancelarTextoMapa(); return; }
+  if (mapaAnotacoes.length >= 30) { alert("Limite de 30 anotações atingido."); cancelarTextoMapa(); return; }
+  mapaHistorico.push(JSON.parse(JSON.stringify(mapaAnotacoes)));
+  const [rx, ry] = mapaCanvasParaRel(mapaTextoX, mapaTextoY);
+  mapaAnotacoes.push({ tipo: "texto", texto, x: rx, y: ry, cor: mapaCorAtiva });
+  document.getElementById("mapaTextoValor").value = "";
+  document.getElementById("mapaInputTexto").classList.add("fechado");
+  desenharMapa();
+}
+
+function cancelarTextoMapa() {
+  document.getElementById("mapaTextoValor").value = "";
+  document.getElementById("mapaInputTexto").classList.add("fechado");
+}
+
+function desfazerMapaAnotacao() {
+  if (mapaHistorico.length === 0) return;
+  mapaAnotacoes = mapaHistorico.pop();
+  desenharMapa();
+}
+
+function salvarAnotacoesMapa() {
+  if (mapaAtual === null) return;
+  mapas[mapaAtual].anotacoes = JSON.parse(JSON.stringify(mapaAnotacoes));
+  salvarTudo();
+  renderMapas();
+  alert("Anotações salvas!");
 }
 
 function selecionarRaridade(valor, btn) {
