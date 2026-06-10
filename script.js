@@ -42,7 +42,14 @@ function sanitizarCampanha(c) {
 const EMAILS_VIP = [
   "fichaignea@gmail.com",
   "lonnar321@gmail.com",
-  "niviciusedney@gmail.com" 
+  "niviciusedney@gmail.com",
+  "nic.tresca@gmail.com",
+  "giovannyqueiroz@gmail.com", 
+  "luucasrenato@outlook.com", 
+  "dinizpqp123@gmail.com", 
+  "sparda.nb@gmail.com",
+  "araibruna@gmail.com",
+  "pedropian001@gmail.com"
 ];
 
 function getPlanoUsuario() {
@@ -233,6 +240,7 @@ let exaustao = 0;
 let armaduras = [];
 let editandoArmadura = -1;
 let personagens = JSON.parse(localStorage.getItem("personagens")) || [];
+window.personagens = personagens;
 let personagemAtual = null;
 let modoExportacao = false;
 let imagemPosX = 50;
@@ -1525,7 +1533,7 @@ function renderPersonagens() {
 
     card.innerHTML = `
       <div class="card-info">
-        <span class="card-nome">${esc(p.nome) || "Sem nome"}}</span>
+        <span class="card-nome">${esc(p.nome) || "Sem nome"}</span>
         <span class="card-classe">${esc(p.classe) || "Sem classe"}</span>
       </div>
 
@@ -2519,17 +2527,48 @@ function ativarDragEditorCanvas() {
   };
   document.onmouseup = () => { editorDragging = false; };
 
-  canvas.ontouchstart = (e) => { editorDragging = true; editorLastX = e.touches[0].clientX; editorLastY = e.touches[0].clientY; };
-  canvas.ontouchmove = (e) => {
-    if (!editorDragging) return;
+  let editorPinchDist = null;
+
+  canvas.addEventListener("touchstart", (e) => {
     e.preventDefault();
-    editorOffsetX += e.touches[0].clientX - editorLastX;
-    editorOffsetY += e.touches[0].clientY - editorLastY;
-    editorLastX = e.touches[0].clientX;
-    editorLastY = e.touches[0].clientY;
-    desenharEditorCanvas();
-  };
-  canvas.ontouchend = () => { editorDragging = false; };
+    if (e.touches.length === 1) {
+      editorDragging = true;
+      editorLastX = e.touches[0].clientX;
+      editorLastY = e.touches[0].clientY;
+    } else if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      editorPinchDist = Math.hypot(dx, dy);
+    }
+  }, { passive: false });
+
+  canvas.addEventListener("touchmove", (e) => {
+    e.preventDefault();
+    if (e.touches.length === 1 && editorDragging) {
+      editorOffsetX += e.touches[0].clientX - editorLastX;
+      editorOffsetY += e.touches[0].clientY - editorLastY;
+      editorLastX = e.touches[0].clientX;
+      editorLastY = e.touches[0].clientY;
+      desenharEditorCanvas();
+    } else if (e.touches.length === 2 && editorPinchDist !== null) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const novaDist = Math.hypot(dx, dy);
+      const delta = novaDist / editorPinchDist;
+      editorPinchDist = novaDist;
+      editorZoom = Math.min(3, Math.max(0.5, editorZoom * delta));
+      document.getElementById("editorZoom").value = editorZoom;
+      desenharEditorCanvas();
+    }
+  }, { passive: false });
+
+  canvas.addEventListener("touchend", (e) => {
+    e.preventDefault();
+    if (e.touches.length === 0) {
+      editorDragging = false;
+      editorPinchDist = null;
+    }
+  }, { passive: false });
 }
 
 function fecharEditorImagem() {
@@ -3152,9 +3191,6 @@ function importarFichaArquivo(e) {
     try {
       const dadosImportados = JSON.parse(event.target.result);
 
-      let personagensSalvos =
-        JSON.parse(localStorage.getItem("personagens")) || [];
-
       const validar = (p) => p && (p.nome || p.classe || p.raca);
 
       if (Array.isArray(dadosImportados)) {
@@ -3162,17 +3198,18 @@ function importarFichaArquivo(e) {
         if (!validos.length) throw new Error("Nenhuma ficha válida encontrada.");
         validos.forEach((p) => {
           p.imagem = "";
+          if (!p.id) p.id = Date.now() + Math.floor(Math.random() * 99999);
           sanitizarPersonagem(p);
-          personagensSalvos.push(p);
+          personagens.push(p);
         });
       } else {
         if (!validar(dadosImportados)) throw new Error("Arquivo não parece ser uma ficha válida.");
         dadosImportados.imagem = "";
+        if (!dadosImportados.id) dadosImportados.id = Date.now() + Math.floor(Math.random() * 99999);
         sanitizarPersonagem(dadosImportados);
-        personagensSalvos.push(dadosImportados);
+        personagens.push(dadosImportados);
       }
 
-      personagens = personagensSalvos;
       localStorage.setItem("personagens", JSON.stringify(personagens));
 
       if (typeof window.salvarFichasNaNuvem === "function") {
