@@ -2214,23 +2214,17 @@ import {
   if (!window.usuarioAtual) return;
 
   const uid = window.usuarioAtual.uid;
-  const fichas = JSON.parse(localStorage.getItem("personagens")) || [];
-  const fichasValidas = fichas.filter(ficha =>
-  ficha &&
-  (
-    ficha.nome?.trim() ||
-    ficha.classe?.trim() ||
-    ficha.raca?.trim() ||
-    ficha.imagem ||
-    ficha.imagemBase64
-  )
-);
 
-  for (const ficha of fichasValidas) {
+  // 🔥 CORREÇÃO: usa o array em memória, não relê o localStorage
+  // Reler o localStorage a cada save fazia fichas sem ID gerarem
+  // um ID novo a cada chamada, criando duplicatas infinitas no Firestore
+  const fichas = window.personagens || [];
+
+  for (const ficha of fichas) {
+    if (!ficha) continue;
     if (!ficha.id) {
-  ficha.id = Date.now() + Math.floor(Math.random() * 99999);
-}
-
+      ficha.id = Date.now() + Math.floor(Math.random() * 99999);
+    }
     await setDoc(
       doc(db, "usuarios", uid, "fichas", String(ficha.id)),
       ficha
@@ -2247,10 +2241,10 @@ import {
   );
 
   try {
-  localStorage.setItem("personagens", JSON.stringify(fichasValidas));
-} catch (erro) {
-  console.warn("localStorage cheio. Fichas mantidas na nuvem.", erro);
-}
+    localStorage.setItem("personagens", JSON.stringify(fichas));
+  } catch (erro) {
+    console.warn("localStorage cheio. Fichas mantidas na nuvem.", erro);
+  }
 }
 
   async function carregarFichasDaNuvem() {
@@ -2278,19 +2272,23 @@ import {
 
     if (confirmar) {
       personagens = fichasLocais;
+      window.personagens = personagens;
 
       await salvarFichasNaNuvem();
 
       alert("Fichas vinculadas com sucesso!");
     } else {
       personagens = [];
+      window.personagens = personagens;
       localStorage.setItem("personagens", JSON.stringify([]));
     }
   } else if (fichasNuvem.length > 0) {
     personagens = fichasNuvem;
+    window.personagens = personagens;
     localStorage.setItem("personagens", JSON.stringify(personagens));
   } else {
     personagens = [];
+    window.personagens = personagens;
   }
 
   if (typeof renderPersonagens === "function") {
