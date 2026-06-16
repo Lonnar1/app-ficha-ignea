@@ -2451,14 +2451,21 @@ function previewImagem() {
   if (nomeArquivo) nomeArquivo.innerText = file.name;
 
   const reader = new FileReader();
-  reader.onload = function (e) {
-    imagemBase64 = e.target.result;
-    imagemOriginalBase64 = e.target.result;
+  reader.onload = async function (e) {
+    const base64Local = e.target.result;
     imagemPosX = 50;
     imagemPosY = 50;
 
-    preview.src = imagemBase64;
+    preview.src = base64Local;
     preview.style.objectPosition = `${imagemPosX}% ${imagemPosY}%`;
+
+    if (nomeArquivo) nomeArquivo.innerText = "Enviando imagem...";
+
+    const resultado = await uploadImagemFirebase(base64Local, `personagens/${Date.now()}.jpg`);
+    imagemBase64 = resultado.url;
+    imagemOriginalBase64 = resultado.url;
+
+    if (nomeArquivo) nomeArquivo.innerText = file.name;
 
     salvarTudo();
     renderPersonagens();
@@ -2595,7 +2602,7 @@ function fecharEditorImagem() {
   }
 }
 
-function salvarEditorImagem() {
+async function salvarEditorImagem() {
   const canvas = document.getElementById("editorCanvas");
   if (!canvas) return;
 
@@ -2605,18 +2612,20 @@ function salvarEditorImagem() {
   const ctx = outputCanvas.getContext("2d");
 
   const size = canvas.width;
-  const ratio = 400 / size;
 
   ctx.drawImage(canvas, 0, 0, size, size, 0, 0, 400, 400);
 
-  imagemBase64 = outputCanvas.toDataURL("image/jpeg", 0.9);
-  // não sobrescreve imagemOriginalBase64 — mantém original para reedição
+  const base64Local = outputCanvas.toDataURL("image/jpeg", 0.9);
 
   const preview = document.getElementById("preview");
   if (preview) {
-    preview.src = imagemBase64;
+    preview.src = base64Local;
     preview.style.objectPosition = "50% 50%";
   }
+
+  const resultado = await uploadImagemFirebase(base64Local, `personagens/${Date.now()}.jpg`);
+  imagemBase64 = resultado.url;
+  // não sobrescreve imagemOriginalBase64 — mantém original para reedição
 
   salvarTudo();
   renderPersonagens();
@@ -6414,6 +6423,58 @@ function toggleMinimizarCombate(index) {
 }
 
 
+async function salvarTudoForcado() {
+  const btn = document.getElementById("btnSalvarFlutuante");
+  if (btn) { btn.textContent = "⏳"; btn.disabled = true; }
+
+  try {
+    if (personagemAtual !== null && typeof salvarTudo === "function") {
+      salvarTudo();
+    }
+    if (typeof window.salvarFichasNaNuvem === "function") {
+      await window.salvarFichasNaNuvem();
+    }
+    if (typeof salvarMonstrosMestreStorage === "function") {
+      salvarMonstrosMestreStorage();
+    }
+    if (typeof salvarCombatesMestreStorage === "function") {
+      salvarCombatesMestreStorage();
+    }
+    if (typeof salvarCampanhasMaster === "function") {
+      salvarCampanhasMaster();
+    }
+    if (typeof window.salvarMonstrosNaNuvem === "function") {
+      await window.salvarMonstrosNaNuvem();
+    }
+
+    if (btn) { btn.textContent = "✅"; }
+    mostrarToastSalvarFlutuante("Tudo salvo!");
+  } catch (erro) {
+    console.error("Erro ao salvar tudo:", erro);
+    if (btn) { btn.textContent = "❌"; }
+    mostrarToastSalvarFlutuante("Erro ao salvar. Tente de novo.");
+  }
+
+  setTimeout(() => {
+    if (btn) { btn.textContent = "💾"; btn.disabled = false; }
+  }, 1500);
+}
+
+function mostrarToastSalvarFlutuante(msg) {
+  const t = document.createElement("div");
+  t.textContent = msg;
+  t.style.cssText = `
+    position:fixed;bottom:155px;right:16px;z-index:99999;
+    background:#1E1208;color:#F8F4E3;border:1px solid rgba(196,169,91,0.4);
+    border-radius:10px;padding:8px 14px;font-size:13px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.5);
+    opacity:0;transition:opacity 0.25s;
+  `;
+  document.body.appendChild(t);
+  requestAnimationFrame(() => t.style.opacity = "1");
+  setTimeout(() => { t.style.opacity = "0"; setTimeout(() => t.remove(), 300); }, 2000);
+}
+
 function renderAtaques(texto) {
   if (!texto) return "";
   const itens = texto.split("|").map(a => a.trim()).filter(Boolean);
@@ -6436,6 +6497,82 @@ function renderAtaques(texto) {
     <div style="padding:4px 12px 4px;">${linhas}</div>
   </div>`;
 }
+
+(function ativarDisqueteArrastavel() {
+  function iniciar() {
+    const btn = document.getElementById("btnSalvarFlutuante");
+    if (!btn) return;
+
+    let arrastando = false;
+    let moveu = false;
+    let offsetX = 0, offsetY = 0;
+
+    const posSalva = JSON.parse(localStorage.getItem("posDisqueteFlutuante") || "null");
+    if (posSalva) {
+      btn.style.top = posSalva.top;
+      btn.style.left = posSalva.left;
+      btn.style.right = "auto";
+    }
+
+    function pegarPonto(e) {
+      return e.touches ? e.touches[0] : e;
+    }
+
+    function aoIniciar(e) {
+      const p = pegarPonto(e);
+      const rect = btn.getBoundingClientRect();
+      offsetX = p.clientX - rect.left;
+      offsetY = p.clientY - rect.top;
+      arrastando = true;
+      moveu = false;
+      btn.style.cursor = "grabbing";
+    }
+
+    function aoMover(e) {
+      if (!arrastando) return;
+      moveu = true;
+      const p = pegarPonto(e);
+      let novoX = p.clientX - offsetX;
+      let novoY = p.clientY - offsetY;
+
+      novoX = Math.max(4, Math.min(window.innerWidth - 52, novoX));
+      novoY = Math.max(4, Math.min(window.innerHeight - 52, novoY));
+
+      btn.style.left = novoX + "px";
+      btn.style.top = novoY + "px";
+      btn.style.right = "auto";
+    }
+
+    function aoSoltar() {
+      if (!arrastando) return;
+      arrastando = false;
+      btn.style.cursor = "grab";
+
+      if (moveu) {
+        localStorage.setItem("posDisqueteFlutuante", JSON.stringify({
+          top: btn.style.top,
+          left: btn.style.left
+        }));
+      } else {
+        salvarTudoForcado();
+      }
+    }
+
+    btn.addEventListener("mousedown", aoIniciar);
+    document.addEventListener("mousemove", aoMover);
+    document.addEventListener("mouseup", aoSoltar);
+
+    btn.addEventListener("touchstart", aoIniciar, { passive: true });
+    document.addEventListener("touchmove", aoMover, { passive: true });
+    document.addEventListener("touchend", aoSoltar);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", iniciar);
+  } else {
+    iniciar();
+  }
+})();
 
 function renderHabilidades(texto) {
   if (!texto) return "";
