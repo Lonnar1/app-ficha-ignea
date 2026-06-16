@@ -2407,8 +2407,11 @@ function salvarTudo() {
   p.dtAtributo = dtAtributo ? dtAtributo.value : 0;
   p.dtProf = dtProf ? dtProf.value : 2;
 
-  salvarPersonagens();
   renderPersonagens();
+  clearTimeout(window._debounceSalvar);
+  window._debounceSalvar = setTimeout(() => {
+    salvarPersonagens();
+  }, 800);
 }
 
 /* ================= IMAGEM ================= */
