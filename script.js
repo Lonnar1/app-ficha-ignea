@@ -6558,13 +6558,23 @@ function renderAtaques(texto) {
       }
     }
 
-    btn.addEventListener("mousedown", aoIniciar);
+      btn.addEventListener("mousedown", aoIniciar);
     document.addEventListener("mousemove", aoMover);
     document.addEventListener("mouseup", aoSoltar);
 
-    btn.addEventListener("touchstart", aoIniciar, { passive: true });
-    document.addEventListener("touchmove", aoMover, { passive: true });
-    document.addEventListener("touchend", aoSoltar);
+    btn.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      aoIniciar(e);
+    }, { passive: false });
+
+    document.addEventListener("touchmove", (e) => {
+      if (arrastando) e.preventDefault();
+      aoMover(e);
+    }, { passive: false });
+
+    document.addEventListener("touchend", (e) => {
+      aoSoltar(e);
+    }, { passive: false });
   }
 
   if (document.readyState === "loading") {
