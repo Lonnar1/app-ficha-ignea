@@ -3236,6 +3236,7 @@ function importarFichaArquivo(e) {
         personagens.push(dadosImportados);
       }
 
+      window.personagens = personagens;
       localStorage.setItem("personagens", JSON.stringify(personagens));
 
       if (typeof window.salvarFichasNaNuvem === "function") {
