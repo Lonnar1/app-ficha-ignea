@@ -1795,6 +1795,7 @@ function criarPersonagem() {
     return;
   }
   const novo = {
+    id: Date.now() + Math.floor(Math.random() * 99999),
     nome: "",
     classe: "",
     raca: "",
@@ -7058,10 +7059,6 @@ window.onload = function () {
   restaurarSecoes();
 };
 
-document.addEventListener("DOMContentLoaded", () => {
-  ativarDragEditorImagem();
-});
-
 atualizarDropdownRacas();
 
 
@@ -8027,30 +8024,6 @@ ${m.dificuldade ? `<span class="lore-badge" style="background:${(difInfo[m.dific
     </div>`;
   }).join("");
 }
-
-  lista.innerHTML = campanha.missoes.map(m => {
-    const p = priorInfo[m.prioridade || m.status] || priorInfo.andamento;
-    const etapasTotal     = parseInt(m.etapasTotal)     || 3;
-    const etapasConcluidas= parseInt(m.etapasConcluidas)|| 0;
-    const pct = Math.min(100, Math.round((etapasConcluidas / etapasTotal) * 100));
-    return `
-    <div class="missao-card-mundo">
-      <div class="missao-card-topo">
-        <strong>${escapeHtml(m.nome)}</strong>
-        <span class="lore-badge" style="background:${p.cor}22;color:${p.cor};border:1px solid ${p.cor}44;">${p.label}</span>
-      </div>
-      ${m.desc ? `<p class="lore-resumo">${escapeHtml(m.desc)}</p>` : ""}
-      <div class="missao-progresso">
-        <div class="missao-barra-bg">
-          <div class="missao-barra-fill" style="width:${pct}%;background:${p.cor};"></div>
-        </div>
-        <small>${etapasConcluidas} de ${etapasTotal} etapas</small>
-      </div>
-      <div class="card-lore-botoes">
-        <button onclick="deletarMissaoMundo(${m.id})">🗑</button>
-      </div>
-    </div>`;
-  }).join("");
 
   function toggleMissaoMundo(id) {
   const detalhes = document.getElementById("missaoDetalhes_" + id);
