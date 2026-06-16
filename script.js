@@ -1,4 +1,17 @@
 /* ================= SEGURANÇA XSS ================= */
+window.addEventListener("error", (e) => {
+  mostrarErroNaTela("ERRO JS: " + e.message + " (linha " + e.lineno + ")");
+});
+window.addEventListener("unhandledrejection", (e) => {
+  mostrarErroNaTela("ERRO PROMISE: " + (e.reason?.message || e.reason));
+});
+function mostrarErroNaTela(msg) {
+  const box = document.createElement("div");
+  box.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:999999;background:#8f2222;color:#fff;padding:10px;font-size:12px;font-family:monospace;white-space:pre-wrap;max-height:40vh;overflow-y:auto;";
+  box.textContent = msg;
+  document.body.prepend(box);
+}
+
 function esc(str) {
   if (str === null || str === undefined) return "";
   return String(str)
