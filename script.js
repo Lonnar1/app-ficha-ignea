@@ -1,16 +1,3 @@
-/* ================= SEGURANÇA XSS ================= */
-window.addEventListener("error", (e) => {
-  mostrarErroNaTela("ERRO JS: " + e.message + " (linha " + e.lineno + ")");
-});
-window.addEventListener("unhandledrejection", (e) => {
-  mostrarErroNaTela("ERRO PROMISE: " + (e.reason?.message || e.reason));
-});
-function mostrarErroNaTela(msg) {
-  const box = document.createElement("div");
-  box.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:999999;background:#8f2222;color:#fff;padding:10px;font-size:11px;font-family:monospace;white-space:pre-wrap;max-height:50vh;overflow-y:auto;";
-  box.textContent = msg;
-  document.body.prepend(box);
-}
 
 function esc(str) {
   if (str === null || str === undefined) return "";
@@ -31,13 +18,13 @@ function limparTags(str) {
 function sanitizarPersonagem(p) {
   if (!p) return p;
   const textos = ["nome","classe","raca","idade","altura","antecedentes","idiomas","resistencias","diario","proficienciasExtras","nomeRacaCustom"];
-  textos.forEach(c => { if (p[c]) p[c] = limparTags(p[c]); });
-  if (Array.isArray(p.inventario)) p.inventario.forEach(i => { i.nome = limparTags(i.nome); i.desc = limparTags(i.desc); });
-  if (Array.isArray(p.armaduras))  p.armaduras.forEach(a  => { a.nome = limparTags(a.nome);  a.desc = limparTags(a.desc); a.ca = limparTags(a.ca); });
-  if (Array.isArray(p.armas))      p.armas.forEach(a      => { a.nome = limparTags(a.nome);  a.desc = limparTags(a.desc); a.dano = limparTags(a.dano); });
-  if (Array.isArray(p.poderes))    p.poderes.forEach(p2   => { p2.nome = limparTags(p2.nome); p2.desc = limparTags(p2.desc); p2.dano = limparTags(p2.dano); });
-  if (Array.isArray(p.mapas))      p.mapas.forEach(m      => { m.nome = limparTags(m.nome);  m.desc = limparTags(m.desc); });
-  if (p.aliados && Array.isArray(p.aliados)) p.aliados.forEach(a => { a.nome = limparTags(a.nome); a.desc = limparTags(a.desc); a.local = limparTags(a.local); });
+  textos.forEach(c => { if (p[c]) p[c] = limparTags(p[c]) || ""; });
+  if (Array.isArray(p.inventario)) p.inventario.forEach(i => { i.nome = limparTags(i.nome) || ""; i.desc = limparTags(i.desc) || ""; });
+  if (Array.isArray(p.armaduras))  p.armaduras.forEach(a  => { a.nome = limparTags(a.nome) || "";  a.desc = limparTags(a.desc) || ""; a.ca = limparTags(a.ca) || ""; });
+  if (Array.isArray(p.armas))      p.armas.forEach(a      => { a.nome = limparTags(a.nome) || "";  a.desc = limparTags(a.desc) || ""; a.dano = limparTags(a.dano) || ""; });
+  if (Array.isArray(p.poderes))    p.poderes.forEach(p2   => { p2.nome = limparTags(p2.nome) || ""; p2.desc = limparTags(p2.desc) || ""; p2.dano = limparTags(p2.dano) || ""; });
+  if (Array.isArray(p.mapas))      p.mapas.forEach(m      => { m.nome = limparTags(m.nome) || "";  m.desc = limparTags(m.desc) || ""; });
+  if (p.aliados && Array.isArray(p.aliados)) p.aliados.forEach(a => { a.nome = limparTags(a.nome) || ""; a.desc = limparTags(a.desc) || ""; a.local = limparTags(a.local) || ""; });
   return p;
 }
 
