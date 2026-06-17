@@ -6449,14 +6449,26 @@ async function salvarTudoForcado() {
 }
 
 function mostrarToastSalvarFlutuante(msg) {
+  const btn = document.getElementById("btnSalvarFlutuante");
   const t = document.createElement("div");
   t.textContent = msg;
+
+  let top = "20%";
+  let left = "calc(100% - 120px)";
+
+  if (btn) {
+    const rect = btn.getBoundingClientRect();
+    top = (rect.bottom + 8) + "px";
+    left = Math.max(8, rect.left - 30) + "px";
+  }
+
   t.style.cssText = `
-    position:fixed;bottom:155px;right:16px;z-index:99999;
+    position:fixed;top:${top};left:${left};z-index:99999;
     background:#1E1208;color:#F8F4E3;border:1px solid rgba(196,169,91,0.4);
     border-radius:10px;padding:8px 14px;font-size:13px;
     box-shadow:0 4px 12px rgba(0,0,0,0.5);
     opacity:0;transition:opacity 0.25s;
+    white-space:nowrap;
   `;
   document.body.appendChild(t);
   requestAnimationFrame(() => t.style.opacity = "1");
