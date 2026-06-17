@@ -2222,7 +2222,7 @@ import {
   // um ID novo a cada chamada, criando duplicatas infinitas no Firestore
   const fichas = window.personagens || [];
 
-  mostrarErroNaTela("SALVANDO uid=" + uid + " | qtd fichas=" + fichas.length);
+
   for (const ficha of fichas) {
     if (!ficha) continue;
     if (!ficha.id) {
@@ -2233,9 +2233,7 @@ import {
         doc(db, "usuarios", uid, "fichas", String(ficha.id)),
         ficha
       );
-      mostrarErroNaTela("SALVO OK: " + (ficha.nome || "sem nome") + " id=" + ficha.id);
     } catch (erro) {
-      mostrarErroNaTela("FALHOU AO SALVAR: " + erro.message);
     }
   }
 
