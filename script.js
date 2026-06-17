@@ -2484,9 +2484,13 @@ function abrirEditorImagem() {
   document.getElementById("editorZoom").value = 1;
 
   editorImg = new Image();
+  editorImg.crossOrigin = "anonymous";
   editorImg.onload = function () {
     desenharEditorCanvas();
     ativarDragEditorCanvas();
+  };
+  editorImg.onerror = function () {
+    alert("Não foi possível carregar a imagem para edição. Tente escolher a imagem novamente.");
   };
   editorImg.src = imagemOriginalBase64 || imagemBase64;
 
