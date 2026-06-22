@@ -49,7 +49,8 @@ const EMAILS_VIP = [
   "dinizpqp123@gmail.com", 
   "sparda.nb@gmail.com",
   "araibruna@gmail.com",
-  "pedropian001@gmail.com"
+  "pedropian001@gmail.com",
+  "joaokdljus627@gmail.com"
 ];
 
 function getPlanoUsuario() {
