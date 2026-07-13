@@ -2585,39 +2585,64 @@ button:active {
     box-shadow 0.15s ease;
 }
 
-.poder-drag-handle {
-  width: 34px;
-  min-width: 34px;
-  height: 34px;
+.drag-handle {
+  width: 22px;
+  min-width: 22px;
+  height: 40px;
+  align-self: center;
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: relative;
 
-  border-radius: 10px;
-  background: #76604a;
-  color: #f8f1df;
+  border: none;
+  background: transparent;
+  padding: 0;
+
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
-
-  font-size: 18px;
-  font-weight: bold;
-  line-height: 1;
+  touch-action: none;
 }
 
-.poder-drag-handle:active {
+.drag-handle::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3.5px;
+  height: 3.5px;
+  border-radius: 50%;
+  background: rgba(216, 180, 106, 0.4);
+  transform: translate(-50%, -50%);
+  box-shadow:
+    -6px -8px 0 0 rgba(216, 180, 106, 0.4),
+     6px -8px 0 0 rgba(216, 180, 106, 0.4),
+    -6px 0 0 0 rgba(216, 180, 106, 0.4),
+     6px 0 0 0 rgba(216, 180, 106, 0.4),
+    -6px 8px 0 0 rgba(216, 180, 106, 0.4),
+     6px 8px 0 0 rgba(216, 180, 106, 0.4);
+  transition: filter 0.2s;
+}
+
+.drag-handle:hover::before {
+  filter: brightness(1.6);
+}
+
+.drag-handle:active {
   cursor: grabbing;
 }
 
-.poder-card.dragging {
-  opacity: 0.45;
-  transform: scale(0.98);
+.item-card.arrastando,
+.arma-card.arrastando,
+.armadura-card.arrastando,
+.poder-card.arrastando {
+  opacity: 0.35;
 }
 
-.poder-card.drag-over {
-  outline: 2px dashed #b89654;
-  outline-offset: 2px;
+.card-fantasma {
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+  transform: scale(1.02);
+  transition: none !important;
+  cursor: grabbing;
 }
 
 .item-acoes {
@@ -3451,6 +3476,8 @@ select:focus {
 
 /* ================= ESPAÇO DAS LISTAS ================= */
 #listaPoderesComuns,
+#listaTalentos,
+#listaPassivas,
 #listaMagiasCirculo0,
 #listaMagiasCirculo1,
 #listaMagiasCirculo2,
@@ -3545,11 +3572,13 @@ select:focus {
 }
 
 .subtab-poder {
-  min-width: 110px;
-  height: 44px;
-  padding: 0 18px;
-  border-radius: 14px;
-  font-size: 16px;
+  flex: 1;
+  min-width: 0;
+  height: 38px;
+  padding: 0 6px;
+  border-radius: 12px;
+  font-size: 13px;
+  white-space: nowrap;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -4714,6 +4743,8 @@ select {
 
 #listaPoderes,
 #listaPoderesComuns,
+#listaTalentos,
+#listaPassivas,
 [id^="listaMagiasCirculo"] {
   width: 100%;
 }
@@ -4732,6 +4763,8 @@ select {
 }
 
 #listaPoderesComuns,
+#listaTalentos,
+#listaPassivas,
 #listaMagiasCirculo0,
 #listaMagiasCirculo1,
 #listaMagiasCirculo2,
