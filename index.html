@@ -1317,19 +1317,20 @@
             <span class="setinha">▼</span>
           </h2>
 
-          <div id="boxDominio" class="conteudo-toggle aberto">
+            <div id="boxDominio" class="conteudo-toggle aberto">
             <div class="dominio-box">
-              <div class="dominio-checks">
-                <div class="dominio-check" onclick="toggleDominio(0)"></div>
-                <div class="dominio-check" onclick="toggleDominio(1)"></div>
-                <div class="dominio-check" onclick="toggleDominio(2)"></div>
-                <div class="dominio-check" onclick="toggleDominio(3)"></div>
-                <div class="dominio-check" onclick="toggleDominio(4)"></div>
-                <div class="dominio-check" onclick="toggleDominio(5)"></div>
+              <div class="dominio-topo">
+                <span>Pontos</span>
+                <button
+                  class="btn-editar-slots"
+                  onclick="editarQuantidadePontosDominio()"
+                >
+                  ✏️
+                </button>
               </div>
+              <div class="dominio-checks" id="dominioChecks"></div>
             </div>
           </div>
-        </div>
 
         <div class="secao-toggle">
           <h2
