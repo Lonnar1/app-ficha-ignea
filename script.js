@@ -1807,12 +1807,37 @@ function toggleDominio(index) {
   salvarTudo();
 }
 
-function renderDominio() {
-  const checks = document.querySelectorAll(".dominio-check");
-  if (!checks.length) return;
+function editarQuantidadePontosDominio() {
+  const atual = dominio.length;
+  const resposta = prompt("Quantos Pontos de Domínio?", atual);
 
-  checks.forEach((check, i) => {
-    check.classList.toggle("ativo", !!dominio[i]);
+  if (resposta === null) return;
+
+  let novoTotal = parseInt(resposta);
+  if (isNaN(novoTotal) || novoTotal < 0) novoTotal = 0;
+
+  const novoArray = [];
+  for (let i = 0; i < novoTotal; i++) {
+    novoArray.push(dominio[i] || false);
+  }
+
+  dominio = novoArray;
+
+  renderDominio();
+  salvarTudo();
+}
+
+function renderDominio() {
+  const container = document.getElementById("dominioChecks");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  dominio.forEach((ativo, i) => {
+    const check = document.createElement("div");
+    check.className = "dominio-check" + (ativo ? " ativo" : "");
+    check.onclick = () => toggleDominio(i);
+    container.appendChild(check);
   });
 }
 
