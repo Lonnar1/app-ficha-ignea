@@ -5089,3 +5089,23 @@ select {
   color: #f1e6cf;
   cursor: pointer;
 }
+
+.dominio-topo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.dominio-topo span {
+  font-family: "Cinzel", serif;
+  font-size: 17px;
+  font-weight: bold;
+  color: #f3d9a2;
+}
+
+.dominio-topo .btn-editar-slots {
+  position: absolute;
+  right: 0;
+}
