@@ -11,6 +11,8 @@
       content="width=device-width, initial-scale=1.0, user-scalable=no"
     />
     
+
+
     <title>Ficha Ígnea</title>
     <link rel="stylesheet" href="css/00-base.css" />
     <link rel="stylesheet" href="css/01-player-ficha.css" />
@@ -1662,6 +1664,8 @@
                 <div class="select-wrapper">
                   <select id="poderCirculo" class="input-personagem">
                     <option value="">Sem círculo (Poder)</option>
+                    <option value="talento">Talento</option>
+                    <option value="passiva">Passiva</option>
                     <option value="0">Círculo 0 (Truque)</option>
                     <option value="1">Círculo 1</option>
                     <option value="2">Círculo 2</option>
@@ -1715,23 +1719,43 @@
           </div>
 
           <div class="subtabs-poderes">
-            <button
-              class="subtab-poder active"
-              onclick="trocarSubAbaPoderes('poderes-comuns', this)"
-            >
-              Poderes
-            </button>
-            <button
-              class="subtab-poder"
-              onclick="trocarSubAbaPoderes('magias', this)"
-            >
-              Magias
-            </button>
-          </div>
+  <button
+    class="subtab-poder active"
+    onclick="trocarSubAbaPoderes('poderes-comuns', this)"
+  >
+    Poderes
+  </button>
+  <button
+    class="subtab-poder"
+    onclick="trocarSubAbaPoderes('magias', this)"
+  >
+    Magias
+  </button>
+  <button
+    class="subtab-poder"
+    onclick="trocarSubAbaPoderes('talentos', this)"
+  >
+    Talentos
+  </button>
+  <button
+    class="subtab-poder"
+    onclick="trocarSubAbaPoderes('passivas', this)"
+  >
+    Passivas
+  </button>
+</div>
 
           <div id="subaba-poderes-comuns" class="subaba-poderes active">
-            <ul id="listaPoderesComuns" class="lista-sempre-visivel"></ul>
-          </div>
+  <ul id="listaPoderesComuns" class="lista-sempre-visivel"></ul>
+</div>
+
+<div id="subaba-talentos" class="subaba-poderes" style="display: none">
+  <ul id="listaTalentos" class="lista-sempre-visivel"></ul>
+</div>
+
+<div id="subaba-passivas" class="subaba-poderes" style="display: none">
+  <ul id="listaPassivas" class="lista-sempre-visivel"></ul>
+</div>
 
           <div id="subaba-magias" class="subaba-poderes" style="display: none">
             <div class="subtabs-circulos">
