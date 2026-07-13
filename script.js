@@ -10,6 +10,96 @@ function esc(str) {
     .replace(/\//g, "&#x2F;");
 }
 
+function habilitarArrastarReordenar(ulEl, arrayRef, aoSoltarCallback) {
+  if (!ulEl) return;
+
+  Array.from(ulEl.children).forEach((li) => {
+    const handle = li.querySelector(".drag-handle");
+    if (!handle || li.dataset.index === undefined) return;
+
+    handle.onpointerdown = (ev) => {
+      ev.preventDefault();
+
+      const liArrastado = li;
+      const rectOriginal = liArrastado.getBoundingClientRect();
+      const startY = ev.clientY;
+      const pointerId = ev.pointerId;
+
+      // cria um clone flutuante que segue o cursor/dedo de verdade
+      const fantasma = liArrastado.cloneNode(true);
+      fantasma.classList.add("card-fantasma");
+      fantasma.style.position = "fixed";
+      fantasma.style.left = rectOriginal.left + "px";
+      fantasma.style.top = rectOriginal.top + "px";
+      fantasma.style.width = rectOriginal.width + "px";
+      fantasma.style.margin = "0";
+      fantasma.style.pointerEvents = "none";
+      fantasma.style.zIndex = "9999";
+      document.body.appendChild(fantasma);
+
+      liArrastado.classList.add("arrastando");
+
+      function aoMover(e) {
+        if (e.pointerId !== pointerId) return;
+
+        const deltaY = e.clientY - startY;
+        fantasma.style.top = rectOriginal.top + deltaY + "px";
+
+        const fantasmaRect = fantasma.getBoundingClientRect();
+        const centroFantasma = fantasmaRect.top + fantasmaRect.height / 2;
+
+        const irmaos = Array.from(ulEl.children).filter(
+          (el) => el !== liArrastado,
+        );
+
+        let alvo = null;
+        for (const sib of irmaos) {
+          const box = sib.getBoundingClientRect();
+          if (centroFantasma < box.top + box.height / 2) {
+            alvo = sib;
+            break;
+          }
+        }
+
+        if (alvo) {
+          ulEl.insertBefore(liArrastado, alvo);
+        } else {
+          ulEl.appendChild(liArrastado);
+        }
+      }
+
+      function finalizar(e) {
+        if (e && e.pointerId !== undefined && e.pointerId !== pointerId) return;
+
+        document.removeEventListener("pointermove", aoMover);
+        document.removeEventListener("pointerup", finalizar);
+        document.removeEventListener("pointercancel", finalizar);
+
+        fantasma.remove();
+        liArrastado.classList.remove("arrastando");
+
+        const ordemVisual = Array.from(ulEl.children).map((el) =>
+          Number(el.dataset.index),
+        );
+
+        const objetosNaNovaOrdem = ordemVisual.map((i) => arrayRef[i]);
+        const slots = [...ordemVisual].sort((a, b) => a - b);
+
+        slots.forEach((slot, k) => {
+          arrayRef[slot] = objetosNaNovaOrdem[k];
+        });
+
+        salvarTudo();
+        if (aoSoltarCallback) aoSoltarCallback();
+      }
+
+      document.addEventListener("pointermove", aoMover);
+      document.addEventListener("pointerup", finalizar);
+      document.addEventListener("pointercancel", finalizar);
+    };
+  });
+}
+
 function limparTags(str) {
   if (!str) return str;
   return String(str).replace(/<[^>]*>/g, "");
@@ -49,9 +139,7 @@ const EMAILS_VIP = [
   "dinizpqp123@gmail.com", 
   "sparda.nb@gmail.com",
   "araibruna@gmail.com",
-  "pedropian001@gmail.com",
-  "joaokdljus627@gmail.com",
-  "leticinha.rojo@gmail.com"
+  "pedropian001@gmail.com"
 ];
 
 function getPlanoUsuario() {
@@ -220,6 +308,7 @@ let profs = {};
 let saves = {};
 let imagemBase64 = "";
 let imagemOriginalBase64 = "";
+let imagemDeleteUrl = "";
 let mapas = [];
 let mapaAtual = null;
 let mapaZoom = 1;
@@ -861,6 +950,22 @@ function trocarSubAbaPoderes(tipo, btn) {
     }
   }
 
+  if (tipo === "talentos") {
+    const alvo = document.getElementById("subaba-talentos");
+    if (alvo) {
+      alvo.style.display = "block";
+      alvo.classList.add("active");
+    }
+  }
+
+  if (tipo === "passivas") {
+    const alvo = document.getElementById("subaba-passivas");
+    if (alvo) {
+      alvo.style.display = "block";
+      alvo.classList.add("active");
+    }
+  }
+
   if (btn) btn.classList.add("active");
 }
 
@@ -1203,6 +1308,8 @@ function editarPoder(index) {
       <label class="popup-label">Círculo</label>
 <select id="editPoderCirculo" class="input-personagem">
   <option value="" ${(poder.circulo ?? "") === "" ? "selected" : ""}>Sem círculo (Poder)</option>
+  <option value="talento" ${(poder.circulo ?? "") === "talento" ? "selected" : ""}>Talento</option>
+  <option value="passiva" ${(poder.circulo ?? "") === "passiva" ? "selected" : ""}>Passiva</option>
   <option value="0" ${String(poder.circulo ?? "") === "0" ? "selected" : ""}>Círculo 0 (Truque)</option>
   <option value="1" ${String(poder.circulo ?? "") === "1" ? "selected" : ""}>Círculo 1</option>
   <option value="2" ${String(poder.circulo ?? "") === "2" ? "selected" : ""}>Círculo 2</option>
@@ -1649,8 +1756,11 @@ function renderAliados() {
   p.aliados.forEach((aliado, index) => {
     const li = document.createElement("li");
     li.className = "item-card";
+    li.dataset.index = index;
 
     li.innerHTML = `
+      <button type="button" class="drag-handle" aria-label="Arrastar para reordenar"></button>
+
       <div class="item-info">
         <strong class="item-nome">${esc(aliado.nome) || "Sem nome"}</strong>
         ${aliado.local ? `<div class="aliado-local">📍 ${esc(aliado.local)}</div>` : ""}
@@ -1669,6 +1779,8 @@ function renderAliados() {
 
     ul.appendChild(li);
   });
+
+  habilitarArrastarReordenar(ul, p.aliados, renderAliados);
 }
 
 function removerAliado(index) {
@@ -1875,6 +1987,15 @@ async function deletarPersonagem(index) {
     return;
   }
 
+  // 🔥 remove imagem do ImgBB
+  if (personagem.imagemDeleteUrl?.startsWith("https://")) {
+    try {
+      await fetch(personagem.imagemDeleteUrl);
+    } catch (erro) {
+      console.warn("Erro ao deletar imagem do ImgBB:", erro);
+    }
+  }
+
   // 🔥 remove do Firebase
   if (
     personagem.id &&
@@ -1996,6 +2117,7 @@ function renderArmaduras() {
   armaduras.forEach((armadura, index) => {
     const li = document.createElement("li");
     li.className = "armadura-card";
+    li.dataset.index = index;
 
     const cargasHTML =
       armadura.temCargas && armadura.maxCargas > 0
@@ -2018,6 +2140,8 @@ function renderArmaduras() {
         : "";
 
     li.innerHTML = `
+      <button type="button" class="drag-handle" aria-label="Arrastar para reordenar">⠿</button>
+
       <div class="armadura-info" onclick="verArmadura(${index})">
         <strong class="armadura-nome">${esc(armadura.nome) || "Sem nome"}</strong>
         <p class="armadura-ca-preview">CA: ${esc(armadura.ca) || "Sem CA"}</p>
@@ -2035,6 +2159,8 @@ function renderArmaduras() {
 
     ul.appendChild(li);
   });
+
+  habilitarArrastarReordenar(ul, armaduras, renderArmaduras);
 }
 
 function toggleCampoCargasArmadura() {
@@ -2267,6 +2393,7 @@ function carregarPersonagem(index) {
   document.getElementById("preview").src = p.imagem || "";
   imagemBase64 = p.imagem || "";
   imagemOriginalBase64 = p.imagemOriginal || p.imagem || "";
+  imagemDeleteUrl = p.imagemDeleteUrl || "";
 
   const nomeArquivo = document.getElementById("nome-arquivo");
   if (nomeArquivo) {
@@ -2367,6 +2494,7 @@ function salvarTudo() {
     document.getElementById("proficienciasExtras")?.value || "";
   p.imagem = imagemBase64;
   p.imagemOriginal = imagemOriginalBase64;
+  p.imagemDeleteUrl = imagemDeleteUrl;
   p.imagemPosX = imagemPosX;
   p.imagemPosY = imagemPosY;
   const resistenciasEl = document.getElementById("resistencias");
@@ -2453,6 +2581,7 @@ function previewImagem() {
     const resultado = await uploadImagemFirebase(base64Local, `personagens/${Date.now()}.jpg`);
     imagemBase64 = resultado.url;
     imagemOriginalBase64 = resultado.url;
+    imagemDeleteUrl = resultado.deleteUrl || "";
 
     if (nomeArquivo) nomeArquivo.innerText = file.name;
 
@@ -2618,6 +2747,7 @@ async function salvarEditorImagem() {
 
   const resultado = await uploadImagemFirebase(base64Local, `personagens/${Date.now()}.jpg`);
   imagemBase64 = resultado.url;
+  imagemDeleteUrl = resultado.deleteUrl || "";
   // não sobrescreve imagemOriginalBase64 — mantém original para reedição
 
   salvarTudo();
@@ -2688,8 +2818,11 @@ function renderInv() {
   inventario.forEach((item, index) => {
     const li = document.createElement("li");
     li.className = "item-card";
+    li.dataset.index = index;
 
     li.innerHTML = `
+      <button type="button" class="drag-handle" aria-label="Arrastar para reordenar">⠿</button>
+
       <div class="item-info" onclick="verItem(${index})">
         <div class="item-topo-linha">
           <strong class="item-nome">
@@ -2712,8 +2845,6 @@ function renderInv() {
 
       <div class="item-acoes">
         <div class="acoes-topo">
-          <button type="button" class="btn-mover" onclick="event.stopPropagation(); moverItemCima(${index})">↑</button>
-          <button type="button" class="btn-mover" onclick="event.stopPropagation(); moverItemBaixo(${index})">↓</button>
           <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarItem(${index})">✏️</button>
         </div>
 
@@ -2723,6 +2854,8 @@ function renderInv() {
 
     ul.appendChild(li);
   });
+
+  habilitarArrastarReordenar(ul, inventario, renderInv);
 }
 
 function toggleEditSintoniaItem() {
@@ -2738,42 +2871,6 @@ function toggleEditSintoniaItem() {
     box.style.display = "none";
     if (sintonizado) sintonizado.checked = false;
   }
-}
-
-function moverItemCima(index) {
-  if (index <= 0) return;
-
-  const lista = document.getElementById("lista");
-  const item = lista.children[index];
-
-  item.classList.add("item-animar-cima");
-
-  setTimeout(() => {
-    [inventario[index - 1], inventario[index]] = [
-      inventario[index],
-      inventario[index - 1],
-    ];
-    renderInv();
-    salvarTudo();
-  }, 200);
-}
-
-function moverItemBaixo(index) {
-  if (index >= inventario.length - 1) return;
-
-  const lista = document.getElementById("lista");
-  const item = lista.children[index];
-
-  item.classList.add("item-animar-baixo");
-
-  setTimeout(() => {
-    [inventario[index + 1], inventario[index]] = [
-      inventario[index],
-      inventario[index + 1],
-    ];
-    renderInv();
-    salvarTudo();
-  }, 200);
 }
 
 function verItem(index) {
@@ -2889,6 +2986,7 @@ function renderArmas() {
   armas.forEach((arma, index) => {
     const li = document.createElement("li");
     li.className = "arma-card";
+    li.dataset.index = index;
 
     const cargasHTML =
       arma.temCargas && arma.maxCargas > 0
@@ -2911,6 +3009,8 @@ function renderArmas() {
         : "";
 
     li.innerHTML = `
+      <button type="button" class="drag-handle" aria-label="Arrastar para reordenar">⠿</button>
+
       <div class="arma-info" onclick="verArma(${index})">
         <strong class="arma-nome">${esc(arma.nome) || "Sem nome"}</strong>
         <p class="arma-dano-preview">${esc(arma.dano) || "Sem dano"}</p>
@@ -2928,6 +3028,8 @@ function renderArmas() {
 
     ul.appendChild(li);
   });
+
+  habilitarArrastarReordenar(ul, armas, renderArmas);
 }
 
 function toggleCargaArma(indexArma, indexCarga) {
@@ -3047,6 +3149,8 @@ function atualizarEstadoLowHP() {
 
 function renderPoderes() {
   const listaPoderesComuns = document.getElementById("listaPoderesComuns");
+  const listaTalentos = document.getElementById("listaTalentos");
+  const listaPassivas = document.getElementById("listaPassivas");
 
   const listasCirculos = {
     0: document.getElementById("listaMagiasCirculo0"),
@@ -3062,6 +3166,8 @@ function renderPoderes() {
   };
 
   if (listaPoderesComuns) listaPoderesComuns.innerHTML = "";
+  if (listaTalentos) listaTalentos.innerHTML = "";
+  if (listaPassivas) listaPassivas.innerHTML = "";
 
   Object.values(listasCirculos).forEach((lista) => {
     if (lista) lista.innerHTML = "";
@@ -3107,8 +3213,11 @@ function renderPoderes() {
 
     const li = document.createElement("li");
     li.className = "poder-card";
+    li.dataset.index = index;
 
     li.innerHTML = `
+      <button type="button" class="drag-handle" aria-label="Arrastar para reordenar">⠿</button>
+
       <div class="poder-info" onclick="verPoder(${index})">
         <strong class="poder-nome">${icone} ${esc(poder.nome) || "Sem nome"}</strong>
 
@@ -3130,25 +3239,32 @@ function renderPoderes() {
       </div>
 
       <div class="item-acoes">
-
         <div class="acoes-topo">
-          <button class="btn-mover" onclick="moverPoderCima(${index})">↑</button>
-          <button class="btn-mover" onclick="moverPoderBaixo(${index})">↓</button>
           <button class="btn-editar" onclick="editarPoder(${index})">✏️</button>
         </div>
 
         <button class="btn-deletar" onclick="removerPoder(${index})">X</button>
-
       </div>
     `;
 
     if (circulo === "") {
       if (listaPoderesComuns) listaPoderesComuns.appendChild(li);
+    } else if (circulo === "talento") {
+      if (listaTalentos) listaTalentos.appendChild(li);
+    } else if (circulo === "passiva") {
+      if (listaPassivas) listaPassivas.appendChild(li);
     } else if (listasCirculos[circulo]) {
       listasCirculos[circulo].appendChild(li);
     } else {
       if (listaPoderesComuns) listaPoderesComuns.appendChild(li);
     }
+  });
+
+  habilitarArrastarReordenar(listaPoderesComuns, poderes, renderPoderes);
+  habilitarArrastarReordenar(listaTalentos, poderes, renderPoderes);
+  habilitarArrastarReordenar(listaPassivas, poderes, renderPoderes);
+  Object.values(listasCirculos).forEach((lista) => {
+    habilitarArrastarReordenar(lista, poderes, renderPoderes);
   });
 
   for (let i = 0; i <= 9; i++) {
@@ -3869,20 +3985,6 @@ function ativarDragTemp() {
   });
 }
 
-function getGrupoPoder(poder) {
-  const circulo = (poder?.circulo ?? "").toString().trim();
-
-  if (circulo === "") return "comum";
-
-  const numero = parseInt(circulo, 10);
-
-  if (isNaN(numero) || numero < 0 || numero > 9) {
-    return "comum";
-  }
-
-  return `circulo-${numero}`;
-}
-
 
 function limitarAtributo(input) {
   let valor = parseInt(input.value);
@@ -3890,86 +3992,6 @@ function limitarAtributo(input) {
   if (isNaN(valor)) return;
   if (valor > 20) input.value = 20;
   if (valor < 1) input.value = 1;
-}
-
-function moverPoderCima(index) {
-  moverPoderNoGrupo(index, -1);
-}
-
-function moverPoderBaixo(index) {
-  moverPoderNoGrupo(index, 1);
-}
-
-function moverPoderNoGrupo(indexOriginal, direcao) {
-  const poderAtual = poderes[indexOriginal];
-  if (!poderAtual) return;
-
-  const grupo = getGrupoPoder(poderAtual);
-
-  const indicesDoGrupo = poderes
-    .map((p, i) => ({ poder: p, index: i }))
-    .filter((item) => getGrupoPoder(item.poder) === grupo)
-    .map((item) => item.index);
-
-  const posicaoNoGrupo = indicesDoGrupo.indexOf(indexOriginal);
-  if (posicaoNoGrupo === -1) return;
-
-  const novaPosicaoNoGrupo = posicaoNoGrupo + direcao;
-  if (novaPosicaoNoGrupo < 0 || novaPosicaoNoGrupo >= indicesDoGrupo.length)
-    return;
-
-  const indexDestino = indicesDoGrupo[novaPosicaoNoGrupo];
-  animarTrocaPoder(indexOriginal, indexDestino, grupo);
-}
-
-function animarTrocaPoder(origem, destino, grupo) {
-  let seletorLista = "#listaPoderesComuns";
-
-  if (grupo !== "comum") {
-    const numero = grupo.replace("circulo-", "");
-    seletorLista = `#listaMagiasCirculo${numero}`;
-  }
-
-  const cards = Array.from(
-    document.querySelectorAll(`${seletorLista} .poder-card`),
-  );
-
-  const indicesDoGrupo = poderes
-    .map((p, i) => ({ poder: p, index: i }))
-    .filter((item) => getGrupoPoder(item.poder) === grupo)
-    .map((item) => item.index);
-
-  const posOrigem = indicesDoGrupo.indexOf(origem);
-  const posDestino = indicesDoGrupo.indexOf(destino);
-
-  const cardOrigem = cards[posOrigem];
-  const cardDestino = cards[posDestino];
-
-  if (!cardOrigem || !cardDestino) {
-    [poderes[origem], poderes[destino]] = [poderes[destino], poderes[origem]];
-    renderPoderes();
-    salvarTudo();
-    return;
-  }
-
-  const rectOrigem = cardOrigem.getBoundingClientRect();
-  const rectDestino = cardDestino.getBoundingClientRect();
-  const distancia = rectDestino.top - rectOrigem.top;
-
-  cardOrigem.style.transition = "transform 0.22s ease";
-  cardDestino.style.transition = "transform 0.22s ease";
-
-  cardOrigem.style.transform = `translateY(${distancia}px)`;
-  cardDestino.style.transform = `translateY(${-distancia}px)`;
-
-  cardOrigem.style.zIndex = "2";
-  cardDestino.style.zIndex = "2";
-
-  setTimeout(() => {
-    [poderes[origem], poderes[destino]] = [poderes[destino], poderes[origem]];
-    renderPoderes();
-    salvarTudo();
-  }, 220);
 }
 
 /* ================= GRIMÓRIO ÍGNEO / MASTER ================= */
