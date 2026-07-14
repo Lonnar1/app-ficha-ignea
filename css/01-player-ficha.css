@@ -3574,14 +3574,22 @@ select:focus {
 .subtab-poder {
   flex: 1;
   min-width: 0;
-  height: 38px;
+  height: 46px;
   padding: 0 6px;
   border-radius: 12px;
   font-size: 13px;
   white-space: nowrap;
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 2px;
+}
+
+.subtab-contador {
+  font-size: 11px;
+  font-weight: normal;
+  opacity: 0.7;
 }
 
 .subtabs-circulos {
