@@ -3292,6 +3292,29 @@ function renderPoderes() {
     habilitarArrastarReordenar(lista, poderes, renderPoderes);
   });
 
+  let totalPoderes = 0;
+  let totalMagias = 0;
+  let totalTalentos = 0;
+  let totalPassivas = 0;
+
+  poderes.forEach((poder) => {
+    const c = (poder.circulo ?? "").toString().trim();
+    if (c === "") totalPoderes++;
+    else if (c === "talento") totalTalentos++;
+    else if (c === "passiva") totalPassivas++;
+    else totalMagias++;
+  });
+
+  const contadorPoderes = document.getElementById("contadorPoderes");
+  const contadorMagias = document.getElementById("contadorMagias");
+  const contadorTalentos = document.getElementById("contadorTalentos");
+  const contadorPassivas = document.getElementById("contadorPassivas");
+
+  if (contadorPoderes) contadorPoderes.textContent = `(${totalPoderes})`;
+  if (contadorMagias) contadorMagias.textContent = `(${totalMagias})`;
+  if (contadorTalentos) contadorTalentos.textContent = `(${totalTalentos})`;
+  if (contadorPassivas) contadorPassivas.textContent = `(${totalPassivas})`;
+
   for (let i = 0; i <= 9; i++) {
     const inputGasto = document.getElementById(`gastoCirculo${i}`);
     if (inputGasto) {
