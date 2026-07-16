@@ -1,4 +1,3 @@
-
 function esc(str) {
   if (str === null || str === undefined) return "";
   return String(str)
@@ -327,6 +326,12 @@ let mapaTextoY = 0;
 let mapaPanUltimoX = 0;
 let mapaPanUltimoY = 0;
 let mapaBase64Temp = "";
+let itemImagemBase64Temp = "";
+let editItemImagemBase64Temp = "";
+let armaImagemBase64Temp = "";
+let editArmaImagemBase64Temp = "";
+let armaduraImagemBase64Temp = "";
+let editArmaduraImagemBase64Temp = "";
 let exaustao = 0;
 let armaduras = [];
 let editandoArmadura = -1;
@@ -1096,6 +1101,8 @@ function editarItem(index) {
   const item = inventario[index];
   if (!item) return;
 
+  editItemImagemBase64Temp = "";
+
   const html = `
     <div class="popup-form">
       <label class="popup-label">Nome</label>
@@ -1106,6 +1113,16 @@ function editarItem(index) {
 
       <label class="popup-label">Quantidade</label>
       <input id="editItemQtd" type="number" min="1" value="${item.qtd || 1}">
+
+      <label class="popup-label">Imagem (opcional)</label>
+      <input type="file" id="editItemImagem" accept="image/*" onchange="previewEditItemImagem()" />
+      <label for="editItemImagem" class="botao-upload">🖼 Trocar imagem</label>
+      <img
+        id="editItemImagemPreview"
+        src="${item.imagemUrl || ""}"
+        style="display:${item.imagemUrl ? "block" : "none"}; max-width:100%; border-radius:10px; margin-top:8px;"
+      />
+      <span class="link-remover-imagem" onclick="removerEditImagemItem()">Remover imagem</span>
 
       <div class="toggle-cargas" style="margin-top:10px;">
         <span class="toggle-cargas-texto">Requer sintonia</span>
@@ -1143,7 +1160,7 @@ function editarItem(index) {
   abrirPopup("Editar item", html, true, null);
 }
 
-function salvarEdicaoItem(index) {
+async function salvarEdicaoItem(index) {
   const nome = document.getElementById("editItemNome").value.trim();
   const desc = document.getElementById("editItemDesc").value.trim();
   const qtd = parseInt(document.getElementById("editItemQtd")?.value) || 1;
@@ -1154,13 +1171,35 @@ function salvarEdicaoItem(index) {
 
   if (!nome) return;
 
+  let imagemUrl = inventario[index]?.imagemUrl || "";
+  let imagemDeleteUrl = inventario[index]?.imagemDeleteUrl || "";
+
+  if (editItemImagemBase64Temp === "REMOVIDA") {
+    imagemUrl = "";
+    imagemDeleteUrl = "";
+  } else if (editItemImagemBase64Temp) {
+    try {
+      const resultado = await uploadImagemFirebase(editItemImagemBase64Temp, "item");
+      imagemUrl = resultado.url;
+      imagemDeleteUrl = resultado.deleteUrl;
+    } catch (e) {
+      console.warn("Upload da imagem do item falhou, usando base64");
+      imagemUrl = editItemImagemBase64Temp;
+      imagemDeleteUrl = "";
+    }
+  }
+
   inventario[index] = {
     nome,
     desc,
     qtd,
     requerSintonia,
     sintonizado,
+    imagemUrl,
+    imagemDeleteUrl,
   };
+
+  editItemImagemBase64Temp = "";
 
   renderInv();
   salvarTudo();
@@ -1195,6 +1234,8 @@ function editarArma(index) {
   const arma = armas[index];
   if (!arma) return;
 
+  editArmaImagemBase64Temp = "";
+
   const html = `
     <div class="popup-form">
       <label class="popup-label">Nome</label>
@@ -1205,6 +1246,16 @@ function editarArma(index) {
 
       <label class="popup-label">Descrição</label>
       <textarea id="editArmaDesc">${arma.desc || ""}</textarea>
+
+      <label class="popup-label">Imagem (opcional)</label>
+      <input type="file" id="editArmaImagem" accept="image/*" onchange="previewEditArmaImagem()" />
+      <label for="editArmaImagem" class="botao-upload">🖼 Trocar imagem</label>
+      <img
+        id="editArmaImagemPreview"
+        src="${arma.imagemUrl || ""}"
+        style="display:${arma.imagemUrl ? "block" : "none"}; max-width:100%; border-radius:10px; margin-top:8px;"
+      />
+      <span class="link-remover-imagem" onclick="removerEditImagemArma()">Remover imagem</span>
 
       <div class="toggle-cargas" style="margin-top:10px;">
         <span class="toggle-cargas-texto">Usa cargas</span>
@@ -1438,7 +1489,7 @@ function fecharPopup() {
   if (popup) popup.style.display = "none";
 }
 
-function salvarEdicaoArma(index) {
+async function salvarEdicaoArma(index) {
   const nome = document.getElementById("editArmaNome").value.trim();
   const dano = document.getElementById("editArmaDano").value.trim();
   const desc = document.getElementById("editArmaDesc").value.trim();
@@ -1466,6 +1517,24 @@ function salvarEdicaoArma(index) {
     }
   }
 
+  let imagemUrl = armaAnterior?.imagemUrl || "";
+  let imagemDeleteUrl = armaAnterior?.imagemDeleteUrl || "";
+
+  if (editArmaImagemBase64Temp === "REMOVIDA") {
+    imagemUrl = "";
+    imagemDeleteUrl = "";
+  } else if (editArmaImagemBase64Temp) {
+    try {
+      const resultado = await uploadImagemFirebase(editArmaImagemBase64Temp, "arma");
+      imagemUrl = resultado.url;
+      imagemDeleteUrl = resultado.deleteUrl;
+    } catch (e) {
+      console.warn("Upload da imagem da arma falhou, usando base64");
+      imagemUrl = editArmaImagemBase64Temp;
+      imagemDeleteUrl = "";
+    }
+  }
+
   armas[index] = {
     nome,
     dano,
@@ -1473,8 +1542,11 @@ function salvarEdicaoArma(index) {
     temCargas,
     maxCargas,
     cargasGastas,
+    imagemUrl,
+    imagemDeleteUrl,
   };
 
+  editArmaImagemBase64Temp = "";
   renderArmas();
   salvarTudo();
   fecharPopup();
@@ -2068,7 +2140,7 @@ function toggleDiario() {
   }
 }
 
-function addArmadura() {
+async function addArmadura() {
   const nome = document.getElementById("armaduraNome").value.trim();
   const ca = document.getElementById("armaduraCA").value.trim();
   const desc = document.getElementById("armaduraDesc").value.trim();
@@ -2082,6 +2154,24 @@ function addArmadura() {
   if (!nome) return;
   if (temCargas && maxCargas <= 0) return;
 
+  let imagemUrl = editandoArmadura >= 0 ? armaduras[editandoArmadura]?.imagemUrl || "" : "";
+  let imagemDeleteUrl = editandoArmadura >= 0 ? armaduras[editandoArmadura]?.imagemDeleteUrl || "" : "";
+
+  if (armaduraImagemBase64Temp === "REMOVIDA") {
+    imagemUrl = "";
+    imagemDeleteUrl = "";
+  } else if (armaduraImagemBase64Temp) {
+    try {
+      const resultado = await uploadImagemFirebase(armaduraImagemBase64Temp, "armadura");
+      imagemUrl = resultado.url;
+      imagemDeleteUrl = resultado.deleteUrl;
+    } catch (e) {
+      console.warn("Upload da imagem da armadura falhou, usando base64");
+      imagemUrl = armaduraImagemBase64Temp;
+      imagemDeleteUrl = "";
+    }
+  }
+
   const novaArmadura = {
     nome,
     ca,
@@ -2089,6 +2179,8 @@ function addArmadura() {
     temCargas,
     maxCargas,
     cargasGastas: temCargas ? Array(maxCargas).fill(false) : [],
+    imagemUrl,
+    imagemDeleteUrl,
   };
 
   if (editandoArmadura >= 0) {
@@ -2121,6 +2213,10 @@ function addArmadura() {
     maxCargasEl.value = "";
     maxCargasEl.style.display = "none";
   }
+
+  armaduraImagemBase64Temp = "";
+  document.getElementById("armaduraImagem").value = "";
+  document.getElementById("armaduraImagemPreview").style.display = "none";
 }
 
 function toggleCargaArmadura(indexArmadura, indexCarga) {
@@ -2208,6 +2304,12 @@ function verArmadura(index) {
 
   const html = `
     <div class="popup-bloco">
+      ${
+        armadura.imagemUrl
+          ? `<div><img src="${armadura.imagemUrl}" class="popup-imagem-item" /></div>`
+          : ""
+      }
+
       <div>
         <span class="popup-label">CA</span>
         <div class="popup-descricao-pequena">${esc(armadura.ca) || "Sem CA"}</div>
@@ -2243,6 +2345,8 @@ function editarArmadura(index) {
   const armadura = armaduras[index];
   if (!armadura) return;
 
+  editArmaduraImagemBase64Temp = "";
+
   const html = `
     <div class="popup-form">
       <label class="popup-label">Nome</label>
@@ -2253,6 +2357,16 @@ function editarArmadura(index) {
 
       <label class="popup-label">Descrição</label>
       <textarea id="editArmaduraDesc">${armadura.desc || ""}</textarea>
+
+      <label class="popup-label">Imagem (opcional)</label>
+      <input type="file" id="editArmaduraImagem" accept="image/*" onchange="previewEditArmaduraImagem()" />
+      <label for="editArmaduraImagem" class="botao-upload">🖼 Trocar imagem</label>
+      <img
+        id="editArmaduraImagemPreview"
+        src="${armadura.imagemUrl || ""}"
+        style="display:${armadura.imagemUrl ? "block" : "none"}; max-width:100%; border-radius:10px; margin-top:8px;"
+      />
+      <span class="link-remover-imagem" onclick="removerEditImagemArmadura()">Remover imagem</span>
 
       <div class="toggle-cargas" style="margin-top:10px;">
         <span class="toggle-cargas-texto">Usa cargas</span>
@@ -2301,7 +2415,7 @@ function toggleEditCampoCargasArmadura() {
   }
 }
 
-function salvarEdicaoArmadura(index) {
+async function salvarEdicaoArmadura(index) {
   const nome = document.getElementById("editArmaduraNome").value.trim();
   const ca = document.getElementById("editArmaduraCA").value.trim();
   const desc = document.getElementById("editArmaduraDesc").value.trim();
@@ -2329,6 +2443,24 @@ function salvarEdicaoArmadura(index) {
     }
   }
 
+  let imagemUrl = armaduraAnterior?.imagemUrl || "";
+  let imagemDeleteUrl = armaduraAnterior?.imagemDeleteUrl || "";
+
+  if (editArmaduraImagemBase64Temp === "REMOVIDA") {
+    imagemUrl = "";
+    imagemDeleteUrl = "";
+  } else if (editArmaduraImagemBase64Temp) {
+    try {
+      const resultado = await uploadImagemFirebase(editArmaduraImagemBase64Temp, "armadura");
+      imagemUrl = resultado.url;
+      imagemDeleteUrl = resultado.deleteUrl;
+    } catch (e) {
+      console.warn("Upload da imagem da armadura falhou, usando base64");
+      imagemUrl = editArmaduraImagemBase64Temp;
+      imagemDeleteUrl = "";
+    }
+  }
+
   armaduras[index] = {
     nome,
     ca,
@@ -2336,8 +2468,11 @@ function salvarEdicaoArmadura(index) {
     temCargas,
     maxCargas,
     cargasGastas,
+    imagemUrl,
+    imagemDeleteUrl,
   };
 
+  editArmaduraImagemBase64Temp = "";
   renderArmaduras();
   salvarTudo();
   fecharPopup();
@@ -2782,7 +2917,7 @@ async function salvarEditorImagem() {
 
 /* ================= INVENTÁRIO ================= */
 
-function addItem() {
+async function addItem() {
   const nome = document.getElementById("itemNome")?.value.trim();
   const desc = document.getElementById("itemDesc")?.value.trim();
   const qtd = parseInt(document.getElementById("itemQtd")?.value) || 1;
@@ -2793,12 +2928,32 @@ function addItem() {
 
   if (!nome) return;
 
+  let imagemUrl = editandoItem >= 0 ? inventario[editandoItem]?.imagemUrl || "" : "";
+  let imagemDeleteUrl = editandoItem >= 0 ? inventario[editandoItem]?.imagemDeleteUrl || "" : "";
+
+  if (itemImagemBase64Temp === "REMOVIDA") {
+    imagemUrl = "";
+    imagemDeleteUrl = "";
+  } else if (itemImagemBase64Temp) {
+    try {
+      const resultado = await uploadImagemFirebase(itemImagemBase64Temp, "item");
+      imagemUrl = resultado.url;
+      imagemDeleteUrl = resultado.deleteUrl;
+    } catch (e) {
+      console.warn("Upload da imagem do item falhou, usando base64");
+      imagemUrl = itemImagemBase64Temp;
+      imagemDeleteUrl = "";
+    }
+  }
+
   const novoItem = {
     nome,
     desc,
     qtd,
     requerSintonia,
     sintonizado,
+    imagemUrl,
+    imagemDeleteUrl,
   };
 
   if (editandoItem >= 0) {
@@ -2817,6 +2972,135 @@ function addItem() {
   document.getElementById("itemRequerSintonia").checked = false;
   document.getElementById("itemSintonizado").checked = false;
   document.getElementById("boxItemSintonizado").style.display = "none";
+  document.getElementById("itemImagem").value = "";
+  document.getElementById("itemImagemPreview").style.display = "none";
+  itemImagemBase64Temp = "";
+}
+
+function previewItemImagem() {
+  const input = document.getElementById("itemImagem");
+  const preview = document.getElementById("itemImagemPreview");
+  if (!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    itemImagemBase64Temp = e.target.result;
+    preview.src = itemImagemBase64Temp;
+    preview.style.display = "block";
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function removerImagemItem() {
+  itemImagemBase64Temp = "REMOVIDA";
+  const preview = document.getElementById("itemImagemPreview");
+  const input = document.getElementById("itemImagem");
+  if (preview) { preview.style.display = "none"; preview.src = ""; }
+  if (input) input.value = "";
+}
+
+function previewEditItemImagem() {
+  const input = document.getElementById("editItemImagem");
+  const preview = document.getElementById("editItemImagemPreview");
+  if (!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    editItemImagemBase64Temp = e.target.result;
+    preview.src = editItemImagemBase64Temp;
+    preview.style.display = "block";
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function removerEditImagemItem() {
+  editItemImagemBase64Temp = "REMOVIDA";
+  const preview = document.getElementById("editItemImagemPreview");
+  const input = document.getElementById("editItemImagem");
+  if (preview) { preview.style.display = "none"; preview.src = ""; }
+  if (input) input.value = "";
+}
+
+function previewArmaImagem() {
+  const input = document.getElementById("armaImagem");
+  const preview = document.getElementById("armaImagemPreview");
+  if (!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    armaImagemBase64Temp = e.target.result;
+    preview.src = armaImagemBase64Temp;
+    preview.style.display = "block";
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function removerImagemArma() {
+  armaImagemBase64Temp = "REMOVIDA";
+  const preview = document.getElementById("armaImagemPreview");
+  const input = document.getElementById("armaImagem");
+  if (preview) { preview.style.display = "none"; preview.src = ""; }
+  if (input) input.value = "";
+}
+
+function previewEditArmaImagem() {
+  const input = document.getElementById("editArmaImagem");
+  const preview = document.getElementById("editArmaImagemPreview");
+  if (!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    editArmaImagemBase64Temp = e.target.result;
+    preview.src = editArmaImagemBase64Temp;
+    preview.style.display = "block";
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function removerEditImagemArma() {
+  editArmaImagemBase64Temp = "REMOVIDA";
+  const preview = document.getElementById("editArmaImagemPreview");
+  const input = document.getElementById("editArmaImagem");
+  if (preview) { preview.style.display = "none"; preview.src = ""; }
+  if (input) input.value = "";
+}
+
+function previewArmaduraImagem() {
+  const input = document.getElementById("armaduraImagem");
+  const preview = document.getElementById("armaduraImagemPreview");
+  if (!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    armaduraImagemBase64Temp = e.target.result;
+    preview.src = armaduraImagemBase64Temp;
+    preview.style.display = "block";
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function removerImagemArmadura() {
+  armaduraImagemBase64Temp = "REMOVIDA";
+  const preview = document.getElementById("armaduraImagemPreview");
+  const input = document.getElementById("armaduraImagem");
+  if (preview) { preview.style.display = "none"; preview.src = ""; }
+  if (input) input.value = "";
+}
+
+function previewEditArmaduraImagem() {
+  const input = document.getElementById("editArmaduraImagem");
+  const preview = document.getElementById("editArmaduraImagemPreview");
+  if (!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    editArmaduraImagemBase64Temp = e.target.result;
+    preview.src = editArmaduraImagemBase64Temp;
+    preview.style.display = "block";
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function removerEditImagemArmadura() {
+  editArmaduraImagemBase64Temp = "REMOVIDA";
+  const preview = document.getElementById("editArmaduraImagemPreview");
+  const input = document.getElementById("editArmaduraImagem");
+  if (preview) { preview.style.display = "none"; preview.src = ""; }
+  if (input) input.value = "";
 }
 
 function toggleSintoniaItem() {
@@ -2904,6 +3188,12 @@ function verItem(index) {
 
   const html = `
   <div class="popup-bloco">
+    ${
+      item.imagemUrl
+        ? `<div><img src="${item.imagemUrl}" class="popup-imagem-item" /></div>`
+        : ""
+    }
+
     <div>
       <span class="popup-label">Quantidade</span>
       <div class="popup-descricao popup-descricao-pequena">${item.qtd || 1}</div>
@@ -2946,7 +3236,7 @@ function removerItem(index) {
 
 /* ================= ARMAS ================= */
 
-function addArma() {
+async function addArma() {
   const nome = document.getElementById("armaNome").value.trim();
   const dano = document.getElementById("armaDano").value.trim();
   const descEl = document.getElementById("armaDesc");
@@ -2961,6 +3251,24 @@ function addArma() {
   if (!nome) return;
   if (temCargas && maxCargas <= 0) return;
 
+  let imagemUrl = editandoArma >= 0 ? armas[editandoArma]?.imagemUrl || "" : "";
+  let imagemDeleteUrl = editandoArma >= 0 ? armas[editandoArma]?.imagemDeleteUrl || "" : "";
+
+  if (armaImagemBase64Temp === "REMOVIDA") {
+    imagemUrl = "";
+    imagemDeleteUrl = "";
+  } else if (armaImagemBase64Temp) {
+    try {
+      const resultado = await uploadImagemFirebase(armaImagemBase64Temp, "arma");
+      imagemUrl = resultado.url;
+      imagemDeleteUrl = resultado.deleteUrl;
+    } catch (e) {
+      console.warn("Upload da imagem da arma falhou, usando base64");
+      imagemUrl = armaImagemBase64Temp;
+      imagemDeleteUrl = "";
+    }
+  }
+
   const novaArma = {
     nome,
     dano,
@@ -2968,6 +3276,8 @@ function addArma() {
     temCargas,
     maxCargas,
     cargasGastas: temCargas ? Array(maxCargas).fill(false) : [],
+    imagemUrl,
+    imagemDeleteUrl,
   };
 
   if (editandoArma >= 0) {
@@ -3000,6 +3310,10 @@ function addArma() {
     maxCargasEl.value = "";
     maxCargasEl.style.display = "none";
   }
+
+  armaImagemBase64Temp = "";
+  document.getElementById("armaImagem").value = "";
+  document.getElementById("armaImagemPreview").style.display = "none";
 }
 
 function renderArmas() {
@@ -3072,6 +3386,12 @@ function verArma(index) {
 
   const html = `
     <div class="popup-bloco">
+      ${
+        arma.imagemUrl
+          ? `<div><img src="${arma.imagemUrl}" class="popup-imagem-item" /></div>`
+          : ""
+      }
+
       <div>
         <span class="popup-label">Dano</span>
         <div class="popup-tags">
