@@ -1229,6 +1229,20 @@
                 placeholder="Descrição da arma"
               ></textarea>
 
+              <input
+                type="file"
+                id="armaImagem"
+                accept="image/*"
+                onchange="previewArmaImagem()"
+              />
+              <label for="armaImagem" class="botao-upload"
+                >🖼 Adicionar imagem (opcional)</label
+              >
+              <img id="armaImagemPreview" style="display: none" />
+              <span class="link-remover-imagem" onclick="removerImagemArma()"
+                >Remover imagem</span
+              >
+
               <div class="toggle-cargas">
                 <span class="toggle-cargas-texto">Usa cargas</span>
 
@@ -1277,6 +1291,22 @@
                 id="armaduraDesc"
                 placeholder="Descrição da armadura"
               ></textarea>
+
+              <input
+                type="file"
+                id="armaduraImagem"
+                accept="image/*"
+                onchange="previewArmaduraImagem()"
+              />
+              <label for="armaduraImagem" class="botao-upload"
+                >🖼 Adicionar imagem (opcional)</label
+              >
+              <img id="armaduraImagemPreview" style="display: none" />
+              <span
+                class="link-remover-imagem"
+                onclick="removerImagemArmadura()"
+                >Remover imagem</span
+              >
 
               <div class="toggle-cargas">
                 <span class="toggle-cargas-texto">Usa cargas</span>
@@ -1459,6 +1489,21 @@
             <div class="inv-add">
               <input id="itemNome" placeholder="Nome do item" />
               <textarea id="itemDesc" placeholder="Descrição"></textarea>
+
+              <input
+                type="file"
+                id="itemImagem"
+                accept="image/*"
+                onchange="previewItemImagem()"
+              />
+              <label for="itemImagem" class="botao-upload"
+                >🖼 Adicionar imagem (opcional)</label
+              >
+              <img id="itemImagemPreview" style="display: none" />
+              <span class="link-remover-imagem" onclick="removerImagemItem()"
+                >Remover imagem</span
+              >
+
               <input
                 id="itemQtd"
                 type="number"
