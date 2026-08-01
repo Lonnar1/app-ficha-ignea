@@ -2797,7 +2797,7 @@ button:active {
 
 .conteudo-toggle {
   overflow: hidden;
-  max-height: 500px;
+  max-height: 2000px;
   opacity: 1;
   transition:
     max-height 0.3s ease,
@@ -4828,7 +4828,7 @@ select {
 }
 
 #ficha .aba {
-  padding-bottom: 120px !important;
+  padding-bottom: calc(110px + env(safe-area-inset-bottom));
 }
 
 #ficha {
