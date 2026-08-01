@@ -2277,21 +2277,40 @@ button:active {
 
 .btn-diario {
   width: 100%;
-  margin: 10px 0 12px 0;
-  padding: 12px;
-  border: none;
-  border-radius: 12px;
-  background: #b89654;
-  color: #2c2520;
+  margin: 14px 0 18px 0;
+  padding: 15px 20px;
+
+  border: 1px solid rgba(200, 169, 107, 0.45);
+  border-radius: 14px;
+
+  background: linear-gradient(180deg, #3a2c23 0%, #2a1f19 100%);
+  color: #e5c98f;
+
+  font-family: "Cinzel", serif;
   font-size: 16px;
-  font-weight: bold;
+  font-weight: 600;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+
   cursor: pointer;
-  transition: 0.2s;
+  transition: 0.22s ease;
+
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .btn-diario:hover {
-  background: #c8a662;
-  transform: scale(1.01);
+  background: linear-gradient(180deg, #4a3829 0%, #33261e 100%);
+  border-color: rgba(200, 169, 107, 0.75);
+  color: #f3d9a2;
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.38),
+    0 0 14px rgba(200, 169, 107, 0.15);
+}
+
+.btn-diario:active {
+  transform: scale(0.985);
 }
 
 .diario-box {
@@ -3076,16 +3095,10 @@ select:focus {
 
 .botao-upload,
 .inv-add-btn,
-.btn-diario {
-  background: #b89654;
-  color: #1b1411;
-}
 
 .botao-upload:hover,
 .inv-add-btn:hover,
-.btn-diario:hover {
-  background: #c8a662;
-}
+
 
 .tab-btn.active {
   background: #b89654;
@@ -5151,4 +5164,19 @@ select {
 .dominio-topo .btn-editar-slots {
   position: absolute;
   right: 0;
+}
+
+#ficha .titulo-toggle {
+  position: relative;
+}
+
+#ficha .titulo-toggle .setinha {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+#ficha .titulo-toggle.fechado .setinha {
+  transform: translateY(-50%) rotate(-90deg);
 }
