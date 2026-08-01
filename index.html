@@ -1234,6 +1234,7 @@
                 id="armaImagem"
                 accept="image/*"
                 onchange="previewArmaImagem()"
+                style="display: none"
               />
               <label for="armaImagem" class="botao-upload"
                 >🖼 Adicionar imagem (opcional)</label
@@ -1297,6 +1298,7 @@
                 id="armaduraImagem"
                 accept="image/*"
                 onchange="previewArmaduraImagem()"
+                style="display: none"
               />
               <label for="armaduraImagem" class="botao-upload"
                 >🖼 Adicionar imagem (opcional)</label
@@ -1495,6 +1497,7 @@
                 id="itemImagem"
                 accept="image/*"
                 onchange="previewItemImagem()"
+                style="display: none"
               />
               <label for="itemImagem" class="botao-upload"
                 >🖼 Adicionar imagem (opcional)</label
@@ -2294,6 +2297,8 @@ import {
   const fichas = window.personagens || [];
 
 
+  const falhas = [];
+
   for (const ficha of fichas) {
     if (!ficha) continue;
     if (!ficha.id) {
@@ -2305,7 +2310,14 @@ import {
         ficha
       );
     } catch (erro) {
+      console.error(`Falha ao salvar ficha "${ficha.nome || ficha.id}":`, erro);
+      const tamKB = (new Blob([JSON.stringify(ficha)]).size / 1024).toFixed(0);
+      falhas.push(`${ficha.nome || "Sem nome"} (${tamKB} KB)`);
     }
+  }
+
+  if (falhas.length) {
+    throw new Error("Não foi possível salvar: " + falhas.join(", "));
   }
 
   await setDoc(
@@ -2332,15 +2344,30 @@ import {
   const fichasLocais =
     JSON.parse(localStorage.getItem("personagens")) || [];
 
-  const snapFichas = await getDocs(
-    collection(db, "usuarios", uid, "fichas")
-  );
+  let snapFichas;
+  try {
+    snapFichas = await getDocs(
+      collection(db, "usuarios", uid, "fichas")
+    );
+  } catch (erro) {
+    console.error("Falha ao ler fichas da nuvem:", erro);
+    alert("Não consegui carregar suas fichas da nuvem. Usando os dados deste aparelho.");
+    if (typeof renderPersonagens === "function") renderPersonagens();
+    return;
+  }
 
   const fichasNuvem = [];
 
   snapFichas.forEach((docSnap) => {
     fichasNuvem.push(docSnap.data());
   });
+
+  // rede de segurança: guarda o que estava no aparelho antes de sobrescrever
+  if (fichasLocais.length > 0) {
+    try {
+      localStorage.setItem("personagens_backup", JSON.stringify(fichasLocais));
+    } catch (e) { console.warn("Sem espaço para backup local:", e); }
+  }
 
   if (fichasNuvem.length === 0 && fichasLocais.length > 0) {
     const confirmar = confirm(
