@@ -844,7 +844,7 @@ function exportarFichaAtual() {
   exportarFicha(personagemAtual);
 }
 
-function salvarPersonagens() {
+async function salvarPersonagens() {
   try {
     localStorage.setItem("personagens", JSON.stringify(personagens));
   } catch (erro) {
@@ -852,9 +852,17 @@ function salvarPersonagens() {
   }
 
   if (typeof window.salvarFichasNaNuvem === "function") {
-    window.salvarFichasNaNuvem();
+    try {
+      await window.salvarFichasNaNuvem();
+    } catch (erro) {
+      console.error("Falha ao salvar na nuvem:", erro);
+      if (typeof mostrarToastSalvarFlutuante === "function") {
+        mostrarToastSalvarFlutuante("Falha ao salvar na nuvem!");
+      }
+    }
   }
 }
+
 function normalizarTipo(tipo) {
   return (tipo || "")
     .toLowerCase()
@@ -1178,14 +1186,12 @@ async function salvarEdicaoItem(index) {
     imagemUrl = "";
     imagemDeleteUrl = "";
   } else if (editItemImagemBase64Temp) {
-    try {
-      const resultado = await uploadImagemFirebase(editItemImagemBase64Temp, "item");
+    const resultado = await uploadImagemFirebase(editItemImagemBase64Temp, "item");
+    if (resultado.erro || !resultado.url) {
+      alert("Não consegui enviar a imagem (internet?). A imagem anterior foi mantida.");
+    } else {
       imagemUrl = resultado.url;
       imagemDeleteUrl = resultado.deleteUrl;
-    } catch (e) {
-      console.warn("Upload da imagem do item falhou, usando base64");
-      imagemUrl = editItemImagemBase64Temp;
-      imagemDeleteUrl = "";
     }
   }
 
@@ -1524,14 +1530,12 @@ async function salvarEdicaoArma(index) {
     imagemUrl = "";
     imagemDeleteUrl = "";
   } else if (editArmaImagemBase64Temp) {
-    try {
-      const resultado = await uploadImagemFirebase(editArmaImagemBase64Temp, "arma");
+    const resultado = await uploadImagemFirebase(editArmaImagemBase64Temp, "arma");
+    if (resultado.erro || !resultado.url) {
+      alert("Não consegui enviar a imagem (internet?). A imagem anterior foi mantida.");
+    } else {
       imagemUrl = resultado.url;
       imagemDeleteUrl = resultado.deleteUrl;
-    } catch (e) {
-      console.warn("Upload da imagem da arma falhou, usando base64");
-      imagemUrl = editArmaImagemBase64Temp;
-      imagemDeleteUrl = "";
     }
   }
 
@@ -2161,14 +2165,12 @@ async function addArmadura() {
     imagemUrl = "";
     imagemDeleteUrl = "";
   } else if (armaduraImagemBase64Temp) {
-    try {
-      const resultado = await uploadImagemFirebase(armaduraImagemBase64Temp, "armadura");
+    const resultado = await uploadImagemFirebase(armaduraImagemBase64Temp, "armadura");
+    if (resultado.erro || !resultado.url) {
+      alert("Não consegui enviar a imagem (internet?). A armadura foi salva sem imagem.");
+    } else {
       imagemUrl = resultado.url;
       imagemDeleteUrl = resultado.deleteUrl;
-    } catch (e) {
-      console.warn("Upload da imagem da armadura falhou, usando base64");
-      imagemUrl = armaduraImagemBase64Temp;
-      imagemDeleteUrl = "";
     }
   }
 
@@ -2450,14 +2452,12 @@ async function salvarEdicaoArmadura(index) {
     imagemUrl = "";
     imagemDeleteUrl = "";
   } else if (editArmaduraImagemBase64Temp) {
-    try {
-      const resultado = await uploadImagemFirebase(editArmaduraImagemBase64Temp, "armadura");
+    const resultado = await uploadImagemFirebase(editArmaduraImagemBase64Temp, "armadura");
+    if (resultado.erro || !resultado.url) {
+      alert("Não consegui enviar a imagem (internet?). A imagem anterior foi mantida.");
+    } else {
       imagemUrl = resultado.url;
       imagemDeleteUrl = resultado.deleteUrl;
-    } catch (e) {
-      console.warn("Upload da imagem da armadura falhou, usando base64");
-      imagemUrl = editArmaduraImagemBase64Temp;
-      imagemDeleteUrl = "";
     }
   }
 
@@ -2739,6 +2739,11 @@ function previewImagem() {
     if (nomeArquivo) nomeArquivo.innerText = "Enviando imagem...";
 
     const resultado = await uploadImagemFirebase(base64Local, `personagens/${Date.now()}.jpg`);
+    if (resultado.erro || !resultado.url) {
+      if (nomeArquivo) nomeArquivo.innerText = "Falha ao enviar imagem";
+      alert("Não consegui enviar a foto agora. Tente de novo com internet melhor.");
+      return;
+    }
     imagemBase64 = resultado.url;
     imagemOriginalBase64 = resultado.url;
     imagemDeleteUrl = resultado.deleteUrl || "";
@@ -2906,6 +2911,10 @@ async function salvarEditorImagem() {
   }
 
   const resultado = await uploadImagemFirebase(base64Local, `personagens/${Date.now()}.jpg`);
+  if (resultado.erro || !resultado.url) {
+    alert("Não consegui enviar a foto agora. Tente de novo com internet melhor.");
+    return;
+  }
   imagemBase64 = resultado.url;
   imagemDeleteUrl = resultado.deleteUrl || "";
   // não sobrescreve imagemOriginalBase64 — mantém original para reedição
@@ -2935,14 +2944,12 @@ async function addItem() {
     imagemUrl = "";
     imagemDeleteUrl = "";
   } else if (itemImagemBase64Temp) {
-    try {
-      const resultado = await uploadImagemFirebase(itemImagemBase64Temp, "item");
+    const resultado = await uploadImagemFirebase(itemImagemBase64Temp, "item");
+    if (resultado.erro || !resultado.url) {
+      alert("Não consegui enviar a imagem (internet?). O item foi salvo sem imagem.");
+    } else {
       imagemUrl = resultado.url;
       imagemDeleteUrl = resultado.deleteUrl;
-    } catch (e) {
-      console.warn("Upload da imagem do item falhou, usando base64");
-      imagemUrl = itemImagemBase64Temp;
-      imagemDeleteUrl = "";
     }
   }
 
@@ -2978,16 +2985,7 @@ async function addItem() {
 }
 
 function previewItemImagem() {
-  const input = document.getElementById("itemImagem");
-  const preview = document.getElementById("itemImagemPreview");
-  if (!input.files[0]) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    itemImagemBase64Temp = e.target.result;
-    preview.src = itemImagemBase64Temp;
-    preview.style.display = "block";
-  };
-  reader.readAsDataURL(input.files[0]);
+  _previewImagemGenerica("itemImagem", "itemImagemPreview", v => itemImagemBase64Temp = v);
 }
 
 function removerImagemItem() {
@@ -2999,16 +2997,7 @@ function removerImagemItem() {
 }
 
 function previewEditItemImagem() {
-  const input = document.getElementById("editItemImagem");
-  const preview = document.getElementById("editItemImagemPreview");
-  if (!input.files[0]) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    editItemImagemBase64Temp = e.target.result;
-    preview.src = editItemImagemBase64Temp;
-    preview.style.display = "block";
-  };
-  reader.readAsDataURL(input.files[0]);
+  _previewImagemGenerica("editItemImagem", "editItemImagemPreview", v => editItemImagemBase64Temp = v);
 }
 
 function removerEditImagemItem() {
@@ -3020,16 +3009,7 @@ function removerEditImagemItem() {
 }
 
 function previewArmaImagem() {
-  const input = document.getElementById("armaImagem");
-  const preview = document.getElementById("armaImagemPreview");
-  if (!input.files[0]) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    armaImagemBase64Temp = e.target.result;
-    preview.src = armaImagemBase64Temp;
-    preview.style.display = "block";
-  };
-  reader.readAsDataURL(input.files[0]);
+  _previewImagemGenerica("armaImagem", "armaImagemPreview", v => armaImagemBase64Temp = v);
 }
 
 function removerImagemArma() {
@@ -3041,16 +3021,7 @@ function removerImagemArma() {
 }
 
 function previewEditArmaImagem() {
-  const input = document.getElementById("editArmaImagem");
-  const preview = document.getElementById("editArmaImagemPreview");
-  if (!input.files[0]) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    editArmaImagemBase64Temp = e.target.result;
-    preview.src = editArmaImagemBase64Temp;
-    preview.style.display = "block";
-  };
-  reader.readAsDataURL(input.files[0]);
+  _previewImagemGenerica("editArmaImagem", "editArmaImagemPreview", v => editArmaImagemBase64Temp = v);
 }
 
 function removerEditImagemArma() {
@@ -3062,16 +3033,7 @@ function removerEditImagemArma() {
 }
 
 function previewArmaduraImagem() {
-  const input = document.getElementById("armaduraImagem");
-  const preview = document.getElementById("armaduraImagemPreview");
-  if (!input.files[0]) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    armaduraImagemBase64Temp = e.target.result;
-    preview.src = armaduraImagemBase64Temp;
-    preview.style.display = "block";
-  };
-  reader.readAsDataURL(input.files[0]);
+  _previewImagemGenerica("armaduraImagem", "armaduraImagemPreview", v => armaduraImagemBase64Temp = v);
 }
 
 function removerImagemArmadura() {
@@ -3083,16 +3045,7 @@ function removerImagemArmadura() {
 }
 
 function previewEditArmaduraImagem() {
-  const input = document.getElementById("editArmaduraImagem");
-  const preview = document.getElementById("editArmaduraImagemPreview");
-  if (!input.files[0]) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    editArmaduraImagemBase64Temp = e.target.result;
-    preview.src = editArmaduraImagemBase64Temp;
-    preview.style.display = "block";
-  };
-  reader.readAsDataURL(input.files[0]);
+  _previewImagemGenerica("editArmaduraImagem", "editArmaduraImagemPreview", v => editArmaduraImagemBase64Temp = v);
 }
 
 function removerEditImagemArmadura() {
@@ -3258,14 +3211,12 @@ async function addArma() {
     imagemUrl = "";
     imagemDeleteUrl = "";
   } else if (armaImagemBase64Temp) {
-    try {
-      const resultado = await uploadImagemFirebase(armaImagemBase64Temp, "arma");
+    const resultado = await uploadImagemFirebase(armaImagemBase64Temp, "arma");
+    if (resultado.erro || !resultado.url) {
+      alert("Não consegui enviar a imagem (internet?). A arma foi salva sem imagem.");
+    } else {
       imagemUrl = resultado.url;
       imagemDeleteUrl = resultado.deleteUrl;
-    } catch (e) {
-      console.warn("Upload da imagem da arma falhou, usando base64");
-      imagemUrl = armaImagemBase64Temp;
-      imagemDeleteUrl = "";
     }
   }
 
@@ -5116,21 +5067,69 @@ function previewImagemMonstro() {
   reader.readAsDataURL(file);
 }
 
+// Comprime a imagem antes de virar base64 (evita ficha estourar o limite do Firestore)
+function comprimirImagem(file, maxLado = 900, qualidade = 0.72) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Falha ao ler o arquivo"));
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("Arquivo de imagem inválido"));
+      img.onload = () => {
+        let w = img.width;
+        let h = img.height;
+        if (w > h && w > maxLado) { h = Math.round((h * maxLado) / w); w = maxLado; }
+        else if (h >= w && h > maxLado) { w = Math.round((w * maxLado) / h); h = maxLado; }
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", qualidade));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function _previewImagemGenerica(inputId, previewId, setter) {
+  const input = document.getElementById(inputId);
+  const preview = document.getElementById(previewId);
+  if (!input?.files?.[0]) return;
+  try {
+    const base64 = await comprimirImagem(input.files[0]);
+    setter(base64);
+    if (preview) { preview.src = base64; preview.style.display = "block"; }
+  } catch (e) {
+    console.error("Erro ao processar imagem:", e);
+    alert("Não consegui processar essa imagem. Tente outra.");
+    input.value = "";
+  }
+}
+
 async function uploadImagemFirebase(base64, caminho) {
   try {
     const formData = new FormData();
     formData.append("image", base64.split(",")[1]);
     formData.append("key", "26dfe793d942b94afde4b0cf7a63a385");
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
+
     const response = await fetch("https://api.imgbb.com/1/upload", {
       method: "POST",
       body: formData,
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
+
     const data = await response.json();
     if (data.success) return { url: data.data.url, deleteUrl: data.data.delete_url };
     throw new Error("ImgBB upload falhou");
-  } catch(e) {
+  } catch (e) {
     console.error("Erro upload imagem ImgBB:", e);
-    return { url: base64, deleteUrl: "" };
+    // NUNCA devolver o base64 aqui — era isso que estourava o documento no Firestore
+    return { url: "", deleteUrl: "", erro: true };
   }
 }
 
@@ -5530,14 +5529,17 @@ async function addMapa() {
   const btn = document.querySelector("#boxMapasForm .inv-add-btn");
   if (btn) { btn.disabled = true; btn.textContent = "..."; }
 
-  let imagemUrl = mapaBase64Temp;
+  let imagemUrl = "";
   let imagemDeleteUrl = "";
 
-  try {
-    const resultado = await uploadImagemFirebase(mapaBase64Temp, "mapa");
-    imagemUrl = resultado.url;
-    imagemDeleteUrl = resultado.deleteUrl;
-  } catch(e) { console.warn("Upload mapa falhou, usando base64"); }
+  const resultado = await uploadImagemFirebase(mapaBase64Temp, "mapa");
+  if (resultado.erro || !resultado.url) {
+    alert("Não consegui enviar a imagem do mapa. Tente de novo com internet melhor.");
+    if (btn) { btn.disabled = false; btn.textContent = "+"; }
+    return;
+  }
+  imagemUrl = resultado.url;
+  imagemDeleteUrl = resultado.deleteUrl;
 
   mapas.push({ nome, desc, imagemUrl, imagemDeleteUrl, anotacoes: [] });
 
@@ -6751,9 +6753,13 @@ async function excluirMonstroMestre(index) {
   }
 
   // apaga do Firebase
-  if (window.usuarioAtual && monstro.id) {
-    const uid = window.usuarioAtual.uid;
-    deleteDoc(doc(db, "usuarios", uid, "monstros", String(monstro.id)));
+  if (window.usuarioAtual && monstro.id && window.db && window.deleteDoc) {
+    try {
+      const uid = window.usuarioAtual.uid;
+      await window.deleteDoc(window.doc(window.db, "usuarios", uid, "monstros", String(monstro.id)));
+    } catch (e) {
+      console.warn("Erro ao deletar monstro da nuvem:", e);
+    }
   }
 
   monstrosMestre.splice(index, 1);
@@ -7389,37 +7395,6 @@ function formatarTexto(texto) {
 
 let editandoEventoLore = -1;
 
-function getCampanhaAtualLore() {
-  const campanha = campanhasMaster[campanhaAtualMaster];
-  if (!campanha) return null;
-
-  if (!campanha.loreDados) {
-    campanha.loreDados = {
-      historiaPrincipal: "",
-      sessoes: [],
-      eventos: []
-    };
-  }
-
-  campanha.loreDados.sessoes ??= [];
-  campanha.loreDados.eventos ??= [];
-  campanha.loreDados.historiaPrincipal ??= "";
-
-  return campanha;
-}
-
-function salvarHistoriaPrincipalLore() {
-  const campanha = getCampanhaAtualLore();
-  if (!campanha) return;
-
-  campanha.loreDados.historiaPrincipal =
-    document.getElementById("historiaPrincipalLore")?.value || "";
-
-  salvarCampanhasMaster();
-}
-
-
-
 function salvarSessaoLore() {
   const campanha = campanhasMaster[campanhaAtualMaster];
   if (!campanha) return;
@@ -7485,40 +7460,6 @@ function salvarEventoLore() {
   renderEventosLore();
 }
  
-function salvarHistoriaPrincipalLore() {
-  const campanha = garantirEstruturaLoreCampanha();
-  if (!campanha) return;
-
-  campanha.loreDados.historiaPrincipal =
-    document.getElementById("historiaPrincipalLore")?.value || "";
-
-  salvarCampanhasMaster();
-}
-
-function apagarSessaoLore(index) {
-  const campanha = garantirEstruturaLoreCampanha();
-  if (!campanha) return;
-
-  if (!confirm("Apagar esta sessão?")) return;
-
-  campanha.loreDados.sessoes.splice(index, 1);
-  salvarCampanhasMaster();
-  renderLoreCampanha();
-}
-
-
-function apagarEventoLore(index) {
-  const campanha = garantirEstruturaLoreCampanha();
-  if (!campanha) return;
-
-  if (!confirm("Apagar este evento?")) return;
-
-  campanha.loreDados.eventos.splice(index, 1);
-  salvarCampanhasMaster();
-  renderLoreCampanha();
-}
-
-
 function init() {
   atualizarTudo();
   renderPersonagens();
@@ -9332,4 +9273,23 @@ function proximoTurno() {
   const ordenado = [...iniciativaOrdem].sort((a, b) => b.iniciativa - a.iniciativa);
   iniciativaTurnoAtual = (iniciativaTurnoAtual + 1) % ordenado.length;
   renderPainelIniciativa();
+}
+
+function flushSalvamentoPendente() {
+  if (window._debounceSalvar) {
+    clearTimeout(window._debounceSalvar);
+    window._debounceSalvar = null;
+    try { salvarPersonagens(); } catch (e) { console.error("Erro no flush:", e); }
+  }
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") flushSalvamentoPendente();
+});
+window.addEventListener("pagehide", flushSalvamentoPendente);
+
+if (window.Capacitor?.Plugins?.App) {
+  window.Capacitor.Plugins.App.addListener("appStateChange", ({ isActive }) => {
+    if (!isActive) flushSalvamentoPendente();
+  });
 }
