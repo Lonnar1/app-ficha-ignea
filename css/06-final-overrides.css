@@ -368,7 +368,7 @@ body {
   content: "";
   position: absolute;
   inset: -200px;
-  background-image: url("img/simbolos-bg.png");
+  background-image: url("../img/simbolos-bg.png");
   background-repeat: repeat;
   background-size: 430px auto;
   opacity: 0.22;
