@@ -470,10 +470,11 @@
 .folhas-bg::after {
   content: "";
   position: absolute;
-  inset: 0;
+  inset: -600px;
   background-image: url("img/folhas-bg.png");
   background-repeat: repeat;
   pointer-events: none;
+  will-change: transform;
 }
 
 .folhas-bg::before {
@@ -487,28 +488,17 @@
   background-size: 760px auto;
 
   opacity: 0.010;
-
   animation: folhas2 140s linear infinite;
 }
 
 @keyframes folhas1 {
-  from {
-    background-position: 0 0;
-  }
-
-  to {
-    background-position: -520px 260px;
-  }
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-520px, 260px, 0); }
 }
 
 @keyframes folhas2 {
-  from {
-    background-position: 0 300px;
-  }
-
-  to {
-    background-position: -760px 620px;
-  }
+  from { transform: translate3d(0, 300px, 0); }
+  to   { transform: translate3d(-760px, 620px, 0); }
 }
 
 
@@ -629,25 +619,21 @@
 .simbolos-bg::before {
   content: "";
   position: absolute;
-  inset: -200px;
+  inset: -500px;
 
   background-image: url("img/simbolos-bg.png");
   background-repeat: repeat;
   background-size: 430px auto;
 
   opacity: 0.22;
+  will-change: transform;
 
   animation: simbolosGrimorio 35s linear infinite;
 }
 
 @keyframes simbolosGrimorio {
-  from {
-    background-position: 0 0;
-  }
-
-  to {
-    background-position: -430px 320px;
-  }
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-430px, 320px, 0); }
 }
 
 #masterIgnea > *:not(.simbolos-bg) {
