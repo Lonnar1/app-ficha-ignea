@@ -72,10 +72,11 @@ body {
 .folhas-bg::after {
   content: "" !important;
   position: absolute !important;
-  inset: 0 !important;
+  inset: -600px !important;
   background-image: url("../img/folhas-bg.png") !important;
   background-repeat: repeat !important;
   pointer-events: none !important;
+  will-change: transform !important;
 }
 
 .folhas-bg::before {
@@ -91,13 +92,13 @@ body {
 }
 
 @keyframes folhasFicha1 {
-  from { background-position: 0 0; }
-  to { background-position: -520px 260px; }
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-520px, 260px, 0); }
 }
 
 @keyframes folhasFicha2 {
-  from { background-position: 0 300px; }
-  to { background-position: -760px 620px; }
+  from { transform: translate3d(0, 300px, 0); }
+  to   { transform: translate3d(-760px, 620px, 0); }
 }
 
 /* ========================= 03. TOPO / LOGO FICHA ÍGNEA ========================= */
@@ -367,17 +368,18 @@ body {
 .simbolos-bg::before {
   content: "";
   position: absolute;
-  inset: -200px;
+  inset: -500px;
   background-image: url("../img/simbolos-bg.png");
   background-repeat: repeat;
   background-size: 430px auto;
   opacity: 0.22;
+  will-change: transform;
   animation: simbolosGrimorioFinal 45s linear infinite;
 }
 
 @keyframes simbolosGrimorioFinal {
-  from { background-position: 0 0; }
-  to { background-position: -430px 320px; }
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-430px, 320px, 0); }
 }
 
 /* ========================= 09. GRIMÓRIO — LOGO / TÍTULO ========================= */
