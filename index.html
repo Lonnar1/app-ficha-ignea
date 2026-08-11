@@ -56,9 +56,146 @@
   </div>
 </div>
 
+
+<div id="modalNicknameOverlay" style="display:none;position:fixed;inset:0;z-index:6000;background:rgba(0,0,0,.75);"></div>
+<div id="modalNickname" class="container login-box" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:6001;width:min(90vw,380px);">
+  <h2 class="titulo-secao">Escolha seu nome</h2>
+  <p style="text-align:center;color:#cbbfa7;font-size:13px;margin-bottom:14px;">
+    Esse nome + número é como seus amigos vão te encontrar no app.
+  </p>
+  <input id="nicknameInput" placeholder="Seu nickname" maxlength="20" />
+  <div id="nicknameTagPreview" style="text-align:center;margin:10px 0;font-family:'Cinzel',serif;color:#d7b46a;font-size:18px;"></div>
+  <div id="nicknameErro" class="login-erro"></div>
+  <div class="login-botoes">
+    <button class="btn-login btn-login-secundario" type="button" onclick="gerarNovaTagPreview()">Gerar outro número</button>
+    <button class="btn-login" type="button" onclick="confirmarNickname()">Confirmar</button>
+  </div>
+</div>
+
+<!-- ================= DETALHE DO GRUPO ================= -->
+<div id="modalGrupoDetalheOverlay" style="display:none;position:fixed;inset:0;z-index:6600;background:rgba(0,0,0,.75);" onclick="fecharDetalheGrupo()"></div>
+<div id="modalGrupoDetalhe" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:6601;width:min(90vw,380px);max-height:80vh;overflow-y:auto;background:#120c09;border:1px solid rgba(196,169,91,0.25);border-radius:14px;padding:20px;color:#F8F4E3;font-family:'EB Garamond',serif;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <span id="detalheGrupoNome" style="font-family:'Cinzel',serif;color:#E8CC80;font-size:17px;"></span>
+    <button onclick="fecharDetalheGrupo()" style="background:none;border:none;color:#9A8A70;font-size:20px;cursor:pointer;padding:2px;line-height:1;">✕</button>
+  </div>
+  <div id="detalheGrupoRenomear" style="display:none;gap:8px;margin-bottom:14px;">
+    <input id="renomearGrupoInput" style="flex:1;background:#1b120c;border:1px solid rgba(196,169,91,0.25);border-radius:8px;padding:8px 10px;color:#F8F4E3;font-size:13px;">
+    <button onclick="salvarRenomearGrupo()" style="padding:0 14px;border-radius:8px;border:none;background:#C4A95B;color:#1a0e05;font-weight:bold;cursor:pointer;">OK</button>
+  </div>
+  <div id="detalheGrupoMembros" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+  <div id="detalheGrupoAcoes" style="display:flex;flex-direction:column;gap:8px;"></div>
+</div>
+
+<!-- ================= PERFIL ================= -->
+<div id="modalPerfilOverlay" style="display:none;position:fixed;inset:0;z-index:6700;background:rgba(0,0,0,.8);" onclick="fecharPerfil()"></div>
+<div id="modalPerfil" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:6701;width:min(92vw,400px);max-height:88vh;overflow-y:auto;overflow-x:hidden;background:#0e0907;border:1px solid rgba(196,169,91,0.25);border-radius:16px;color:#F8F4E3;font-family:'EB Garamond',serif;">
+  <button onclick="fecharPerfil()" style="position:absolute;top:10px;right:10px;z-index:5;background:rgba(0,0,0,.5);border:none;color:#F8F4E3;font-size:18px;width:30px;height:30px;border-radius:50%;cursor:pointer;">✕</button>
+
+  <div id="perfilFundo" style="height:110px;background-size:cover;background-position:center;background-color:#1b120c;border-radius:16px 16px 0 0;position:relative;">
+    <button id="btnMudarFundo" onclick="document.getElementById('inputFundoPerfil').click()" style="display:none;position:absolute;bottom:8px;right:8px;font-size:11px;padding:5px 10px;border-radius:8px;border:1px solid rgba(196,169,91,0.4);background:rgba(0,0,0,.5);color:#E8CC80;cursor:pointer;">Trocar fundo</button>
+    <input type="file" id="inputFundoPerfil" accept="image/*" style="display:none;" onchange="uploadImagemPerfil(this, 'fundo')">
+  </div>
+
+  <div style="text-align:center;margin-top:-45px;position:relative;pointer-events:none;">
+    <div id="perfilAvatarWrap" style="display:inline-block;position:relative;pointer-events:auto;">
+      <div id="perfilAvatar" style="width:90px;height:90px;border-radius:50%;background-color:#2a1e14;background-size:cover;background-position:center;border:3px solid #0e0907;box-shadow:0 0 0 1px rgba(196,169,91,0.4);"></div>
+      <button id="btnMudarAvatar" onclick="document.getElementById('inputAvatarPerfil').click()" style="display:none;position:absolute;bottom:0;right:0;width:26px;height:26px;border-radius:50%;background:#C4A95B;border:2px solid #0e0907;color:#1a0e05;font-size:12px;cursor:pointer;">✎</button>
+      <input type="file" id="inputAvatarPerfil" accept="image/*" style="display:none;" onchange="uploadImagemPerfil(this, 'avatar')">
+    </div>
+    <div id="perfilNomeTag" style="margin-top:8px;font-family:'Cinzel',serif;color:#E8CC80;font-size:16px;"></div>
+  </div>
+
+  <div style="padding:16px;">
+<div id="perfilBioView" style="background:rgba(255,255,255,0.03);border:1px solid rgba(196,169,91,0.15);border-radius:10px;padding:10px 12px;font-size:13px;color:#cdb791;min-height:20px;word-break:break-word;overflow-wrap:anywhere;"></div>    <textarea id="perfilBioEdit" maxlength="200" placeholder="Fale um pouco sobre você..." style="display:none;width:100%;background:rgba(255,255,255,0.03);border:1px solid rgba(196,169,91,0.25);border-radius:10px;padding:10px 12px;font-size:13px;color:#F8F4E3;box-sizing:border-box;min-height:60px;font-family:inherit;"></textarea>
+    <button id="btnSalvarBio" onclick="salvarBioPerfil()" style="display:none;margin-top:6px;width:100%;padding:8px;border-radius:8px;border:none;background:#C4A95B;color:#1a0e05;font-weight:bold;font-size:12px;cursor:pointer;">Salvar bio</button>
+
+    <div style="font-size:11px;color:#9A8A70;text-transform:uppercase;letter-spacing:.06em;margin:16px 0 8px;">Personagens</div>
+    <div id="perfilShowcase" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
+    <button id="btnEscolherDestaque" onclick="abrirEscolherDestaque()" style="display:none;margin-top:10px;width:100%;padding:8px;border-radius:8px;border:1px solid rgba(196,169,91,0.3);background:transparent;color:#E8CC80;font-size:12px;cursor:pointer;">Escolher personagens em destaque</button>
+  </div>
+</div>
+
+<!-- ================= ESCOLHER PERSONAGENS DESTAQUE ================= -->
+<div id="modalEscolherDestaqueOverlay" style="display:none;position:fixed;inset:0;z-index:6800;background:rgba(0,0,0,.8);" onclick="fecharEscolherDestaque()"></div>
+<div id="modalEscolherDestaque" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:6801;width:min(90vw,380px);max-height:80vh;overflow-y:auto;background:#120c09;border:1px solid rgba(196,169,91,0.25);border-radius:14px;padding:18px;color:#F8F4E3;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <span style="font-family:'Cinzel',serif;color:#E8CC80;font-size:15px;">Escolha até 4</span>
+    <button onclick="fecharEscolherDestaque()" style="background:none;border:none;color:#9A8A70;font-size:18px;cursor:pointer;">✕</button>
+  </div>
+  <div id="listaEscolherDestaque" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;"></div>
+  <button onclick="salvarDestaquePerfil()" style="width:100%;padding:10px;border-radius:8px;border:none;background:#C4A95B;color:#1a0e05;font-weight:bold;font-size:13px;cursor:pointer;">Salvar</button>
+</div>
+
+<!-- ================= DAR ITEM ================= -->
+<div id="modalDarItemOverlay" style="display:none;position:fixed;inset:0;z-index:7000;background:rgba(0,0,0,.8);" onclick="fecharDarItem()"></div>
+<div id="modalDarItem" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:7001;width:min(90vw,360px);max-height:75vh;overflow-y:auto;background:#120c09;border:1px solid rgba(196,169,91,0.25);border-radius:14px;padding:18px;color:#F8F4E3;font-family:'EB Garamond',serif;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <span style="font-family:'Cinzel',serif;color:#E8CC80;font-size:15px;">Dar pra quem?</span>
+    <button onclick="fecharDarItem()" style="background:none;border:none;color:#9A8A70;font-size:18px;cursor:pointer;">✕</button>
+  </div>
+  <div id="listaDarItem" style="display:flex;flex-direction:column;gap:8px;"></div>
+</div>
+
+<!-- ================= DAR ITEM (MESTRE) ================= -->
+<div id="modalDarItemMestreOverlay" style="display:none;position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.8);" onclick="fecharDarItemMestre()"></div>
+<div id="modalDarItemMestre" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:100001;width:min(90vw,360px);max-height:75vh;overflow-y:auto;background:#120c09;border:1px solid rgba(196,169,91,0.25);border-radius:14px;padding:18px;color:#F8F4E3;font-family:'EB Garamond',serif;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <span style="font-family:'Cinzel',serif;color:#E8CC80;font-size:15px;">Dar pra quem?</span>
+    <button onclick="fecharDarItemMestre()" style="background:none;border:none;color:#9A8A70;font-size:18px;cursor:pointer;">✕</button>
+  </div>
+  <div id="listaDarItemMestre" style="display:flex;flex-direction:column;gap:8px;"></div>
+</div>
+
+<!-- ================= ITENS RECEBIDOS ================= -->
+<div id="modalInboxItensOverlay" style="display:none;position:fixed;inset:0;z-index:7000;background:rgba(0,0,0,.8);" onclick="fecharInboxItens()"></div>
+<div id="modalInboxItens" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:7001;width:min(92vw,380px);max-height:80vh;overflow-y:auto;background:#120c09;border:1px solid rgba(196,169,91,0.25);border-radius:14px;padding:18px;color:#F8F4E3;font-family:'EB Garamond',serif;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <span style="font-family:'Cinzel',serif;color:#E8CC80;font-size:15px;">Itens recebidos</span>
+    <button onclick="fecharInboxItens()" style="background:none;border:none;color:#9A8A70;font-size:18px;cursor:pointer;">✕</button>
+  </div>
+  <div id="listaInboxItens" style="display:flex;flex-direction:column;gap:8px;"></div>
+</div>
+
+<!-- ================= EDITAR CAMPANHA ================= -->
+<div id="modalEditarCampanhaOverlay" style="display:none;position:fixed;inset:0;z-index:6900;background:rgba(0,0,0,.8);" onclick="fecharEditarCampanha()"></div>
+<div id="modalEditarCampanha" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:6901;width:min(90vw,380px);max-height:85vh;overflow-y:auto;background:#120c09;border:1px solid rgba(196,169,91,0.25);border-radius:14px;padding:18px;color:#F8F4E3;font-family:'EB Garamond',serif;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <span style="font-family:'Cinzel',serif;color:#E8CC80;font-size:16px;">Editar campanha</span>
+    <button onclick="fecharEditarCampanha()" style="background:none;border:none;color:#9A8A70;font-size:18px;cursor:pointer;">✕</button>
+  </div>
+
+  <input id="editCampanhaNome" placeholder="Nome da campanha" style="width:100%;background:#1b120c;border:1px solid rgba(196,169,91,0.25);border-radius:8px;padding:9px 12px;color:#F8F4E3;font-size:13px;margin-bottom:8px;box-sizing:border-box;">
+  <input id="editCampanhaSistema" placeholder="Sistema usado" style="width:100%;background:#1b120c;border:1px solid rgba(196,169,91,0.25);border-radius:8px;padding:9px 12px;color:#F8F4E3;font-size:13px;margin-bottom:8px;box-sizing:border-box;">
+  <textarea id="editCampanhaDescricao" placeholder="Descrição breve" style="width:100%;background:#1b120c;border:1px solid rgba(196,169,91,0.25);border-radius:8px;padding:9px 12px;color:#F8F4E3;font-size:13px;margin-bottom:8px;box-sizing:border-box;min-height:60px;font-family:inherit;"></textarea>
+
+  <select id="editCampanhaGrupo" style="width:100%;background:#1b120c;border:1px solid rgba(196,169,91,0.25);border-radius:8px;padding:9px 12px;color:#F8F4E3;font-size:13px;margin-bottom:14px;box-sizing:border-box;">
+    <option value="">Sem grupo vinculado</option>
+  </select>
+
+  <button onclick="salvarEdicaoCampanha()" style="width:100%;padding:10px;border-radius:8px;border:none;background:#C4A95B;color:#1a0e05;font-weight:bold;font-size:13px;cursor:pointer;">Salvar</button>
+</div>
+
+<!-- ================= DASHBOARD DO MESTRE ================= -->
+<div id="modalDashboardOverlay" style="display:none;position:fixed;inset:0;z-index:6900;background:rgba(0,0,0,.85);" onclick="fecharDashboardMestre()"></div>
+<div id="modalDashboard" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:6901;background:#0e0907;color:#F8F4E3;padding:16px;overflow-y:auto;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+    <span style="font-family:'Cinzel',serif;color:#E8CC80;font-size:17px;">Dashboard ao vivo</span>
+    <button onclick="fecharDashboardMestre()" style="background:none;border:none;color:#9A8A70;font-size:22px;cursor:pointer;">✕</button>
+  </div>
+  <div id="dashboardConteudo" style="display:flex;flex-direction:column;gap:12px;"></div>
+</div>
+
+
 <!-- ================= ESCOLHA DE MODO ================= -->
 <div id="tela-modo" style="display:none;position:fixed;inset:0;z-index:5000;background:#0e0907;color:#F8F4E3;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px 36px;overflow-y:auto;">
 
+  <button onclick="abrirPainelAmigos()"
+    style="position:absolute;top:18px;left:18px;z-index:20;width:38px;height:38px;border-radius:50%;background:rgba(196,169,91,0.12);border:1px solid rgba(196,169,91,0.4);color:#E8CC80;display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;">
+    <i class="ti ti-users"></i>
+  </button>
+
+  <!-- fundos animados -->
   <!-- fundos animados -->
   <div style="position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(123,30,40,0.22) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 50% 100%,rgba(60,13,20,0.35) 0%,transparent 55%),linear-gradient(180deg,#0e0907 0%,#160d0a 50%,#0a0605 100%);pointer-events:none;"></div>
   <div id="tmBgJornada" style="position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 80% 60% at 30% 50%,rgba(100,60,10,0.2) 0%,transparent 65%);opacity:0;transition:opacity 0.6s ease;pointer-events:none;"></div>
@@ -161,7 +298,57 @@
 
   </div>
 
+   <div id="painelAmigosOverlay" style="display:none;position:fixed;inset:0;z-index:6500;background:rgba(0,0,0,.6);" onclick="fecharPainelAmigos()"></div>
+  <div id="painelAmigos" style="display:none;position:fixed;top:0;left:0;bottom:0;width:min(85vw,340px);background:#120c09;border-right:1px solid rgba(196,169,91,0.25);z-index:6501;padding:20px 16px;flex-direction:column;transform:translateX(-100%);transition:transform .3s ease;color:#F8F4E3;font-family:'EB Garamond',serif;">
+
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+      <div>
+        <div style="font-family:'Cinzel',serif;color:#E8CC80;font-size:17px;letter-spacing:.04em;">Amigos</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+          <span id="meuNicknameLabel" style="font-size:12px;color:#9A8A70;"></span>
+          <button id="btnCopiarNickname" onclick="copiarMeuNickname()" title="Copiar"
+            style="background:none;border:none;color:#C4A95B;cursor:pointer;padding:2px;display:flex;align-items:center;font-size:13px;">
+            <i class="ti ti-copy"></i>
+          </button>
+        </div>
+        <button onclick="abrirPerfil(window.usuarioAtual.uid)" style="margin-top:4px;background:none;border:none;color:#C4A95B;font-size:11px;padding:0;cursor:pointer;text-decoration:underline;">Ver meu perfil</button>
+      </div>
+      <button onclick="fecharPainelAmigos()" style="background:none;border:none;color:#9A8A70;font-size:20px;cursor:pointer;padding:2px;line-height:1;">✕</button>
+    </div>
+
+    <div style="display:flex;gap:6px;margin-bottom:16px;background:rgba(255,255,255,0.03);border-radius:10px;padding:3px;">
+      <button id="tabAmigosBtn" onclick="trocarAbaAmigos('amigos')" style="flex:1;padding:8px;border:none;border-radius:8px;background:rgba(196,169,91,0.18);color:#E8CC80;font-family:'Cinzel',serif;font-size:12px;letter-spacing:.05em;cursor:pointer;">AMIGOS</button>
+      <button id="tabGruposBtn" onclick="trocarAbaAmigos('grupos')" style="flex:1;padding:8px;border:none;border-radius:8px;background:transparent;color:#9A8A70;font-family:'Cinzel',serif;font-size:12px;letter-spacing:.05em;cursor:pointer;">GRUPOS</button>
+    </div>
+
+    <div id="abaAmigosConteudo" style="flex:1;overflow-y:auto;min-height:0;display:flex;flex-direction:column;">
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <input id="buscaAmigoInput" placeholder="Nickname#0000" style="flex:1;background:#1b120c;border:1px solid rgba(196,169,91,0.25);border-radius:8px;padding:9px 12px;color:#F8F4E3;font-size:13px;">
+        <button onclick="enviarSolicitacaoAmizade()" style="width:38px;border-radius:8px;border:none;background:#C4A95B;color:#1a0e05;font-weight:bold;font-size:16px;cursor:pointer;">+</button>
+      </div>
+      <div id="listaAmigos" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+
+    <div id="abaGruposConteudo" style="display:none;flex:1;overflow-y:auto;min-height:0;flex-direction:column;">
+      <button id="btnMostrarCriarGrupo" onclick="mostrarFormCriarGrupo()" style="width:100%;padding:10px;border-radius:8px;border:1px solid rgba(196,169,91,0.35);background:rgba(196,169,91,0.1);color:#E8CC80;font-family:'Cinzel',serif;font-size:13px;cursor:pointer;margin-bottom:14px;">+ Criar grupo</button>
+
+      <div id="formCriarGrupo" style="display:none;background:rgba(255,255,255,0.03);border:1px solid rgba(196,169,91,0.2);border-radius:10px;padding:12px;margin-bottom:14px;">
+        <input id="nomeGrupoInput" placeholder="Nome do grupo" style="width:100%;background:#1b120c;border:1px solid rgba(196,169,91,0.25);border-radius:8px;padding:9px 12px;color:#F8F4E3;font-size:13px;margin-bottom:10px;box-sizing:border-box;">
+        <div style="font-size:11px;color:#9A8A70;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Convidar amigos</div>
+        <div id="listaAmigosParaGrupo" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;margin-bottom:12px;"></div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="cancelarCriarGrupo()" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(196,169,91,0.25);background:transparent;color:#9A8A70;font-size:13px;cursor:pointer;">Cancelar</button>
+          <button onclick="confirmarCriarGrupo()" style="flex:1;padding:8px;border-radius:8px;border:none;background:#C4A95B;color:#1a0e05;font-weight:bold;font-size:13px;cursor:pointer;">Criar</button>
+        </div>
+      </div>
+
+      <div id="listaGrupos" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+
+  </div>
+
   <script>
+    
     var tmSelected = null;
 
     function tmHover(p) {
@@ -295,6 +482,10 @@
         placeholder="Descrição breve da campanha"
       ></textarea>
 
+      <select id="novaCampanhaGrupo" style="width:100%;background:#f5ecd8;color:#3c2c1c;border:1px solid #cbb98a;border-radius:8px;padding:10px 12px;font-size:14px;margin:5px 0;box-sizing:border-box;">
+        <option value="">Sem grupo vinculado</option>
+      </select>
+
       <label class="master-upload">
   Escolher imagem da campanha
   <input
@@ -359,6 +550,9 @@
   </button>
   <button class="master-tab-btn" title="Combate" onclick="trocarAbaMaster('combateMaster', this)">
     <span class="tab-icone"><i class="ti ti-swords"></i></span>
+  </button>
+  <button class="master-tab-btn" title="Grupo" onclick="trocarAbaMaster('grupoMaster', this)">
+    <span class="tab-icone"><i class="ti ti-users"></i></span>
   </button>
 </div>
 
@@ -537,6 +731,9 @@
   </button>
   <button class="criar-tipo-btn" onclick="trocarTipoCriar('item', this)">
     <span>Item</span>
+  </button>
+  <button class="criar-tipo-btn" onclick="trocarTipoCriar('mapa', this)">
+    <span>Mapa</span>
   </button>
   <button class="criar-tipo-btn" onclick="trocarTipoCriar('encontro', this)">
   <span>Encontro</span>
@@ -740,6 +937,11 @@
     <div class="criar-form-titulo">Criar Item</div>
     <div class="form-master-limpo">
       <input id="itemMasterNome" placeholder="Nome do item">
+      <select id="itemMasterCategoria" onchange="window.atualizarCamposCategoriaItem()">
+        <option value="inventario">Item diverso (vai pro inventário)</option>
+        <option value="armas">Arma</option>
+        <option value="armaduras">Armadura</option>
+      </select>
       <div class="criar-campos-duplos">
         <input id="itemMasterTipo" placeholder="Tipo (arma, armadura...)">
         <select id="itemMasterRaridade">
@@ -749,6 +951,8 @@
           <option value="reliquia">Relíquia</option>
         </select>
       </div>
+      <input id="itemMasterDano" placeholder="Dano (ex: 1d8+2)" style="display:none;">
+      <input id="itemMasterCA" placeholder="CA (ex: 16)" style="display:none;">
       <select id="itemMasterSintonia">
         <option value="nao">Sem sintonização</option>
         <option value="sim">Requer sintonização</option>
@@ -760,6 +964,18 @@
       <label class="master-upload" style="display:block; margin-bottom:8px;">📷 Imagem do item<input id="itemMasterImagemInput" type="file" accept="image/*" onchange="previewImagemItem()"></label>
       <img id="previewItemMaster" class="preview-monstro" src="" style="display:none;">
       <button class="btn-master-principal" onclick="salvarItemMestre()">⚡ Salvar Item</button>
+    </div>
+  </div>
+
+  <!-- ===== MAPA ===== -->
+  <div id="criarForm-mapa" class="criar-form-panel" style="display:none;">
+    <div class="criar-form-titulo">Criar Mapa</div>
+    <div class="form-master-limpo">
+      <input id="mapaMasterNome" placeholder="Nome do mapa">
+      <textarea id="mapaMasterDesc" placeholder="Descrição / notas do mestre"></textarea>
+      <label class="master-upload" style="display:block; margin-bottom:8px;">📷 Imagem do mapa<input id="mapaMasterImagemInput" type="file" accept="image/*" onchange="previewImagemMapaMestre()"></label>
+      <img id="previewMapaMaster" class="preview-monstro" src="" style="display:none;">
+      <button class="btn-master-principal" onclick="salvarMapaMestre()">⚡ Salvar Mapa</button>
     </div>
   </div>
 
@@ -805,6 +1021,12 @@
     <button class="btn-iniciativa-abrir" onclick="abrirPainelIniciativa()">☰</button>
   </div>
   <div id="listaCombateMestre" class="combate-master-lista"></div>
+</section>
+
+<section id="abaMaster-grupoMaster" class="master-aba" style="display:none;">
+  <h3 class="titulo-secao" style="margin:0 0 4px;">Grupo</h3>
+  <p class="master-desc" style="margin:0 0 14px;">Acompanhe as fichas dos jogadores em tempo real.</p>
+  <div id="grupoMasterConteudo"></div>
 </section>
 </div>
 
@@ -870,7 +1092,13 @@
 
       <!-- ================= PERSONAGEM ================= -->
       <div class="aba" id="personagem">
-        <button class="voltar" onclick="voltarInicio()">← Voltar</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <button class="voltar" onclick="voltarInicio()">← Voltar</button>
+          <button id="btnInboxItens" onclick="abrirInboxItens()" style="position:relative;background:#4a3b31;border:none;color:#f1e6cf;border-radius:10px;padding:8px 12px;cursor:pointer;font-size:13px;">
+            Itens recebidos
+            <span id="badgeInboxItens" style="display:none;position:absolute;top:-6px;right:-6px;background:#b83a2f;color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;display:flex;align-items:center;justify-content:center;">0</span>
+          </button>
+        </div>
 
         <div class="personagem-topo">
           <!-- CAMPOS -->
@@ -909,7 +1137,8 @@
               />
               <input id="antecedentes" placeholder="Antecedentes" />
             </div>
-          </div>
+
+            </div>
 
           <!-- IMAGEM -->
           <div class="personagem-imagem-box">
@@ -2190,7 +2419,13 @@
   getDoc,
   collection,
   getDocs,
-  deleteDoc
+  deleteDoc,
+  runTransaction,
+  query,
+  where,
+  updateDoc,
+  arrayUnion,
+  onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import {
@@ -2226,6 +2461,13 @@ import {
   window.setDoc = setDoc;
   window.getDoc = getDoc;
   window.deleteDoc = deleteDoc;
+  window.updateDoc = updateDoc;
+  window.arrayUnion = arrayUnion;
+  window.onSnapshot = onSnapshot;
+  window.query = query;
+  window.where = where;
+  window.collection = collection;
+  window.getDocs = getDocs;
 
   await setPersistence(auth, browserLocalPersistence);
 
@@ -2578,7 +2820,513 @@ window.carregarMonstrosDaNuvem = carregarMonstrosDaNuvem;
     }
   };
 
-  window.sairConta = async () => {
+  
+
+  function gerarTagAleatoria() {
+  return String(Math.floor(1000 + Math.random() * 9000));
+}
+
+async function tagDisponivel(nicknameLower, tag) {
+  const ref = doc(db, "tagsUsuario", `${nicknameLower}#${tag}`);
+  const snap = await getDoc(ref);
+  return !snap.exists();
+}
+
+let tagAtualSugerida = null;
+
+window.gerarNovaTagPreview = async function gerarNovaTagPreview() {
+  const nickname = document.getElementById("nicknameInput").value.trim();
+  const preview = document.getElementById("nicknameTagPreview");
+  const erro = document.getElementById("nicknameErro");
+  if (erro) erro.textContent = "";
+
+  if (nickname.length < 3) {
+    preview.textContent = "";
+    tagAtualSugerida = null;
+    return;
+  }
+
+  try {
+    const nicknameLower = nickname.toLowerCase();
+    let tentativas = 0;
+    let tag = gerarTagAleatoria();
+
+    while (!(await tagDisponivel(nicknameLower, tag)) && tentativas < 15) {
+      tag = gerarTagAleatoria();
+      tentativas++;
+    }
+
+    tagAtualSugerida = tag;
+    preview.textContent = `${nickname}#${tag}`;
+  } catch (e) {
+    console.error(e);
+    if (erro) erro.textContent = "Erro ao verificar disponibilidade: " + (e.code || e.message);
+  }
+};
+
+window.confirmarNickname = async () => {
+  const erro = document.getElementById("nicknameErro");
+  erro.textContent = "";
+
+  const nickname = document.getElementById("nicknameInput").value.trim();
+
+  if (nickname.length < 3 || nickname.length > 20) {
+    erro.textContent = "O nickname precisa ter entre 3 e 20 caracteres.";
+    return;
+  }
+  if (!/^[a-zA-Z0-9_ ]+$/.test(nickname)) {
+    erro.textContent = "Use só letras, números, espaço e _.";
+    return;
+  }
+
+  const nicknameLower = nickname.toLowerCase();
+  const uid = window.usuarioAtual.uid;
+
+  try {
+    if (!tagAtualSugerida) {
+      await window.gerarNovaTagPreview();
+    }
+    const tag = tagAtualSugerida;
+    await runTransaction(db, async (transaction) => {
+      const tagRef = doc(db, "tagsUsuario", `${nicknameLower}#${tag}`);
+      const tagSnap = await transaction.get(tagRef);
+      if (tagSnap.exists()) {
+        throw new Error("tag-ocupada");
+      }
+      transaction.set(tagRef, { uid });
+      transaction.set(
+        doc(db, "usuarios", uid),
+        { nickname, nicknameLower, tag },
+        { merge: true }
+      );
+    });
+
+    document.getElementById("modalNicknameOverlay").style.display = "none";
+    document.getElementById("modalNickname").style.display = "none";
+
+    abrirTelaModo();
+  } catch (e) {
+    if (e.message === "tag-ocupada") {
+      erro.textContent = "Esse nome ficou indisponível nesse instante, gerando outro número...";
+      await window.gerarNovaTagPreview();
+    } else {
+      erro.textContent = "Erro ao salvar: " + (e.code || e.message || "desconhecido");
+      console.error(e);
+    }
+  }
+};
+
+async function verificarNicknameEContinuar() {
+  const uid = window.usuarioAtual.uid;
+  const snap = await getDoc(doc(db, "usuarios", uid));
+  const dados = snap.exists() ? snap.data() : {};
+
+  if (dados.nickname && dados.tag) {
+    abrirTelaModo();
+  } else {
+    document.getElementById("modalNicknameOverlay").style.display = "block";
+    document.getElementById("modalNickname").style.display = "block";
+  }
+}
+
+document.addEventListener("input", (e) => {
+  if (e.target && e.target.id === "nicknameInput") {
+    clearTimeout(window._nicknameDebounce);
+    window._nicknameDebounce = setTimeout(window.gerarNovaTagPreview, 350);
+  }
+});
+
+// ================= PAINEL DE AMIGOS =================
+
+window.abrirPainelAmigos = function () {
+  document.getElementById("painelAmigosOverlay").style.display = "block";
+  const painel = document.getElementById("painelAmigos");
+  painel.style.display = "flex";
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    painel.style.transform = "translateX(0)";
+  }));
+  mostrarMeuNickname();
+  carregarAmigos();
+};
+
+window.fecharPainelAmigos = function () {
+  const painel = document.getElementById("painelAmigos");
+  painel.style.transform = "translateX(-100%)";
+  setTimeout(() => {
+    painel.style.display = "none";
+    document.getElementById("painelAmigosOverlay").style.display = "none";
+  }, 300);
+};
+
+window.trocarAbaAmigos = function (aba) {
+  const btnAmigos = document.getElementById("tabAmigosBtn");
+  const btnGrupos = document.getElementById("tabGruposBtn");
+  const contAmigos = document.getElementById("abaAmigosConteudo");
+  const contGrupos = document.getElementById("abaGruposConteudo");
+
+  if (aba === "amigos") {
+    contAmigos.style.display = "flex";
+    contGrupos.style.display = "none";
+    btnAmigos.style.background = "rgba(196,169,91,0.18)";
+    btnAmigos.style.color = "#E8CC80";
+    btnGrupos.style.background = "transparent";
+    btnGrupos.style.color = "#9A8A70";
+  } else {
+    contAmigos.style.display = "none";
+    contGrupos.style.display = "flex";
+    btnGrupos.style.background = "rgba(196,169,91,0.18)";
+    btnGrupos.style.color = "#E8CC80";
+    btnAmigos.style.background = "transparent";
+    btnAmigos.style.color = "#9A8A70";
+    carregarGrupos();
+  }
+};
+
+async function mostrarMeuNickname() {
+  const label = document.getElementById("meuNicknameLabel");
+  if (!label || !window.usuarioAtual) return;
+  try {
+    const snap = await getDoc(doc(db, "usuarios", window.usuarioAtual.uid));
+    const dados = snap.exists() ? snap.data() : {};
+    window._meuNicknameCompleto = dados.nickname && dados.tag
+      ? `${dados.nickname}#${dados.tag}`
+      : "";
+    label.innerHTML = dados.nickname && dados.tag
+      ? `${escapeHtml(dados.nickname)}<span style="opacity:.5;">#${escapeHtml(dados.tag)}</span>`
+      : "";
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+window.copiarMeuNickname = async function () {
+  const texto = window._meuNicknameCompleto;
+  if (!texto) return;
+
+  const btn = document.getElementById("btnCopiarNickname");
+  const iconeOriginal = btn.innerHTML;
+
+  try {
+    await navigator.clipboard.writeText(texto);
+  } catch (e) {
+    const temp = document.createElement("textarea");
+    temp.value = texto;
+    temp.style.position = "fixed";
+    temp.style.opacity = "0";
+    document.body.appendChild(temp);
+    temp.select();
+    document.execCommand("copy");
+    document.body.removeChild(temp);
+  }
+
+  btn.innerHTML = `<i class="ti ti-check" style="color:#4a7c3a;"></i>`;
+  setTimeout(() => { btn.innerHTML = iconeOriginal; }, 1200);
+};
+
+async function carregarAmigos() {
+  const lista = document.getElementById("listaAmigos");
+  const meuUid = window.usuarioAtual.uid;
+  lista.innerHTML = `<p style="color:#9A8A70;font-size:12px;text-align:center;">Carregando...</p>`;
+
+  try {
+    const [solicitacoesSnap, amigosSnap] = await Promise.all([
+      getDocs(collection(db, "usuarios", meuUid, "solicitacoesRecebidas")),
+      getDocs(collection(db, "usuarios", meuUid, "amigos"))
+    ]);
+
+    let html = "";
+
+    if (!solicitacoesSnap.empty) {
+      html += `<div style="font-size:11px;color:#9A8A70;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Pedidos pendentes</div>`;
+      solicitacoesSnap.forEach(docSnap => {
+        const d = docSnap.data();
+        html += `
+          <div style="display:flex;align-items:center;gap:8px;background:rgba(196,169,91,0.08);border:1px solid rgba(196,169,91,0.2);border-radius:8px;padding:8px 10px;margin-bottom:6px;">
+            <span style="flex:1;font-size:13px;color:#F8F4E3;">${escapeHtml(d.deNickname)}<span style="opacity:.5;">#${escapeHtml(d.deTag)}</span></span>            <button onclick="responderSolicitacao('${docSnap.id}', true)" style="width:26px;height:26px;border-radius:50%;border:none;background:#4a7c3a;color:#fff;cursor:pointer;font-size:12px;">✓</button>
+            <button onclick="responderSolicitacao('${docSnap.id}', false)" style="width:26px;height:26px;border-radius:50%;border:none;background:#7B1E28;color:#fff;cursor:pointer;font-size:12px;">✕</button>
+          </div>`;
+      });
+    }
+
+    if (!amigosSnap.empty) {
+      html += `<div style="font-size:11px;color:#9A8A70;text-transform:uppercase;letter-spacing:.08em;margin:${solicitacoesSnap.empty ? "0" : "14px"} 0 6px;">Seus amigos</div>`;
+      amigosSnap.forEach(docSnap => {
+        const d = docSnap.data();
+        html += `
+          <div onclick="abrirPerfil('${docSnap.id}')" style="cursor:pointer;display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(196,169,91,0.12);border-radius:8px;padding:8px 10px;margin-bottom:6px;">
+            <span style="flex:1;font-size:13px;color:#F8F4E3;">${escapeHtml(d.nickname)}<span style="opacity:.5;">#${escapeHtml(d.tag)}</span></span>
+          </div>`;
+      });
+    }
+
+    if (solicitacoesSnap.empty && amigosSnap.empty) {
+      html = `<p style="color:#9A8A70;font-size:13px;text-align:center;padding:20px 0;font-style:italic;">Nenhum amigo ainda.</p>`;
+    }
+
+    lista.innerHTML = html;
+  } catch (e) {
+    console.error(e);
+    lista.innerHTML = `<p style="color:#e07a7a;font-size:12px;text-align:center;">Erro ao carregar: ${e.code || e.message}</p>`;
+  }
+}
+
+window.carregarGrupos = async function () {
+  const lista = document.getElementById("listaGrupos");
+  const meuUid = window.usuarioAtual.uid;
+  lista.innerHTML = `<p style="color:#9A8A70;font-size:12px;text-align:center;">Carregando...</p>`;
+
+  try {
+    const [convitesSnap, gruposSnap] = await Promise.all([
+      getDocs(collection(db, "usuarios", meuUid, "convitesGrupo")),
+      getDocs(query(collection(db, "grupos"), where("membrosUids", "array-contains", meuUid)))
+    ]);
+
+    let html = "";
+
+    if (!convitesSnap.empty) {
+      html += `<div style="font-size:11px;color:#9A8A70;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Convites pendentes</div>`;
+      convitesSnap.forEach(docSnap => {
+        const d = docSnap.data();
+        html += `
+          <div style="display:flex;align-items:center;gap:8px;background:rgba(196,169,91,0.08);border:1px solid rgba(196,169,91,0.2);border-radius:8px;padding:8px 10px;margin-bottom:6px;">
+            <div style="flex:1;">
+              <div style="font-size:13px;color:#F8F4E3;">${escapeHtml(d.nomeGrupo)}</div>
+              <div style="font-size:11px;color:#9A8A70;">de ${escapeHtml(d.deNickname)}<span style="opacity:.5;">#${escapeHtml(d.deTag)}</span></div>
+            </div>
+            <button onclick="responderConviteGrupo('${docSnap.id}', true)" style="width:26px;height:26px;border-radius:50%;border:none;background:#4a7c3a;color:#fff;cursor:pointer;font-size:12px;">✓</button>
+            <button onclick="responderConviteGrupo('${docSnap.id}', false)" style="width:26px;height:26px;border-radius:50%;border:none;background:#7B1E28;color:#fff;cursor:pointer;font-size:12px;">✕</button>
+          </div>`;
+      });
+    }
+
+    if (!gruposSnap.empty) {
+      html += `<div style="font-size:11px;color:#9A8A70;text-transform:uppercase;letter-spacing:.08em;margin:${convitesSnap.empty ? "0" : "14px"} 0 6px;">Seus grupos</div>`;
+      gruposSnap.forEach(docSnap => {
+        const d = docSnap.data();
+        const souMestre = d.criadoPor === meuUid;
+        html += `
+          <div onclick="abrirDetalheGrupo('${docSnap.id}')" style="cursor:pointer;background:rgba(255,255,255,0.03);border:1px solid rgba(196,169,91,0.15);border-radius:10px;padding:10px 12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:14px;color:#F8F4E3;font-weight:bold;">${escapeHtml(d.nome)}</span>
+              ${souMestre ? `<span style="font-size:10px;color:#C4A95B;text-transform:uppercase;letter-spacing:.05em;">Mestre</span>` : ""}
+            </div>
+            <div style="font-size:12px;color:#9A8A70;margin-top:4px;">${d.membros.length} membro${d.membros.length > 1 ? "s" : ""}</div>
+          </div>`;
+      });
+    }
+
+    if (convitesSnap.empty && gruposSnap.empty) {
+      html = `<p style="color:#9A8A70;font-size:13px;text-align:center;padding:20px 0;font-style:italic;">Nenhum grupo ainda.</p>`;
+    }
+
+    lista.innerHTML = html;
+  } catch (e) {
+    console.error(e);
+    lista.innerHTML = `<p style="color:#e07a7a;font-size:12px;text-align:center;">Erro ao carregar: ${e.code || e.message}</p>`;
+  }
+};
+
+window.responderConviteGrupo = async function (grupoId, aceitar) {
+  const meuUid = window.usuarioAtual.uid;
+  try {
+    const conviteRef = doc(db, "usuarios", meuUid, "convitesGrupo", grupoId);
+
+    if (aceitar) {
+      const meuSnap = await getDoc(doc(db, "usuarios", meuUid));
+      const meuDados = meuSnap.exists() ? meuSnap.data() : {};
+
+      const grupoRef = doc(db, "grupos", grupoId);
+      const novoMembro = { uid: meuUid, nickname: meuDados.nickname || "", tag: meuDados.tag || "", papel: "jogador" };
+
+      await updateDoc(grupoRef, {
+        membros: arrayUnion(novoMembro),
+        membrosUids: arrayUnion(meuUid)
+      });
+    }
+
+    await deleteDoc(conviteRef);
+    carregarGrupos();
+  } catch (e) {
+    console.error(e);
+    alert("Erro: " + (e.code || e.message));
+  }
+};
+
+window.mostrarFormCriarGrupo = async function () {
+  document.getElementById("btnMostrarCriarGrupo").style.display = "none";
+  document.getElementById("formCriarGrupo").style.display = "block";
+
+  const meuUid = window.usuarioAtual.uid;
+  const lista = document.getElementById("listaAmigosParaGrupo");
+  lista.innerHTML = `<p style="color:#9A8A70;font-size:12px;">Carregando...</p>`;
+
+  try {
+    const amigosSnap = await getDocs(collection(db, "usuarios", meuUid, "amigos"));
+    if (amigosSnap.empty) {
+      lista.innerHTML = `<p style="color:#9A8A70;font-size:12px;font-style:italic;">Você ainda não tem amigos pra convidar.</p>`;
+      return;
+    }
+    let html = "";
+    amigosSnap.forEach(docSnap => {
+      const d = docSnap.data();
+      html += `
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#F8F4E3;cursor:pointer;">
+          <input type="checkbox" class="checkAmigoGrupo" value="${docSnap.id}" data-nickname="${escapeHtml(d.nickname)}" data-tag="${escapeHtml(d.tag)}" style="width:auto;margin:0;">
+          ${escapeHtml(d.nickname)}<span style="opacity:.5;">#${escapeHtml(d.tag)}</span>
+        </label>`;
+    });
+    lista.innerHTML = html;
+  } catch (e) {
+    console.error(e);
+    lista.innerHTML = `<p style="color:#e07a7a;font-size:12px;">Erro ao carregar amigos.</p>`;
+  }
+};
+
+window.cancelarCriarGrupo = function () {
+  document.getElementById("formCriarGrupo").style.display = "none";
+  document.getElementById("btnMostrarCriarGrupo").style.display = "block";
+  document.getElementById("nomeGrupoInput").value = "";
+};
+
+window.confirmarCriarGrupo = async function () {
+  const nome = document.getElementById("nomeGrupoInput").value.trim();
+  if (!nome) {
+    alert("Digite um nome pro grupo.");
+    return;
+  }
+
+  const meuUid = window.usuarioAtual.uid;
+  const meuSnap = await getDoc(doc(db, "usuarios", meuUid));
+  const meuDados = meuSnap.exists() ? meuSnap.data() : {};
+
+  const checks = document.querySelectorAll(".checkAmigoGrupo:checked");
+  const convidados = Array.from(checks).map(chk => ({
+    uid: chk.value,
+    nickname: chk.dataset.nickname,
+    tag: chk.dataset.tag
+  }));
+
+  try {
+    const novoGrupoRef = doc(collection(db, "grupos"));
+    await setDoc(novoGrupoRef, {
+      nome,
+      criadoPor: meuUid,
+      criadoEm: new Date().toISOString(),
+      membros: [{
+        uid: meuUid,
+        nickname: meuDados.nickname || "",
+        tag: meuDados.tag || "",
+        papel: "mestre"
+      }],
+      membrosUids: [meuUid],
+      mestresUids: [meuUid]
+    });
+
+    for (const c of convidados) {
+      await setDoc(doc(db, "usuarios", c.uid, "convitesGrupo", novoGrupoRef.id), {
+        grupoId: novoGrupoRef.id,
+        nomeGrupo: nome,
+        deUid: meuUid,
+        deNickname: meuDados.nickname || "",
+        deTag: meuDados.tag || "",
+        criadoEm: new Date().toISOString()
+      });
+    }
+
+    window.cancelarCriarGrupo();
+    carregarGrupos();
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao criar grupo: " + (e.code || e.message));
+  }
+};
+
+window.enviarSolicitacaoAmizade = async function () {
+  const input = document.getElementById("buscaAmigoInput");
+  const valor = input.value.trim();
+
+  const partes = valor.split("#");
+  if (partes.length !== 2 || !partes[0] || !partes[1]) {
+    alert("Digite no formato Nickname#0000.");
+    return;
+  }
+  const nicknameLower = partes[0].trim().toLowerCase();
+  const tag = partes[1].trim();
+  const meuUid = window.usuarioAtual.uid;
+
+  try {
+    const tagSnap = await getDoc(doc(db, "tagsUsuario", `${nicknameLower}#${tag}`));
+    if (!tagSnap.exists()) {
+      alert("Nenhum usuário encontrado com esse nome.");
+      return;
+    }
+    const alvoUid = tagSnap.data().uid;
+
+    if (alvoUid === meuUid) {
+      alert("Você não pode adicionar a si mesmo.");
+      return;
+    }
+
+    const jaAmigo = await getDoc(doc(db, "usuarios", meuUid, "amigos", alvoUid));
+    if (jaAmigo.exists()) {
+      alert("Vocês já são amigos.");
+      return;
+    }
+
+    const meuSnap = await getDoc(doc(db, "usuarios", meuUid));
+    const meuDados = meuSnap.exists() ? meuSnap.data() : {};
+
+    await setDoc(doc(db, "usuarios", alvoUid, "solicitacoesRecebidas", meuUid), {
+      deUid: meuUid,
+      deNickname: meuDados.nickname || "",
+      deTag: meuDados.tag || "",
+      criadoEm: new Date().toISOString()
+    });
+
+    input.value = "";
+    alert("Solicitação enviada!");
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao enviar solicitação: " + (e.code || e.message));
+  }
+};
+
+window.responderSolicitacao = async function (deUid, aceitar) {
+  const meuUid = window.usuarioAtual.uid;
+  try {
+    const reqRef = doc(db, "usuarios", meuUid, "solicitacoesRecebidas", deUid);
+    const reqSnap = await getDoc(reqRef);
+    if (!reqSnap.exists()) return;
+    const d = reqSnap.data();
+
+    if (aceitar) {
+      const meuSnap = await getDoc(doc(db, "usuarios", meuUid));
+      const meuDados = meuSnap.exists() ? meuSnap.data() : {};
+
+      await setDoc(doc(db, "usuarios", meuUid, "amigos", deUid), {
+        nickname: d.deNickname,
+        tag: d.deTag,
+        desde: new Date().toISOString()
+      });
+
+      await setDoc(doc(db, "usuarios", deUid, "amigos", meuUid), {
+        nickname: meuDados.nickname || "",
+        tag: meuDados.tag || "",
+        desde: new Date().toISOString()
+      });
+    }
+
+    await deleteDoc(reqRef);
+    carregarAmigos();
+  } catch (e) {
+    console.error(e);
+    alert("Erro: " + (e.code || e.message));
+  }
+};
+
+window.criarGrupo = () => alert("Em breve: criar grupo.");
+
+  window.sairConta = async () => {  
   try {
     await signOut(auth);
 
@@ -2615,11 +3363,16 @@ window.carregarMonstrosDaNuvem = carregarMonstrosDaNuvem;
 
     if (loginBox) loginBox.style.display = "none";
 
-    abrirTelaModo();
+    await verificarNicknameEContinuar();
 
     await carregarFichasDaNuvem();
     await carregarMonstrosDaNuvem();
     await carregarCampanhasMasterFirebase();
+
+    setTimeout(() => {
+      if (typeof window.carregarGruposParaCampanha === "function") window.carregarGruposParaCampanha();
+      if (typeof window.processarDevolucoesAutomaticas === "function") window.processarDevolucoesAutomaticas();
+    }, 1500);
 
   }  else {
   window.usuarioAtual = null;
