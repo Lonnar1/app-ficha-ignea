@@ -582,8 +582,8 @@ function entrarCampanhaMaster(index) {
   carregarDadosCampanhaAtual();
 }
 
-function deletarCampanhaMaster(index) {
-  if (!confirm("Deseja deletar esta campanha?")) return;
+async function deletarCampanhaMaster(index) {
+  if (!(await confirmBonito("Deseja deletar esta campanha?"))) return;
 
   campanhasMaster.splice(index, 1);
 
@@ -752,8 +752,8 @@ function editarRacaCustom(index) {
   abrirPopupBonusCustom(index);
 }
 
-function deletarRacaCustom(index) {
-  if (!confirm("Deseja deletar essa raça custom?")) return;
+async function deletarRacaCustom(index) {
+  if (!(await confirmBonito("Deseja deletar essa raça custom?"))) return;
 
   const select = document.getElementById("racaSelect");
   const valorAtual = select?.value;
@@ -2097,9 +2097,9 @@ async function deletarPersonagem(index) {
   if (!personagem) return;
 
   if (
-    !confirm(
+    !(await confirmBonito(
       `Tem certeza que quer excluir "${personagem.nome || "Sem nome"}"?`
-    )
+    ))
   ) {
     return;
   }
@@ -2495,11 +2495,11 @@ async function salvarEdicaoArmadura(index) {
   fecharPopup();
 }
 
-function removerArmadura(index) {
+async function removerArmadura(index) {
   const armadura = armaduras[index];
   if (!armadura) return;
 
-  const confirmar = confirm(`Remover "${armadura.nome}"?`);
+  const confirmar = await confirmBonito(`Remover "${armadura.nome}"?`);
   if (!confirmar) return;
 
   armaduras.splice(index, 1);
@@ -2920,7 +2920,7 @@ window.salvarDestaquePerfil = async function () {
 };
 
 window.pegarFichaPublica = async function (donoUid, fichaId) {
-  if (!confirm("Copiar essa ficha pra sua conta?")) return;
+  if (!(await confirmBonito("Copiar essa ficha pra sua conta?"))) return;
   try {
     const snap = await getDoc(doc(db, "usuarios", donoUid, "fichas", fichaId));
     if (!snap.exists()) {
@@ -3404,11 +3404,11 @@ function verItem(index) {
   abrirPopup(item.nome || "Sem nome", html, true, () => editarItem(index));
 }
 
-function removerItem(index) {
+async function removerItem(index) {
   const item = inventario[index];
   if (!item) return;
 
-  const confirmar = confirm(`Remover "${item.nome}"?`);
+  const confirmar = await confirmBonito(`Remover "${item.nome}"?`);
   if (!confirmar) return;
 
   inventario.splice(index, 1);
@@ -3593,11 +3593,11 @@ function verArma(index) {
   abrirPopup(arma.nome || "Sem nome", html, true, () => editarArma(index));
 }
 
-function removerArma(index) {
+async function removerArma(index) {
   const arma = armas[index];
   if (!arma) return;
 
-  const confirmar = confirm(`Remover "${arma.nome}"?`);
+  const confirmar = await confirmBonito(`Remover "${arma.nome}"?`);
   if (!confirmar) return;
 
   armas.splice(index, 1);
@@ -4040,11 +4040,11 @@ function verPoder(index) {
   abrirPopup(`${icone} ${poder.nome}`, html, true, null);
 }
 
-function removerPoder(index) {
+async function removerPoder(index) {
   const poder = poderes[index];
   if (!poder) return;
 
-  const confirmar = confirm(`Remover "${poder.nome}"?`);
+  const confirmar = await confirmBonito(`Remover "${poder.nome}"?`);
   if (!confirmar) return;
 
   poderes.splice(index, 1);
@@ -5885,8 +5885,8 @@ function salvarEdicaoMapa(index) {
   fecharPopup();
 }
 
-function removerMapa(index) {
-  if (!confirm("Remover este mapa?")) return;
+async function removerMapa(index) {
+  if (!(await confirmBonito("Remover este mapa?"))) return;
   mapas.splice(index, 1);
   salvarTudo();
   renderMapas();
@@ -6453,7 +6453,7 @@ window.confirmarDarItemMestre = async function (uidDestino, fichaIdDestino, nome
   const itemOriginal = window._darItemMestreContexto;
   if (!itemOriginal) return;
 
-  if (!confirm(`Dar "${itemOriginal.nome}" pra ${nomeDestino}?`)) return;
+  if (!(await confirmBonito(`Dar "${itemOriginal.nome}" pra ${nomeDestino}?`))) return;
 
   try {
     const meuUid = window.usuarioAtual.uid;
@@ -6777,7 +6777,8 @@ function iniciarDragSheet(e) {
   if (sheet.classList.contains("full")) {
     const rect = sheet.getBoundingClientRect();
     const toqueRelativo = ponto.clientY - rect.top;
-    sheetArrastando = toqueRelativo <= 60 ? "full-topo" : "full-conteudo";
+    const tocouNaImagem = e.target?.closest?.(".sheet-img") != null;
+    sheetArrastando = (toqueRelativo <= 60 || tocouNaImagem) ? "full-topo" : "full-conteudo";
   } else {
     sheetArrastando = true;
   }
@@ -6932,8 +6933,17 @@ function moverDragSheet(e) {
       if (e.cancelable) e.preventDefault();
       sheet.style.transform = `translateX(${diffX}px)`;
       sheet.style.opacity = String(1 - Math.min(Math.abs(diffX) / 500, 0.45));
+      return;
     }
-    return;
+
+    // já rolou até o topo do conteúdo e continua puxando pra baixo:
+    // vira o gesto de encolher a sheet, capturando o toque antes que o
+    // navegador tente interpretar isso como "puxar pra atualizar" (F5)
+    if (diffY > 0 && sheet.scrollTop <= 0) {
+      sheetArrastando = "full-topo";
+    } else {
+      return;
+    }
   }
 
   if (movimentoHorizontal) {
@@ -6955,6 +6965,20 @@ function moverDragSheet(e) {
     sheet.style.opacity = String(1 - Math.min(diffY / 450, 0.45));
   }
 }
+
+window.confirmBonito = function (mensagem) {
+  return new Promise(resolve => {
+    document.getElementById("confirmBonitoTexto").textContent = mensagem;
+    document.getElementById("modalConfirmBonitoOverlay").style.display = "block";
+    document.getElementById("modalConfirmBonito").style.display = "block";
+    window._confirmBonitoResolve = (valor) => {
+      document.getElementById("modalConfirmBonitoOverlay").style.display = "none";
+      document.getElementById("modalConfirmBonito").style.display = "none";
+      window._confirmBonitoResolve = null;
+      resolve(valor);
+    };
+  });
+};
 
 function finalizarDragSheet(e) {
   if (!sheetArrastando) return;
@@ -7171,16 +7195,8 @@ async function excluirMonstroMestre(index) {
   const monstro = monstrosMestre[index];
   if (!monstro) return;
 
-  const confirmar = confirm(`Deseja excluir "${monstro.nome}"?`);
+  const confirmar = await confirmBonito(`Deseja excluir "${monstro.nome}"?`);
   if (!confirmar) return;
-
-  // deleta imagem do Storage
-  if (window.storage && window.usuarioAtual && monstro.imagem?.startsWith("https://")) {
-    try {
-      const imgRef = window.storageRef(window.storage, monstro.imagem);
-      await window.deleteObject(imgRef);
-    } catch(e) { console.warn("Imagem não encontrada no Storage:", e); }
-  }
 
   // apaga do Firebase
   if (window.usuarioAtual && monstro.id && window.db && window.deleteDoc) {
@@ -7747,11 +7763,11 @@ function aplicarCuraCombate(index) {
   alterarHpCombate(index, cura);
 }
 
-function removerDoCombate(index) {
+async function removerDoCombate(index) {
   const monstro = combatesMestre[index];
   if (!monstro) return;
 
-  const confirmar = confirm(`Remover "${monstro.nome}" do combate?`);
+  const confirmar = await confirmBonito(`Remover "${monstro.nome}" do combate?`);
   if (!confirmar) return;
 
   combatesMestre.splice(index, 1);
@@ -8472,7 +8488,7 @@ window.confirmarDarItem = async function (uidDestino, fichaIdDestino, nomeDestin
   const item = arr?.[ctx.index];
   if (!item) return;
 
-  if (!confirm(`Dar "${item.nome || "esse item"}" pra ${nomeDestino}?`)) return;
+  if (!(await confirmBonito(`Dar "${item.nome || "esse item"}" pra ${nomeDestino}?`))) return;
 
   try {
     const meuUid = window.usuarioAtual.uid;
@@ -9090,9 +9106,9 @@ function salvarEdicaoNPCMundo(id) {
   fecharPopup();
 }
 
-function deletarNPCMundo(id) {
+async function deletarNPCMundo(id) {
   const campanha = campanhasMaster[campanhaAtualMaster];
-  if (!campanha || !confirm("Remover este NPC?")) return;
+  if (!campanha || !(await confirmBonito("Remover este NPC?"))) return;
   campanha.npcsMundo = campanha.npcsMundo.filter(n => n.id !== id);
   salvarCampanhasMaster();
   renderNPCsMundo();
@@ -9299,9 +9315,9 @@ function salvarEdicaoMissaoMundo(id) {
   fecharPopup();
 }
 
-function deletarMissaoMundo(id) {
+async function deletarMissaoMundo(id) {
   const campanha = campanhasMaster[campanhaAtualMaster];
-  if (!campanha || !confirm("Remover esta missão?")) return;
+  if (!campanha || !(await confirmBonito("Remover esta missão?"))) return;
   campanha.missoes = campanha.missoes.filter(m => m.id !== id);
   salvarCampanhasMaster();
   renderMissoesMundo();
@@ -9457,9 +9473,9 @@ function salvarEdicaoEncontroMundo(id) {
   fecharPopup();
 }
 
-function deletarEncontroMundo(id) {
+async function deletarEncontroMundo(id) {
   const campanha = campanhasMaster[campanhaAtualMaster];
-  if (!campanha || !confirm("Remover este encontro?")) return;
+  if (!campanha || !(await confirmBonito("Remover este encontro?"))) return;
   campanha.encontrosPlanejados = campanha.encontrosPlanejados.filter(e => e.id !== id);
   salvarCampanhasMaster();
   renderEncontrosMundo();
@@ -10480,7 +10496,7 @@ window.alternarPapelMembro = async function (uidAlvo) {
 window.removerMembroGrupo = async function (uidAlvo) {
   const grupoId = window._grupoAtualId;
   if (!grupoId) return;
-  if (!confirm("Remover esse membro do grupo?")) return;
+  if (!(await confirmBonito("Remover esse membro do grupo?"))) return;
   try {
     const grupoRef = doc(db, "grupos", grupoId);
     const snap = await getDoc(grupoRef);
@@ -10502,7 +10518,7 @@ window.sairDoGrupo = async function () {
   const grupoId = window._grupoAtualId;
   const meuUid = window.usuarioAtual.uid;
   if (!grupoId) return;
-  if (!confirm("Sair desse grupo?")) return;
+  if (!(await confirmBonito("Sair desse grupo?"))) return;
   try {
     const grupoRef = doc(db, "grupos", grupoId);
     const snap = await getDoc(grupoRef);
@@ -10523,7 +10539,7 @@ window.sairDoGrupo = async function () {
 window.excluirGrupo = async function () {
   const grupoId = window._grupoAtualId;
   if (!grupoId) return;
-  if (!confirm("Excluir esse grupo pra sempre? Não dá pra desfazer.")) return;
+  if (!(await confirmBonito("Excluir esse grupo pra sempre? Não dá pra desfazer."))) return;
   try {
     await deleteDoc(doc(db, "grupos", grupoId));
     fecharDetalheGrupo();
