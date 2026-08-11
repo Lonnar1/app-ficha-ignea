@@ -4853,7 +4853,7 @@ select {
 #tela-inicial {
   max-width: 500px !important;
   margin: 0 auto !important;
-  padding: 0 16px !important;
+  padding: 0 16px 130px !important;
 }
 
 #ficha .conteudo-toggle {
