@@ -138,6 +138,16 @@
 </div>
 
 <!-- ================= DAR ITEM (MESTRE) ================= -->
+<div id="modalConfirmBonitoOverlay" style="display:none;position:fixed;inset:0;z-index:200000;background:rgba(0,0,0,.78);" onclick="window._confirmBonitoResolve && window._confirmBonitoResolve(false)"></div>
+<div id="modalConfirmBonito" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:200001;width:min(88vw,340px);background:#120c09;border:1px solid rgba(196,169,91,0.3);border-radius:16px;padding:24px 20px 20px;color:#F8F4E3;font-family:'EB Garamond',serif;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+  <div style="font-size:24px;margin-bottom:10px;color:#C4A95B;">⚠</div>
+  <div id="confirmBonitoTexto" style="font-size:15px;line-height:1.5;color:#F0E4D0;margin-bottom:22px;"></div>
+  <div style="display:flex;gap:10px;">
+    <button onclick="window._confirmBonitoResolve && window._confirmBonitoResolve(false)" style="flex:1;padding:10px;border-radius:10px;border:1px solid rgba(196,169,91,0.3);background:transparent;color:#9A8A70;font-family:'Cinzel',serif;font-size:13px;font-weight:bold;letter-spacing:.03em;cursor:pointer;">Cancelar</button>
+    <button onclick="window._confirmBonitoResolve && window._confirmBonitoResolve(true)" style="flex:1;padding:10px;border-radius:10px;border:none;background:linear-gradient(135deg,#e05050,#7B1E28);color:#fff;font-family:'Cinzel',serif;font-weight:bold;font-size:13px;letter-spacing:.03em;cursor:pointer;">Confirmar</button>
+  </div>
+</div>
+
 <div id="modalDarItemMestreOverlay" style="display:none;position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.8);" onclick="fecharDarItemMestre()"></div>
 <div id="modalDarItemMestre" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:100001;width:min(90vw,360px);max-height:75vh;overflow-y:auto;background:#120c09;border:1px solid rgba(196,169,91,0.25);border-radius:14px;padding:18px;color:#F8F4E3;font-family:'EB Garamond',serif;">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
@@ -195,24 +205,27 @@
     <i class="ti ti-users"></i>
   </button>
 
-  <!-- fundos animados -->
-  <!-- fundos animados -->
-  <div style="position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(123,30,40,0.22) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 50% 100%,rgba(60,13,20,0.35) 0%,transparent 55%),linear-gradient(180deg,#0e0907 0%,#160d0a 50%,#0a0605 100%);pointer-events:none;"></div>
-  <div id="tmBgJornada" style="position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 80% 60% at 30% 50%,rgba(100,60,10,0.2) 0%,transparent 65%);opacity:0;transition:opacity 0.6s ease;pointer-events:none;"></div>
-  <div id="tmBgGrimorio" style="position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 80% 60% at 70% 50%,rgba(123,30,40,0.25) 0%,transparent 65%);opacity:0;transition:opacity 0.6s ease;pointer-events:none;"></div>
+<!-- fundos animados -->
+  <div style="position:fixed;inset:0;z-index:0;background:linear-gradient(180deg,#0e0d0b 0%,#100d0a 50%,#0a0807 100%);pointer-events:none;"></div>
+  <div id="tmBgJornada" style="position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 90% 70% at 50% 40%,rgba(196,150,50,0.32) 0%,rgba(120,80,20,0.14) 45%,transparent 70%);opacity:0;transition:opacity 0.6s ease;pointer-events:none;"></div>
+  <div id="tmBgGrimorio" style="position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 90% 70% at 50% 40%,rgba(180,40,35,0.32) 0%,rgba(100,20,20,0.16) 45%,transparent 70%);opacity:0;transition:opacity 0.6s ease;pointer-events:none;"></div>
 
   <div style="position:relative;z-index:2;width:100%;max-width:420px;display:flex;flex-direction:column;align-items:center;">
 
     <!-- HEADER -->
     <div style="text-align:center;margin-bottom:28px;">
-      <div style="font-family:'Cinzel Decorative',serif;font-size:10px;letter-spacing:0.45em;color:#A88D42;text-transform:uppercase;margin-bottom:10px;opacity:0.75;">Ficha Ígnea</div>
-      <h1 style="font-family:'Cinzel',serif;font-size:clamp(20px,6vw,26px);font-weight:700;letter-spacing:0.08em;color:#F8F4E3;line-height:1.2;text-shadow:0 2px 12px rgba(0,0,0,0.6);">Escolha seu <span style="background:linear-gradient(135deg,#E8CC80,#C4A95B,#A88D42);-webkit-background-clip:text;color:transparent;">Caminho</span></h1>
-      <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin:10px 0 4px;">
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;opacity:0.7;">
+        <div style="height:1px;width:26px;background:linear-gradient(90deg,transparent,rgba(196,169,91,0.6));"></div>
+        <div style="font-family:'MedievalSharp',cursive;font-size:13px;letter-spacing:0.3em;color:#A88D42;text-transform:uppercase;">Ficha Ígnea</div>
+        <div style="height:1px;width:26px;background:linear-gradient(90deg,rgba(196,169,91,0.6),transparent);"></div>
+      </div>
+      <h1 style="font-family:'Cinzel Decorative',serif;font-size:clamp(24px,7vw,32px);font-weight:700;letter-spacing:0.04em;line-height:1.25;margin:0;background:linear-gradient(135deg,#F8ECC8,#E8CC80,#C4A95B,#A88D42);-webkit-background-clip:text;color:transparent;text-shadow:0 3px 18px rgba(196,169,91,0.25);">Escolha seu<br>Caminho</h1>
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin:14px 0 8px;">
         <div style="height:1px;width:44px;background:linear-gradient(90deg,transparent,rgba(196,169,91,0.5));"></div>
         <div style="width:5px;height:5px;background:#C4A95B;transform:rotate(45deg);opacity:0.8;"></div>
         <div style="height:1px;width:44px;background:linear-gradient(90deg,rgba(196,169,91,0.5),transparent);"></div>
       </div>
-      <p style="font-family:'EB Garamond',serif;font-style:italic;font-size:13px;color:#9A8A70;">Jornada ou Grimório?</p>
+      <p style="font-family:'MedievalSharp',cursive;font-size:15px;color:#b8a578;letter-spacing:0.03em;">Jornada ou Grimório?</p>
     </div>
 
     <!-- CARDS -->
@@ -238,8 +251,8 @@
         <div id="tmCheckJornada" style="position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:50%;background:#C4A95B;display:flex;align-items:center;justify-content:center;font-size:10px;color:#1a0e05;font-weight:bold;opacity:0;transform:scale(0.5);transition:opacity 0.3s,transform 0.3s;z-index:5;">✓</div>
         <!-- footer -->
         <div style="position:relative;z-index:2;padding:12px 12px 14px;background:linear-gradient(0deg,rgba(0,0,0,0.8) 0%,transparent 100%);text-align:center;">
-          <div style="font-family:'Cinzel',serif;font-size:14px;font-weight:700;letter-spacing:0.08em;color:#E8CC80;text-shadow:0 1px 6px rgba(0,0,0,0.8);">Jornada</div>
-          <div style="font-size:11px;color:#9A8A70;letter-spacing:0.15em;text-transform:uppercase;margin-top:2px;">Jogador</div>
+          <div style="font-family:'Cinzel Decorative',serif;font-size:15px;font-weight:700;letter-spacing:0.1em;background:linear-gradient(135deg,#F8ECC8,#E8CC80,#C4A95B);-webkit-background-clip:text;color:transparent;text-shadow:0 2px 10px rgba(0,0,0,0.6);">Jornada</div>
+          <div style="font-family:'MedievalSharp',cursive;font-size:11px;color:#9A8A70;letter-spacing:0.1em;text-transform:uppercase;margin-top:3px;">Jogador</div>
           <div id="tmDivJornada" style="width:28px;height:1px;background:rgba(196,169,91,0.3);margin:7px auto 0;transition:width 0.3s,background 0.3s;"></div>
         </div>
       </div>
@@ -264,8 +277,8 @@
         <div id="tmCheckGrimorio" style="position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:50%;background:#7B1E28;display:flex;align-items:center;justify-content:center;font-size:10px;color:#F8F4E3;font-weight:bold;opacity:0;transform:scale(0.5);transition:opacity 0.3s,transform 0.3s;z-index:5;">✓</div>
         <!-- footer -->
         <div style="position:relative;z-index:2;padding:12px 12px 14px;background:linear-gradient(0deg,rgba(0,0,0,0.8) 0%,transparent 100%);text-align:center;">
-          <div style="font-family:'Cinzel',serif;font-size:14px;font-weight:700;letter-spacing:0.08em;color:#e88888;text-shadow:0 1px 6px rgba(0,0,0,0.8);">Grimório</div>
-          <div style="font-size:11px;color:#9A8A70;letter-spacing:0.15em;text-transform:uppercase;margin-top:2px;">Mestre</div>
+          <div style="font-family:'Cinzel Decorative',serif;font-size:15px;font-weight:700;letter-spacing:0.1em;background:linear-gradient(135deg,#f5b8b8,#e88888,#b83a2f);-webkit-background-clip:text;color:transparent;text-shadow:0 2px 10px rgba(0,0,0,0.6);">Grimório</div>
+          <div style="font-family:'MedievalSharp',cursive;font-size:11px;color:#9A8A70;letter-spacing:0.1em;text-transform:uppercase;margin-top:3px;">Mestre</div>
           <div id="tmDivGrimorio" style="width:28px;height:1px;background:rgba(123,30,40,0.4);margin:7px auto 0;transition:width 0.3s,background 0.3s;"></div>
         </div>
       </div>
@@ -274,13 +287,13 @@
 
     <!-- DESCRIÇÃO -->
     <div id="tmDesc" style="width:100%;min-height:50px;text-align:center;margin-bottom:18px;transition:opacity 0.3s ease;">
-      <p style="font-style:italic;font-size:13px;color:rgba(154,138,112,0.45);letter-spacing:0.02em;">Toque em um caminho para revelar seu destino…</p>
+      <p style="font-family:'MedievalSharp',cursive;font-size:14px;color:rgba(196,169,91,0.55);letter-spacing:0.02em;">✦ Toque em um caminho para revelar seu destino ✦</p>
     </div>
 
     <!-- BOTÃO ENTRAR -->
     <button id="tmBtnEntrar" disabled onclick="tmConfirm()"
   style="width:90%;max-width:380px;padding:18px 32px;border-radius:9999px;border:1px solid rgba(196,169,91,0.4);background:transparent;color:rgba(232,204,128,0.5);font-family:'Cinzel',serif;font-size:18px;font-weight:700;letter-spacing:0.18em;cursor:not-allowed;transition:all 0.4s ease;margin:0 auto 28px auto;display:block;text-align:center;overflow:hidden;">
-  Adentrar
+  Adentrar 
 </button>
 
 <!-- BOTÃO SAIR -->
@@ -2612,7 +2625,7 @@ import {
   }
 
   if (fichasNuvem.length === 0 && fichasLocais.length > 0) {
-    const confirmar = confirm(
+    const confirmar = await confirmBonito(
       "Encontramos fichas neste dispositivo. Deseja vincular à sua conta?"
     );
 
@@ -3075,19 +3088,18 @@ window.carregarGrupos = async function () {
   const meuUid = window.usuarioAtual.uid;
   lista.innerHTML = `<p style="color:#9A8A70;font-size:12px;text-align:center;">Carregando...</p>`;
 
+  // convites e grupos são buscados e renderizados de forma INDEPENDENTE —
+  // um erro em um dos dois nunca mais pode apagar o outro da tela
+  let htmlConvites = "";
+  let htmlGrupos = "";
+
   try {
-    const [convitesSnap, gruposSnap] = await Promise.all([
-      getDocs(collection(db, "usuarios", meuUid, "convitesGrupo")),
-      getDocs(query(collection(db, "grupos"), where("membrosUids", "array-contains", meuUid)))
-    ]);
-
-    let html = "";
-
+    const convitesSnap = await getDocs(collection(db, "usuarios", meuUid, "convitesGrupo"));
     if (!convitesSnap.empty) {
-      html += `<div style="font-size:11px;color:#9A8A70;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Convites pendentes</div>`;
+      htmlConvites += `<div style="font-size:11px;color:#9A8A70;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;">Convites pendentes</div>`;
       convitesSnap.forEach(docSnap => {
         const d = docSnap.data();
-        html += `
+        htmlConvites += `
           <div style="display:flex;align-items:center;gap:8px;background:rgba(196,169,91,0.08);border:1px solid rgba(196,169,91,0.2);border-radius:8px;padding:8px 10px;margin-bottom:6px;">
             <div style="flex:1;">
               <div style="font-size:13px;color:#F8F4E3;">${escapeHtml(d.nomeGrupo)}</div>
@@ -3098,32 +3110,35 @@ window.carregarGrupos = async function () {
           </div>`;
       });
     }
+  } catch (e) {
+    console.error("Erro ao carregar convites:", e);
+    htmlConvites = `<p style="color:#e07a7a;font-size:12px;text-align:center;">Erro ao carregar convites: ${e.code || e.message}</p>`;
+  }
 
+  try {
+    const gruposSnap = await getDocs(query(collection(db, "grupos"), where("membrosUids", "array-contains", meuUid)));
     if (!gruposSnap.empty) {
-      html += `<div style="font-size:11px;color:#9A8A70;text-transform:uppercase;letter-spacing:.08em;margin:${convitesSnap.empty ? "0" : "14px"} 0 6px;">Seus grupos</div>`;
+      htmlGrupos += `<div style="font-size:11px;color:#9A8A70;text-transform:uppercase;letter-spacing:.08em;margin:${htmlConvites ? "14px" : "0"} 0 6px;">Seus grupos</div>`;
       gruposSnap.forEach(docSnap => {
         const d = docSnap.data();
         const souMestre = d.criadoPor === meuUid;
-        html += `
+        htmlGrupos += `
           <div onclick="abrirDetalheGrupo('${docSnap.id}')" style="cursor:pointer;background:rgba(255,255,255,0.03);border:1px solid rgba(196,169,91,0.15);border-radius:10px;padding:10px 12px;">
             <div style="display:flex;justify-content:space-between;align-items:center;">
               <span style="font-size:14px;color:#F8F4E3;font-weight:bold;">${escapeHtml(d.nome)}</span>
               ${souMestre ? `<span style="font-size:10px;color:#C4A95B;text-transform:uppercase;letter-spacing:.05em;">Mestre</span>` : ""}
             </div>
-            <div style="font-size:12px;color:#9A8A70;margin-top:4px;">${d.membros.length} membro${d.membros.length > 1 ? "s" : ""}</div>
+            <div style="font-size:12px;color:#9A8A70;margin-top:4px;">${(d.membros || []).length} membro${(d.membros || []).length > 1 ? "s" : ""}</div>
           </div>`;
       });
     }
-
-    if (convitesSnap.empty && gruposSnap.empty) {
-      html = `<p style="color:#9A8A70;font-size:13px;text-align:center;padding:20px 0;font-style:italic;">Nenhum grupo ainda.</p>`;
-    }
-
-    lista.innerHTML = html;
   } catch (e) {
-    console.error(e);
-    lista.innerHTML = `<p style="color:#e07a7a;font-size:12px;text-align:center;">Erro ao carregar: ${e.code || e.message}</p>`;
+    console.error("Erro ao carregar seus grupos:", e);
+    htmlGrupos = `<p style="color:#e07a7a;font-size:12px;text-align:center;">Erro ao carregar seus grupos: ${e.code || e.message}</p>`;
   }
+
+  const html = htmlConvites + htmlGrupos;
+  lista.innerHTML = html || `<p style="color:#9A8A70;font-size:13px;text-align:center;padding:20px 0;font-style:italic;">Nenhum grupo ainda.</p>`;
 };
 
 window.responderConviteGrupo = async function (grupoId, aceitar) {
