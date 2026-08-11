@@ -489,6 +489,15 @@ function renderCampanhasMaster() {
   </div>
 
   <button
+    <button
+    class="monstro-delete campanha-delete"
+    style="right:44px !important;"
+    onclick="event.stopPropagation(); window.abrirEditarCampanha(${index})"
+  >
+    ✎
+  </button>
+
+  <button
     class="monstro-delete campanha-delete"
     onclick="event.stopPropagation(); deletarCampanhaMaster(${index})"
   >
@@ -498,6 +507,10 @@ function renderCampanhasMaster() {
 
     lista.appendChild(card);
   });
+
+  if (typeof window.carregarGruposParaCampanha === "function") {
+    window.carregarGruposParaCampanha();
+  }
 }
 
 function criarCampanhaMaster() {
@@ -514,6 +527,8 @@ function criarCampanhaMaster() {
     return;
   }
 
+  const grupoVinculado = document.getElementById("novaCampanhaGrupo")?.value || "";
+
   const novaCampanha = {
   id: Date.now(),
   nome,
@@ -525,7 +540,8 @@ function criarCampanhaMaster() {
   sessoes: [],
   quests: [],
   npcs: [],
-  combates: []
+  combates: [],
+  grupoVinculado
 };
 
   campanhasMaster.push(novaCampanha);
@@ -2276,6 +2292,7 @@ function renderArmaduras() {
 
       <div class="item-acoes">
         <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarArmadura(${index})">✏️</button>
+        <button type="button" onclick="event.stopPropagation(); window.abrirDarItem('armaduras', ${index})" style="background:#4a3b31;border:none;color:#C4A95B;border-radius:8px;padding:4px 8px;font-size:11px;cursor:pointer;">Dar</button>
         <button type="button" class="arma-remover" onclick="event.stopPropagation(); removerArmadura(${index})">X</button>
       </div>
     `;
@@ -2645,7 +2662,7 @@ function salvarTudo() {
   p.idade = document.getElementById("idade").value;
   p.nomeRacaCustom = nomeRacaCustom;
   p.altura = document.getElementById("altura").value;
-  p.nivel = document.getElementById("nivel")?.value || "";
+p.nivel = document.getElementById("nivel")?.value || "";
   p.antecedentes = document.getElementById("antecedentes")?.value || "";
   p.idiomas = document.getElementById("idiomas").value;
   p.armaduras = armaduras;
@@ -2716,6 +2733,216 @@ function atualizarNomeOpcaoCustom() {
     ? nomeRacaCustom.trim()
     : "Raças Personalizadas";
 }
+
+window._perfilUidAberto = null;
+window._perfilEhMeu = false;
+
+window.abrirPerfil = async function (uid) {
+  const meuUid = window.usuarioAtual.uid;
+  const ehMeu = uid === meuUid;
+  window._perfilUidAberto = uid;
+  window._perfilEhMeu = ehMeu;
+
+  document.getElementById("modalPerfilOverlay").style.display = "block";
+  document.getElementById("modalPerfil").style.display = "block";
+  document.getElementById("btnSalvarBio").style.display = "none";
+  document.getElementById("perfilBioEdit").style.display = "none";
+  document.getElementById("perfilBioView").style.display = "block";
+
+  try {
+    const snap = await getDoc(doc(db, "usuarios", uid));
+    const d = snap.exists() ? snap.data() : {};
+
+    document.getElementById("perfilNomeTag").innerHTML = d.nickname
+      ? `${escapeHtml(d.nickname)}<span style="opacity:.5;">#${escapeHtml(d.tag)}</span>`
+      : "";
+
+    document.getElementById("perfilFundo").style.backgroundImage = d.fotoFundo ? `url('${d.fotoFundo}')` : "none";
+    document.getElementById("perfilAvatar").style.backgroundImage = d.fotoPerfil ? `url('${d.fotoPerfil}')` : "none";
+
+    const bioView = document.getElementById("perfilBioView");
+    bioView.textContent = d.bio || (ehMeu ? "Adicione uma bio..." : "Sem bio ainda.");
+    document.getElementById("perfilBioEdit").value = d.bio || "";
+
+    document.getElementById("btnMudarFundo").style.display = ehMeu ? "block" : "none";
+    document.getElementById("btnMudarAvatar").style.display = ehMeu ? "block" : "none";
+    document.getElementById("btnEscolherDestaque").style.display = ehMeu ? "block" : "none";
+    bioView.onclick = ehMeu ? mostrarEditarBio : null;
+    bioView.style.cursor = ehMeu ? "pointer" : "default";
+
+    const showcase = document.getElementById("perfilShowcase");
+    const destaque = d.personagensDestaque || [];
+    if (destaque.length === 0) {
+      showcase.innerHTML = `<p style="grid-column:1/-1;text-align:center;color:#9A8A70;font-size:12px;font-style:italic;padding:10px 0;">Nenhum personagem em destaque.</p>`;
+    } else {
+      showcase.innerHTML = destaque.map(f => `
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(196,169,91,0.15);border-radius:10px;overflow:hidden;">
+          <div style="height:80px;background-image:url('${f.imagem || ""}');background-size:cover;background-position:center;background-color:#1b120c;"></div>
+          <div style="padding:8px;">
+            <div style="font-size:12px;font-weight:bold;color:#F8F4E3;">${escapeHtml(f.nome || "Sem nome")}</div>
+            <div style="font-size:11px;color:#9A8A70;">${escapeHtml(f.classe || "")}${f.nivel ? " · Nv " + escapeHtml(String(f.nivel)) : ""}</div>
+            ${!ehMeu && f.publica ? `<button onclick="pegarFichaPublica('${uid}','${f.fichaId}')" style="margin-top:6px;width:100%;padding:5px;border-radius:6px;border:none;background:#C4A95B;color:#1a0e05;font-size:11px;font-weight:bold;cursor:pointer;">Pegar</button>` : ""}
+          </div>
+        </div>
+      `).join("");
+    }
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao carregar perfil: " + (e.code || e.message));
+  }
+};
+
+window.fecharPerfil = function () {
+  document.getElementById("modalPerfilOverlay").style.display = "none";
+  document.getElementById("modalPerfil").style.display = "none";
+};
+
+window.mostrarEditarBio = function () {
+  document.getElementById("perfilBioView").style.display = "none";
+  document.getElementById("perfilBioEdit").style.display = "block";
+  document.getElementById("btnSalvarBio").style.display = "block";
+};
+
+window.salvarBioPerfil = async function () {
+  const bio = document.getElementById("perfilBioEdit").value.trim();
+  try {
+    await setDoc(doc(db, "usuarios", window.usuarioAtual.uid), { bio }, { merge: true });
+    window.abrirPerfil(window.usuarioAtual.uid);
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao salvar bio: " + (e.code || e.message));
+  }
+};
+
+window.uploadImagemPerfil = async function (input, tipo) {
+  if (!input.files || !input.files[0]) return;
+  try {
+    const base64 = await comprimirImagem(input.files[0]);
+    const resultado = await uploadImagemFirebase(base64, tipo);
+    if (resultado.erro || !resultado.url) {
+      alert("Não consegui enviar a imagem. Tente outra.");
+      return;
+    }
+    const campo = tipo === "fundo" ? "fotoFundo" : "fotoPerfil";
+    await setDoc(doc(db, "usuarios", window.usuarioAtual.uid), { [campo]: resultado.url }, { merge: true });
+    window.abrirPerfil(window.usuarioAtual.uid);
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao enviar imagem: " + (e.code || e.message));
+  } finally {
+    input.value = "";
+  }
+};
+
+window.abrirEscolherDestaque = async function () {
+  document.getElementById("modalEscolherDestaqueOverlay").style.display = "block";
+  document.getElementById("modalEscolherDestaque").style.display = "block";
+
+  const lista = document.getElementById("listaEscolherDestaque");
+  const fichas = window.personagens || [];
+  if (fichas.length === 0) {
+    lista.innerHTML = `<p style="color:#9A8A70;font-size:12px;text-align:center;">Você ainda não tem fichas.</p>`;
+    return;
+  }
+
+  let idsDestaque = [];
+  try {
+    const snap = await getDoc(doc(db, "usuarios", window.usuarioAtual.uid));
+    const destaqueAtual = (snap.exists() && snap.data().personagensDestaque) || [];
+    idsDestaque = destaqueAtual.map(d => String(d.fichaId));
+  } catch (e) {
+    console.error(e);
+  }
+
+  lista.innerHTML = fichas.map((f, i) => {
+    const jaExibida = idsDestaque.includes(String(f.id));
+    return `
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(196,169,91,0.15);border-radius:10px;padding:10px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="flex:1;font-size:13px;">${escapeHtml(f.nome || "Sem nome")} <span style="color:#9A8A70;font-size:11px;">${escapeHtml(f.classe || "")}</span></span>
+        <button type="button" onclick="var el=document.getElementById('opcoesFicha${i}');el.style.display = el.style.display === 'none' ? 'flex' : 'none';" style="background:none;border:none;color:#C4A95B;font-size:15px;cursor:pointer;padding:2px;">⚙</button>
+      </div>
+      <div id="opcoesFicha${i}" style="display:none;flex-direction:column;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(196,169,91,0.12);">
+        <label style="display:flex;align-items:center;justify-content:space-between;font-size:12px;cursor:pointer;gap:8px;">
+          <span>Exibir ficha</span>
+          <input type="checkbox" class="checkDestaqueFicha" data-index="${i}" ${jaExibida ? "checked" : ""} style="width:auto;margin:0;">
+        </label>
+        <label style="display:flex;align-items:center;justify-content:space-between;font-size:12px;cursor:pointer;gap:8px;">
+          <span>Permitir que a ficha seja copiada</span>
+          <input type="checkbox" class="checkPublicaFicha" data-index="${i}" ${f.publica ? "checked" : ""} style="width:auto;margin:0;">
+        </label>
+      </div>
+    </div>`;
+  }).join("");
+};
+
+window.fecharEscolherDestaque = function () {
+  document.getElementById("modalEscolherDestaqueOverlay").style.display = "none";
+  document.getElementById("modalEscolherDestaque").style.display = "none";
+};
+
+window.salvarDestaquePerfil = async function () {
+  const checksExibir = document.querySelectorAll(".checkDestaqueFicha:checked");
+  if (checksExibir.length > 4) {
+    alert("Escolha no máximo 4 pra exibir.");
+    return;
+  }
+
+  const fichas = window.personagens || [];
+
+  document.querySelectorAll(".checkPublicaFicha").forEach(chk => {
+    const i = parseInt(chk.dataset.index);
+    if (fichas[i]) fichas[i].publica = chk.checked;
+  });
+
+  const destaque = Array.from(checksExibir).map(chk => {
+    const f = fichas[parseInt(chk.dataset.index)];
+    return {
+      fichaId: String(f.id),
+      nome: f.nome || "",
+      classe: f.classe || "",
+      nivel: f.nivel || "",
+      imagem: f.imagem || "",
+      publica: !!f.publica
+    };
+  });
+
+  try {
+    window.personagens = fichas;
+    if (typeof salvarPersonagens === "function") await salvarPersonagens();
+    await setDoc(doc(db, "usuarios", window.usuarioAtual.uid), { personagensDestaque: destaque }, { merge: true });
+    window.fecharEscolherDestaque();
+    window.abrirPerfil(window.usuarioAtual.uid);
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao salvar: " + (e.code || e.message));
+  }
+};
+
+window.pegarFichaPublica = async function (donoUid, fichaId) {
+  if (!confirm("Copiar essa ficha pra sua conta?")) return;
+  try {
+    const snap = await getDoc(doc(db, "usuarios", donoUid, "fichas", fichaId));
+    if (!snap.exists()) {
+      alert("Essa ficha não está mais disponível.");
+      return;
+    }
+    const original = snap.data();
+    const copia = JSON.parse(JSON.stringify(original));
+    copia.id = Date.now() + Math.floor(Math.random() * 99999);
+    copia.nome = (original.nome || "Sem nome") + " (cópia)";
+    copia.publica = false;
+
+    window.personagens.push(copia);
+    if (typeof salvarPersonagens === "function") salvarPersonagens();
+    if (typeof renderPersonagens === "function") renderPersonagens();
+
+    alert("Ficha copiada! Ela já está na sua lista de personagens.");
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao copiar ficha: " + (e.code || e.message));
+  }
+};
 
 function previewImagem() {
   const input = document.getElementById("imagem");
@@ -3110,6 +3337,8 @@ function renderInv() {
           <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarItem(${index})">✏️</button>
         </div>
 
+        <button type="button" onclick="event.stopPropagation(); window.abrirDarItem('inventario', ${index})" style="background:#4a3b31;border:none;color:#C4A95B;border-radius:8px;padding:4px 8px;font-size:11px;cursor:pointer;">Dar</button>
+
         <button type="button" class="item-remover" onclick="event.stopPropagation(); removerItem(${index})">X</button>
       </div>
     `;
@@ -3312,6 +3541,7 @@ function renderArmas() {
 
       <div class="item-acoes">
         <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarArma(${index})">✏️</button>
+        <button type="button" onclick="event.stopPropagation(); window.abrirDarItem('armas', ${index})" style="background:#4a3b31;border:none;color:#C4A95B;border-radius:8px;padding:4px 8px;font-size:11px;cursor:pointer;">Dar</button>
         <button type="button" class="arma-remover" onclick="event.stopPropagation(); removerArma(${index})">X</button>
       </div>
     `;
@@ -4945,6 +5175,10 @@ if (nomeAba === "lore") {
   setTimeout(() => renderLoreCampanha(), 50);
 }
 
+if (nomeAba === "grupoMaster" && typeof window.renderGrupoMaster === "function") {
+  window.renderGrupoMaster();
+}
+
   if (btn) btn.classList.add("active");
 
   if (nomeAba === "compendio") {
@@ -4966,7 +5200,8 @@ function injetarFiltrosCompendio() {
     <option value="bosses">💀 Bosses</option>
     <option value="npcs">🧙 NPCs</option>
     <option value="itens">⚔️ Itens</option>
-  `;
+    <option value="mapas">🗺️ Mapas</option>
+  `;  
   select.onchange = () => {
     _filtroCompendio = select.value;
     renderMonstrosMestre();
@@ -5388,6 +5623,7 @@ function renderMonstrosMestre() {
   const bossesBase   = [...(bossesPadrao || []), ...(campanha.bosses || []).map(b => ({ ...b, _tipo: "boss" }))];
   const itensBase    = [...(itensPadrao || []), ...(campanha.itensMaster || []).map(i => ({ ...i, _tipo: "item" }))];
   const npcsBase = [...(npcsPadrao || []), ...(campanha.npcs || []).map(n => ({ ...n, _tipo: "npc" }))];
+  const mapasBase = (campanha.mapasMaster || []).map(m => ({ ...m, _tipo: "mapa" }));
 
   let listaCompleta;
   switch (_filtroCompendio) {
@@ -5395,7 +5631,8 @@ function renderMonstrosMestre() {
     case "bosses":   listaCompleta = bossesBase;   break;
     case "itens":    listaCompleta = itensBase;    break;
     case "npcs":     listaCompleta = npcsBase;     break;
-    default:         listaCompleta = [...monstrosBase, ...bossesBase, ...itensBase, ...npcsBase];
+    case "mapas":    listaCompleta = mapasBase;    break;
+    default:         listaCompleta = [...monstrosBase, ...bossesBase, ...itensBase, ...npcsBase, ...mapasBase];
   }
 
   const pesquisa = document.getElementById("pesquisaMonstro")?.value?.toLowerCase().trim() || "";
@@ -5446,6 +5683,7 @@ function renderMonstrosMestre() {
       bosses:   "Nenhum boss criado.\nCrie um na aba ✍️ Criar.",
       itens:    "Nenhum item criado.\nCrie um na aba ✍️ Criar.",
       npcs:     "Nenhum NPC criado.\nCrie um na aba ✍️ Criar.",
+      mapas:    "Nenhum mapa criado.\nCrie um na aba ✍️ Criar.",
     };
     lista.innerHTML = `<p style="text-align:center;color:#cdb791;grid-column:1/-1;padding:24px 0;white-space:pre-line;">${msgs[_filtroCompendio] || msgs.todos}</p>`;
     return;
@@ -5465,9 +5703,10 @@ function renderMonstrosMestre() {
       else if (tipo === "boss") { sheetMonstroIndexAtual = index; listaSheetCompendio = listaFiltrada; _abrirPopupBossCompendio(entry); }
       else if (tipo === "item") { sheetMonstroIndexAtual = index; listaSheetCompendio = listaFiltrada; _abrirPopupItemCompendio(entry); }
       else if (tipo === "npc")  { sheetMonstroIndexAtual = index; listaSheetCompendio = listaFiltrada; _abrirPopupNPCCompendio(entry); }
+      else if (tipo === "mapa") { sheetMonstroIndexAtual = index; listaSheetCompendio = listaFiltrada; _abrirPopupMapaCompendio(entry); }
     };
 
-    const badge = { boss:"💀 Boss", item:"⚔️ Item", npc:"🧙 NPC" }[entry._tipo] || "👹 Criatura";
+    const badge = { boss:"💀 Boss", item:"⚔️ Item", npc:"🧙 NPC", mapa:"🗺️ Mapa" }[entry._tipo] || "👹 Criatura";
     const subtitulo = entry._tipo === "item"
       ? [entry.tipo, ({normal:"Normal",incomum:"Incomum",raro:"Raro",reliquia:"Relíquia"})[entry.raridade]].filter(Boolean).join(" · ")
       : entry._tipo === "npc"
@@ -6034,6 +6273,11 @@ async function excluirEntradaCompendio(tipo, id) {
     await deletarImagem(npc?.imagemDeleteUrl);
     campanha.npcs = (campanha.npcs || []).filter(n => n.id !== id);
     salvarCampanhasMaster();
+  } else if (tipo === "mapa") {
+    const mapa = (campanha.mapasMaster || []).find(m => m.id === id);
+    await deletarImagem(mapa?.imagemDeleteUrl);
+    campanha.mapasMaster = (campanha.mapasMaster || []).filter(m => m.id !== id);
+    salvarCampanhasMaster();
   }
 
   renderMonstrosMestre();
@@ -6125,10 +6369,149 @@ function _abrirPopupItemCompendio(item) {
     ${item.descricao ? bloco("Descrição", escapeHtml(item.descricao)) : ""}
     ${item.historia  ? bloco("História", escapeHtml(item.historia)) : ""}
     ${item.origem    ? bloco("Origem", escapeHtml(item.origem)) : ""}
-    <button style="width:100%;margin-top:4px;background:rgba(143,34,34,0.8)!important;border:none!important;border-radius:8px;color:#fff!important;padding:10px;font-size:13px;cursor:pointer;" onclick="excluirEntradaCompendio('item',${item.id})">🗑 Excluir Item</button>
+<button style="width:100%;margin-top:4px;margin-bottom:8px;background:#C4A95B!important;border:none!important;border-radius:8px;color:#1a0e05!important;font-weight:bold;padding:10px;font-size:13px;cursor:pointer;" onclick="window.abrirDarItemMestre('${item.id}')">🎁 Dar pra jogador</button>    <button style="width:100%;margin-top:4px;background:rgba(143,34,34,0.8)!important;border:none!important;border-radius:8px;color:#fff!important;padding:10px;font-size:13px;cursor:pointer;" onclick="excluirEntradaCompendio('item',${item.id})">🗑 Excluir Item</button>
   `;
   _abrirSheetCustom(conteudo);
 }
+
+function _abrirPopupMapaCompendio(mapa) {
+  window._entradaSessaoAtual = mapa;
+
+  const conteudo = `
+    ${mapa.imagem ? `<img src="${mapa.imagem}" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin-bottom:12px;">` : ""}
+    <h2 class="sheet-titulo" style="text-align:center;margin-bottom:4px;">${escapeHtml(mapa.nome)}</h2>
+    ${mapa.desc ? `
+    <div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
+      <div style="background:#D4C9A8;padding:7px 12px;text-align:center;">
+        <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">Descrição</span>
+      </div>
+      <div style="padding:10px 14px;font-size:13px;color:#2A1A10;line-height:1.6;">${escapeHtml(mapa.desc)}</div>
+    </div>` : ""}
+    <button style="width:100%;margin-top:4px;margin-bottom:8px;background:#C4A95B!important;border:none!important;border-radius:8px;color:#1a0e05!important;font-weight:bold;padding:10px;font-size:13px;cursor:pointer;" onclick="window.abrirDarItemMestre('${mapa.id}')">🎁 Dar pra jogador</button>
+    <button style="width:100%;margin-top:4px;background:rgba(143,34,34,0.8)!important;border:none!important;border-radius:8px;color:#fff!important;padding:10px;font-size:13px;cursor:pointer;" onclick="excluirEntradaCompendio('mapa',${mapa.id})">🗑 Excluir Mapa</button>
+  `;
+  _abrirSheetCustom(conteudo);
+}
+
+window._darItemMestreContexto = null;
+
+window.abrirDarItemMestre = async function (itemId) {
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) return;
+
+  if (!campanha.grupoVinculado) {
+    alert("Essa campanha não tem grupo vinculado. Edite a campanha e escolha um grupo primeiro.");
+    return;
+  }
+
+  let item = (campanha.itensMaster || []).find(i => String(i.id) === String(itemId));
+  if (!item) item = (itensPadrao || []).find(i => String(i.id) === String(itemId));
+  if (!item) item = (campanha.mapasMaster || []).find(i => String(i.id) === String(itemId));
+  if (!item) return;
+
+  window._darItemMestreContexto = item;
+
+  document.getElementById("modalDarItemMestreOverlay").style.display = "block";
+  document.getElementById("modalDarItemMestre").style.display = "block";
+
+  const lista = document.getElementById("listaDarItemMestre");
+  lista.innerHTML = `<p style="color:#9A8A70;font-size:12px;text-align:center;">Carregando...</p>`;
+
+  try {
+    const grupoSnap = await getDoc(doc(db, "grupos", campanha.grupoVinculado));
+    if (!grupoSnap.exists()) {
+      lista.innerHTML = `<p style="color:#e07a7a;font-size:12px;text-align:center;">Esse grupo não existe mais.</p>`;
+      return;
+    }
+    const g = grupoSnap.data();
+    const meuUid = window.usuarioAtual.uid;
+    const jogadores = g.membros.filter(m => m.uid !== meuUid && m.fichaId);
+
+    if (jogadores.length === 0) {
+      lista.innerHTML = `<p style="color:#9A8A70;font-size:12px;text-align:center;">Nenhum jogador do grupo tem ficha vinculada ainda.</p>`;
+      return;
+    }
+
+    lista.innerHTML = jogadores.map(m => `
+      <button onclick="window.confirmarDarItemMestre('${m.uid}', '${m.fichaId}', '${escapeHtml(m.nickname)}')" style="width:100%;text-align:left;padding:10px 12px;border-radius:8px;border:1px solid rgba(196,169,91,0.2);background:rgba(255,255,255,0.03);color:#F8F4E3;font-size:13px;cursor:pointer;">
+        ${escapeHtml(m.nickname)}<span style="opacity:.5;">#${escapeHtml(m.tag)}</span>
+      </button>
+    `).join("");
+  } catch (e) {
+    console.error(e);
+    lista.innerHTML = `<p style="color:#e07a7a;font-size:12px;text-align:center;">Erro: ${e.code || e.message}</p>`;
+  }
+};
+
+window.fecharDarItemMestre = function () {
+  document.getElementById("modalDarItemMestreOverlay").style.display = "none";
+  document.getElementById("modalDarItemMestre").style.display = "none";
+  window._darItemMestreContexto = null;
+};
+
+window.confirmarDarItemMestre = async function (uidDestino, fichaIdDestino, nomeDestino) {
+  const itemOriginal = window._darItemMestreContexto;
+  if (!itemOriginal) return;
+
+  if (!confirm(`Dar "${itemOriginal.nome}" pra ${nomeDestino}?`)) return;
+
+  try {
+    const meuUid = window.usuarioAtual.uid;
+    const meuSnap = await getDoc(doc(db, "usuarios", meuUid));
+    const meuDados = meuSnap.exists() ? meuSnap.data() : {};
+
+    const categoria = itemOriginal._tipo === "mapa" ? "mapas" : (itemOriginal.categoria || "inventario");
+
+    // monta o item no formato que a ficha do jogador espera, dependendo da categoria
+    let itemParaJogador;
+    if (categoria === "mapas") {
+      itemParaJogador = {
+        nome: itemOriginal.nome,
+        desc: itemOriginal.desc || "",
+        imagemUrl: itemOriginal.imagem || "",
+        imagemDeleteUrl: "",
+        anotacoes: []
+      };
+    } else if (categoria === "armas") {
+      itemParaJogador = {
+        nome: itemOriginal.nome,
+        dano: itemOriginal.dano || "",
+        desc: itemOriginal.descricao || itemOriginal.efeito || "",
+        temCargas: false
+      };
+    } else if (categoria === "armaduras") {
+      itemParaJogador = {
+        nome: itemOriginal.nome,
+        ca: itemOriginal.ca || "",
+        desc: itemOriginal.descricao || itemOriginal.efeito || "",
+        temCargas: false
+      };
+    } else {
+      itemParaJogador = {
+        nome: itemOriginal.nome,
+        qtd: 1,
+        desc: itemOriginal.descricao || itemOriginal.efeito || ""
+      };
+    }
+
+    await setDoc(doc(collection(db, "usuarios", uidDestino, "itensRecebidos")), {
+      tipo: categoria,
+      item: itemParaJogador,
+      deUid: meuUid,
+      deNickname: meuDados.nickname || "",
+      deTag: meuDados.tag || "",
+      fichaDestinoId: fichaIdDestino,
+      automatico: false,
+      criadoEm: new Date().toISOString()
+    });
+
+    window.fecharDarItemMestre();
+    alert("Item enviado!");
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao dar item: " + (e.code || e.message));
+  }
+};
 
 function _abrirPopupNPCCompendio(npc) {
   const mod = v => { const m = Math.floor(((v||10)-10)/2); return m >= 0 ? `+${m}` : `${m}`; };
@@ -6456,6 +6839,39 @@ async function salvarBossMestre() {
   mostrarToastMundo("Boss salvo!");
 }
 
+async function salvarMapaMestre() {
+  const nome = document.getElementById("mapaMasterNome")?.value.trim();
+  if (!nome) { alert("Coloque o nome do mapa."); return; }
+
+  if (campanhaAtualMaster === null || campanhaAtualMaster === undefined) {
+    alert("Nenhuma campanha selecionada."); return;
+  }
+
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  if (!campanha) { alert("Campanha não encontrada."); return; }
+
+  campanha.mapasMaster ||= [];
+  campanha.mapasMaster.push({
+    id: Date.now(), _tipo: "mapa", nome,
+    desc: document.getElementById("mapaMasterDesc")?.value.trim() || "",
+    ...(window._imagemMapaMestreBase64
+    ? await uploadImagemFirebase(window._imagemMapaMestreBase64, `mapas/${Date.now()}.jpg`).then(r => ({ imagem: r.url, imagemDeleteUrl: r.deleteUrl }))
+    : { imagem: "", imagemDeleteUrl: "" }),
+  });
+
+  salvarCampanhasMaster();
+  renderMonstrosMestre();
+
+  document.getElementById("mapaMasterNome").value = "";
+  document.getElementById("mapaMasterDesc").value = "";
+  document.getElementById("mapaMasterImagemInput").value = "";
+  window._imagemMapaMestreBase64 = "";
+  const preview = document.getElementById("previewMapaMaster");
+  if (preview) { preview.src = ""; preview.style.display = "none"; }
+
+  mostrarToastMundo("Mapa salvo!");
+}
+
 async function salvarItemMestre() {
   const nome = document.getElementById("itemMasterNome")?.value.trim();
   if (!nome) { alert("Coloque o nome do item."); return; }
@@ -6470,6 +6886,9 @@ async function salvarItemMestre() {
   campanha.itensMaster ||= [];
   campanha.itensMaster.push({
     id: Date.now(), _tipo: "item", nome,
+    categoria: document.getElementById("itemMasterCategoria")?.value || "inventario",
+    dano:      document.getElementById("itemMasterDano")?.value.trim() || "",
+    ca:        document.getElementById("itemMasterCA")?.value.trim() || "",
     tipo:      document.getElementById("itemMasterTipo")?.value.trim() || "",
     raridade:  document.getElementById("itemMasterRaridade")?.value || "normal",
     sintonia:  document.getElementById("itemMasterSintonia")?.value || "nao",
@@ -6608,8 +7027,19 @@ function trocarMonstroSheet(direcao) {
   setTimeout(() => {
     sheetMonstroIndexAtual = novoIndex;
 
-    // troca só o conteúdo, sem fechar/reabrir a sheet
-    abrirSheetMonstroPadrao(listaSheetCompendio[novoIndex]);
+    // troca o conteúdo certo dependendo do tipo do próximo item
+    const proximaEntrada = listaSheetCompendio[novoIndex];
+    const tipoProximo = proximaEntrada._tipo;
+
+    if (tipoProximo === "boss") {
+      _abrirPopupBossCompendio(proximaEntrada);
+    } else if (tipoProximo === "item") {
+      _abrirPopupItemCompendio(proximaEntrada);
+    } else if (tipoProximo === "npc") {
+      _abrirPopupNPCCompendio(proximaEntrada);
+    } else {
+      abrirSheetMonstroPadrao(proximaEntrada);
+    }
 
     if (estavaFull) {
       sheet.classList.add("full");
@@ -7981,6 +8411,258 @@ function renderMundoCampanha() {
   renderMissoesMundo();
 }
 
+window._darItemContexto = null;
+
+window.abrirDarItem = async function (tipo, index) {
+  const ficha = window.personagens?.[personagemAtual];
+  if (!ficha) return;
+
+  if (!ficha.grupoAtivo) {
+    alert("Essa ficha não está vinculada a nenhum grupo. Vá em Amigos → Grupos e escolha essa ficha num grupo primeiro.");
+    return;
+  }
+
+  window._darItemContexto = { tipo, index };
+
+  document.getElementById("modalDarItemOverlay").style.display = "block";
+  document.getElementById("modalDarItem").style.display = "block";
+
+  const lista = document.getElementById("listaDarItem");
+  lista.innerHTML = `<p style="color:#9A8A70;font-size:12px;text-align:center;">Carregando...</p>`;
+
+  try {
+    const grupoSnap = await getDoc(doc(db, "grupos", ficha.grupoAtivo));
+    if (!grupoSnap.exists()) {
+      lista.innerHTML = `<p style="color:#e07a7a;font-size:12px;text-align:center;">Esse grupo não existe mais.</p>`;
+      return;
+    }
+    const g = grupoSnap.data();
+    const meuUid = window.usuarioAtual.uid;
+    const outros = g.membros.filter(m => m.uid !== meuUid && m.fichaId);
+
+    if (outros.length === 0) {
+      lista.innerHTML = `<p style="color:#9A8A70;font-size:12px;text-align:center;">Ninguém do grupo tem uma ficha vinculada ainda.</p>`;
+      return;
+    }
+
+    lista.innerHTML = outros.map(m => `
+      <button onclick="window.confirmarDarItem('${m.uid}', '${m.fichaId}', '${escapeHtml(m.nickname)}')" style="width:100%;text-align:left;padding:10px 12px;border-radius:8px;border:1px solid rgba(196,169,91,0.2);background:rgba(255,255,255,0.03);color:#F8F4E3;font-size:13px;cursor:pointer;">
+        ${escapeHtml(m.nickname)}<span style="opacity:.5;">#${escapeHtml(m.tag)}</span>
+      </button>
+    `).join("");
+  } catch (e) {
+    console.error(e);
+    lista.innerHTML = `<p style="color:#e07a7a;font-size:12px;text-align:center;">Erro: ${e.code || e.message}</p>`;
+  }
+};
+
+window.fecharDarItem = function () {
+  document.getElementById("modalDarItemOverlay").style.display = "none";
+  document.getElementById("modalDarItem").style.display = "none";
+  window._darItemContexto = null;
+};
+
+window.confirmarDarItem = async function (uidDestino, fichaIdDestino, nomeDestino) {
+  const ctx = window._darItemContexto;
+  if (!ctx) return;
+
+  const ficha = window.personagens[personagemAtual];
+  const arrays = { inventario, armas, armaduras };
+  const arr = arrays[ctx.tipo];
+  const item = arr?.[ctx.index];
+  if (!item) return;
+
+  if (!confirm(`Dar "${item.nome || "esse item"}" pra ${nomeDestino}?`)) return;
+
+  try {
+    const meuUid = window.usuarioAtual.uid;
+    const meuSnap = await getDoc(doc(db, "usuarios", meuUid));
+    const meuDados = meuSnap.exists() ? meuSnap.data() : {};
+
+    await setDoc(doc(collection(db, "usuarios", uidDestino, "itensRecebidos")), {
+      tipo: ctx.tipo,
+      item,
+      deUid: meuUid,
+      deNickname: meuDados.nickname || "",
+      deTag: meuDados.tag || "",
+      fichaDestinoId: fichaIdDestino,
+      automatico: false,
+      criadoEm: new Date().toISOString()
+    });
+
+    arr.splice(ctx.index, 1);
+    if (ctx.tipo === "inventario") { window.inventario = inventario; renderInv(); }
+    if (ctx.tipo === "armas") { window.armas = armas; renderArmas(); }
+    if (ctx.tipo === "armaduras") { window.armaduras = armaduras; renderArmaduras(); }
+    salvarTudo();
+
+    window.fecharDarItem();
+    alert("Item enviado!");
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao dar item: " + (e.code || e.message));
+  }
+};
+
+window.abrirInboxItens = async function () {
+  document.getElementById("modalInboxItensOverlay").style.display = "block";
+  document.getElementById("modalInboxItens").style.display = "block";
+  await window.renderInboxItens();
+};
+
+window.fecharInboxItens = function () {
+  document.getElementById("modalInboxItensOverlay").style.display = "none";
+  document.getElementById("modalInboxItens").style.display = "none";
+};
+
+window.renderInboxItens = async function () {
+  const lista = document.getElementById("listaInboxItens");
+  const meuUid = window.usuarioAtual.uid;
+
+  lista.innerHTML = `<p style="color:#9A8A70;font-size:12px;text-align:center;">Carregando...</p>`;
+
+  try {
+    const snap = await getDocs(collection(db, "usuarios", meuUid, "itensRecebidos"));
+
+    if (snap.empty) {
+      lista.innerHTML = `<p style="color:#9A8A70;font-size:13px;text-align:center;padding:16px 0;font-style:italic;">Nada por aqui.</p>`;
+      atualizarBadgeInboxItens(0);
+      return;
+    }
+
+    let html = "";
+    snap.forEach(docSnap => {
+      const d = docSnap.data();
+      html += `
+        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(196,169,91,0.15);border-radius:10px;padding:10px 12px;">
+          <div style="font-size:13px;color:#F8F4E3;font-weight:bold;">${escapeHtml(d.item?.nome || "Sem nome")}</div>
+          <div style="font-size:11px;color:#9A8A70;margin:2px 0 8px;">de ${escapeHtml(d.deNickname)}<span style="opacity:.5;">#${escapeHtml(d.deTag)}</span> · ${d.tipo}</div>
+          <div style="display:flex;gap:8px;">
+            <button onclick="window.aceitarItemRecebido('${docSnap.id}')" style="flex:1;padding:6px;border-radius:6px;border:none;background:#4a7c3a;color:#fff;font-size:12px;cursor:pointer;">Aceitar</button>
+            <button onclick="window.recusarItemRecebido('${docSnap.id}')" style="flex:1;padding:6px;border-radius:6px;border:none;background:#7B1E28;color:#fff;font-size:12px;cursor:pointer;">Recusar</button>
+          </div>
+        </div>`;
+    });
+    lista.innerHTML = html;
+    atualizarBadgeInboxItens(snap.size);
+  } catch (e) {
+    console.error(e);
+    lista.innerHTML = `<p style="color:#e07a7a;font-size:12px;text-align:center;">Erro: ${e.code || e.message}</p>`;
+  }
+};
+
+function atualizarBadgeInboxItens(n) {
+  const badge = document.getElementById("badgeInboxItens");
+  if (!badge) return;
+  if (n > 0) {
+    badge.style.display = "flex";
+    badge.textContent = n;
+  } else {
+    badge.style.display = "none";
+  }
+}
+
+window.aceitarItemRecebido = async function (docId) {
+  const meuUid = window.usuarioAtual.uid;
+  try {
+    const ref = doc(db, "usuarios", meuUid, "itensRecebidos", docId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
+    const d = snap.data();
+
+    const ficha = (window.personagens || []).find(f => String(f.id) === String(d.fichaDestinoId));
+    if (!ficha) {
+      alert("A ficha que devia receber esse item não existe mais na sua conta.");
+      await deleteDoc(ref);
+      window.renderInboxItens();
+      return;
+    }
+
+    ficha[d.tipo] = ficha[d.tipo] || [];
+    ficha[d.tipo].push(d.item);
+
+    if (typeof salvarPersonagens === "function") salvarPersonagens();
+
+    if (personagemAtual !== null && window.personagens[personagemAtual]?.id === ficha.id) {
+      if (d.tipo === "inventario") { inventario = ficha.inventario; window.inventario = inventario; renderInv(); }
+      if (d.tipo === "armas") { armas = ficha.armas; window.armas = armas; renderArmas(); }
+      if (d.tipo === "armaduras") { armaduras = ficha.armaduras; window.armaduras = armaduras; renderArmaduras(); }
+      if (d.tipo === "mapas") { mapas = ficha.mapas; window.mapas = mapas; renderMapas(); }
+    }
+
+    await deleteDoc(ref);
+    window.renderInboxItens();
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao aceitar: " + (e.code || e.message));
+  }
+};
+
+window.recusarItemRecebido = async function (docId) {
+  const meuUid = window.usuarioAtual.uid;
+  try {
+    const ref = doc(db, "usuarios", meuUid, "itensRecebidos", docId);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
+    const d = snap.data();
+
+    const meuSnap = await getDoc(doc(db, "usuarios", meuUid));
+    const meuDados = meuSnap.exists() ? meuSnap.data() : {};
+
+    // devolve pra quem deu, marcado como automático (não precisa a pessoa aceitar de novo)
+    await setDoc(doc(collection(db, "usuarios", d.deUid, "itensRecebidos")), {
+      tipo: d.tipo,
+      item: d.item,
+      deUid: meuUid,
+      deNickname: meuDados.nickname || "",
+      deTag: meuDados.tag || "",
+      fichaDestinoId: null,
+      fichaOrigemDevolucao: true,
+      automatico: true,
+      criadoEm: new Date().toISOString()
+    });
+
+    await deleteDoc(ref);
+    window.renderInboxItens();
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao recusar: " + (e.code || e.message));
+  }
+};
+
+// processa devoluções automáticas assim que a conta carrega
+window.processarDevolucoesAutomaticas = async function () {
+  const meuUid = window.usuarioAtual?.uid;
+  if (!meuUid) return;
+
+  try {
+    const snap = await getDocs(collection(db, "usuarios", meuUid, "itensRecebidos"));
+    for (const docSnap of snap.docs) {
+      const d = docSnap.data();
+      if (!d.automatico) continue;
+
+      // devolução: acha a ficha de onde o item saiu originalmente (a que estava vinculada ao grupo na hora)
+      const fichaAlvo = (window.personagens || []).find(f => f.grupoAtivo) || window.personagens?.[0];
+      if (fichaAlvo) {
+        fichaAlvo[d.tipo] = fichaAlvo[d.tipo] || [];
+        fichaAlvo[d.tipo].push(d.item);
+      }
+
+      await deleteDoc(doc(db, "usuarios", meuUid, "itensRecebidos", docSnap.id));
+    }
+
+    if (typeof salvarPersonagens === "function") salvarPersonagens();
+    if (typeof renderInv === "function") renderInv();
+    if (typeof renderArmas === "function") renderArmas();
+    if (typeof renderArmaduras === "function") renderArmaduras();
+
+    const contagemSnap = await getDocs(collection(db, "usuarios", meuUid, "itensRecebidos"));
+    atualizarBadgeInboxItens(contagemSnap.size);
+  } catch (e) {
+    console.error("Erro ao processar devoluções:", e);
+  }
+};
+
 function trocarAbaLore(aba, btn) {
   const mapa = {
     historia: "loreSecaoHistoria",
@@ -9113,6 +9795,48 @@ function previewImagemItem() {
   reader.readAsDataURL(input.files[0]);
 }
 
+function previewImagemItem() {
+  const input = document.getElementById("itemMasterImagemInput");
+  const preview = document.getElementById("previewItemMaster");
+  if (!input?.files?.[0]) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement("canvas");
+      const scale = 500 / img.width;
+      canvas.width = 500;
+      canvas.height = img.height * scale;
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      window._imagemItemBase64 = canvas.toDataURL("image/jpeg", 0.65);
+      if (preview) { preview.src = window._imagemItemBase64; preview.style.display = "block"; }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function previewImagemMapaMestre() {
+  const input = document.getElementById("mapaMasterImagemInput");
+  const preview = document.getElementById("previewMapaMaster");
+  if (!input?.files?.[0]) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement("canvas");
+      const scale = 700 / img.width;
+      canvas.width = 700;
+      canvas.height = img.height * scale;
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      window._imagemMapaMestreBase64 = canvas.toDataURL("image/jpeg", 0.75);
+      if (preview) { preview.src = window._imagemMapaMestreBase64; preview.style.display = "block"; }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
 function previewImagemEncontro() {
   const input = document.getElementById("encontroImagemInput");
   const preview = document.getElementById("previewEncontro");
@@ -9143,6 +9867,672 @@ function adicionarEtapaForm() {
   input.value = "";
   renderEtapasForm();
 }
+
+window._grupoAtualId = null;
+
+window.abrirDetalheGrupo = async function (grupoId) {
+  window._grupoAtualId = grupoId;
+  const meuUid = window.usuarioAtual.uid;
+
+  document.getElementById("modalGrupoDetalheOverlay").style.display = "block";
+  document.getElementById("modalGrupoDetalhe").style.display = "block";
+  document.getElementById("detalheGrupoRenomear").style.display = "none";
+
+  const grupoSnap = await getDoc(doc(db, "grupos", grupoId));
+  if (!grupoSnap.exists()) {
+    fecharDetalheGrupo();
+    return;
+  }
+  const g = grupoSnap.data();
+  const souMestre = g.criadoPor === meuUid;
+  const minhasFichas = window.personagens || [];
+
+  document.getElementById("detalheGrupoNome").textContent = g.nome;
+
+  const membrosDiv = document.getElementById("detalheGrupoMembros");
+  membrosDiv.innerHTML = g.membros.map(m => `
+    <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(196,169,91,0.12);border-radius:8px;padding:8px 10px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div style="flex:1;font-size:13px;">${escapeHtml(m.nickname)}<span style="opacity:.5;">#${escapeHtml(m.tag)}</span></div>
+        ${souMestre && m.uid !== meuUid ? `
+          <button onclick="alternarPapelMembro('${m.uid}')" style="font-size:10px;padding:4px 8px;border-radius:6px;border:1px solid rgba(196,169,91,0.3);background:transparent;color:#C4A95B;cursor:pointer;text-transform:uppercase;">${m.papel === "mestre" ? "Mestre" : "Jogador"}</button>
+          <button onclick="removerMembroGrupo('${m.uid}')" style="width:22px;height:22px;border-radius:50%;border:none;background:#7B1E28;color:#fff;cursor:pointer;font-size:11px;">✕</button>
+        ` : `<span style="font-size:10px;color:#9A8A70;text-transform:uppercase;">${m.papel === "mestre" ? "Mestre" : "Jogador"}</span>`}
+      </div>
+      ${m.uid === meuUid ? `
+        <select id="selectFichaGrupo" style="margin-top:8px;width:100%;background:#1b120c;border:1px solid rgba(196,169,91,0.25);border-radius:6px;padding:6px 8px;color:#F8F4E3;font-size:12px;">
+          <option value="">— minha ficha nesse grupo —</option>
+          ${minhasFichas.map(f => `<option value="${String(f.id)}" ${String(f.id) === String(m.fichaId) ? "selected" : ""}>${escapeHtml(f.nome || "Sem nome")}</option>`).join("")}
+        </select>
+        <button onclick="window.salvarFichaGrupoBotao(this)" style="margin-top:6px;width:100%;padding:7px;border-radius:6px;border:none;background:#C4A95B;color:#1a0e05;font-weight:bold;font-size:12px;cursor:pointer;">Salvar vínculo</button>
+        <div id="statusFichaGrupo" style="font-size:11px;margin-top:4px;text-align:center;"></div>
+      ` : ""}
+    </div>
+  `).join("");
+
+  const acoesDiv = document.getElementById("detalheGrupoAcoes");
+  let acoesHtml = "";
+  if (souMestre) {
+    acoesHtml += `<button onclick="mostrarRenomearGrupo('${escapeHtml(g.nome)}')" style="width:100%;padding:9px;border-radius:8px;border:1px solid rgba(196,169,91,0.3);background:transparent;color:#E8CC80;font-size:13px;cursor:pointer;">Renomear grupo</button>`;
+    acoesHtml += `<button onclick="excluirGrupo()" style="width:100%;padding:9px;border-radius:8px;border:1px solid rgba(123,30,40,0.4);background:rgba(123,30,40,0.15);color:#e07a7a;font-size:13px;cursor:pointer;">Excluir grupo</button>`;
+  } else {
+    acoesHtml += `<button onclick="sairDoGrupo()" style="width:100%;padding:9px;border-radius:8px;border:1px solid rgba(123,30,40,0.4);background:rgba(123,30,40,0.15);color:#e07a7a;font-size:13px;cursor:pointer;">Sair do grupo</button>`;
+  }
+  acoesDiv.innerHTML = acoesHtml;
+};
+
+window.salvarFichaGrupoBotao = async function (btn) {
+  const select = document.getElementById("selectFichaGrupo");
+  const status = document.getElementById("statusFichaGrupo");
+  if (!select) return;
+
+  const grupoId = window._grupoAtualId;
+  const fichaEscolhida = select.value;
+
+  btn.disabled = true;
+  btn.textContent = "Salvando...";
+  status.textContent = "";
+
+  try {
+    await window.escolherFichaGrupo(select);
+
+    if (!fichaEscolhida) {
+      status.textContent = "✓ Vínculo removido.";
+      status.style.color = "#4a7c3a";
+    } else {
+      // confere de verdade no Firestore, não confia só na memória
+      const confSnap = await getDoc(doc(db, "usuarios", window.usuarioAtual.uid, "fichas", fichaEscolhida));
+      const grupoAtivoSalvo = confSnap.exists() ? confSnap.data().grupoAtivo : null;
+
+      if (grupoAtivoSalvo === grupoId) {
+        status.textContent = "✓ Vínculo salvo e confirmado!";
+        status.style.color = "#4a7c3a";
+      } else {
+        status.textContent = "✗ Não confirmei o salvamento — tenta de novo.";
+        status.style.color = "#e07a7a";
+      }
+    }
+  } catch (e) {
+    console.error(e);
+    status.textContent = "✗ Erro: " + (e.code || e.message);
+    status.style.color = "#e07a7a";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Salvar vínculo";
+  }
+};
+
+window.atualizarCamposCategoriaItem = function () {
+  const categoria = document.getElementById("itemMasterCategoria")?.value;
+  const campoDano = document.getElementById("itemMasterDano");
+  const campoCA = document.getElementById("itemMasterCA");
+  if (campoDano) campoDano.style.display = categoria === "armas" ? "block" : "none";
+  if (campoCA) campoCA.style.display = categoria === "armaduras" ? "block" : "none";
+};
+
+window.carregarGruposParaCampanha = async function (selectId = "novaCampanhaGrupo", valorSelecionado = "") {
+  const select = document.getElementById(selectId);
+  if (!select || !window.usuarioAtual) return;
+
+  try {
+    const meuUid = window.usuarioAtual.uid;
+    const q = query(collection(db, "grupos"), where("membrosUids", "array-contains", meuUid));
+    const snap = await getDocs(q);
+
+    const meusGrupos = snap.docs.filter(d => d.data().criadoPor === meuUid);
+
+    select.innerHTML = `<option value="">Sem grupo vinculado</option>` +
+      meusGrupos.map(d => `<option value="${d.id}" ${d.id === valorSelecionado ? "selected" : ""}>${escapeHtml(d.data().nome)}</option>`).join("");
+  } catch (e) {
+    console.error(e);
+  }
+};
+
+window._campanhaEmEdicaoIndex = null;
+
+window.abrirEditarCampanha = async function (index) {
+  const campanha = campanhasMaster[index];
+  if (!campanha) return;
+
+  window._campanhaEmEdicaoIndex = index;
+
+  document.getElementById("modalEditarCampanhaOverlay").style.display = "block";
+  document.getElementById("modalEditarCampanha").style.display = "block";
+
+  document.getElementById("editCampanhaNome").value = campanha.nome || "";
+  document.getElementById("editCampanhaSistema").value = campanha.sistema || "";
+  document.getElementById("editCampanhaDescricao").value = campanha.descricao || "";
+
+  await window.carregarGruposParaCampanha("editCampanhaGrupo", campanha.grupoVinculado || "");
+};
+
+window.fecharEditarCampanha = function () {
+  document.getElementById("modalEditarCampanhaOverlay").style.display = "none";
+  document.getElementById("modalEditarCampanha").style.display = "none";
+  window._campanhaEmEdicaoIndex = null;
+};
+
+window.salvarEdicaoCampanha = function () {
+  const index = window._campanhaEmEdicaoIndex;
+  if (index === null || !campanhasMaster[index]) return;
+
+  const nome = document.getElementById("editCampanhaNome").value.trim();
+  if (!nome) {
+    alert("Digite o nome da campanha.");
+    return;
+  }
+
+  campanhasMaster[index].nome = nome;
+  campanhasMaster[index].sistema = document.getElementById("editCampanhaSistema").value.trim();
+  campanhasMaster[index].descricao = document.getElementById("editCampanhaDescricao").value.trim();
+  campanhasMaster[index].grupoVinculado = document.getElementById("editCampanhaGrupo").value || "";
+
+  salvarCampanhasMaster();
+  renderCampanhasMaster();
+  window.fecharEditarCampanha();
+};
+
+window.escolherFichaGrupo = async function (selectEl) {
+  const grupoId = window._grupoAtualId;
+  const meuUid = window.usuarioAtual.uid;
+  const novoFichaId = selectEl.value;
+  if (!grupoId) return;
+
+  try {
+    const grupoRef = doc(db, "grupos", grupoId);
+    const snap = await getDoc(grupoRef);
+    const g = snap.data();
+
+    const membroAtual = g.membros.find(m => m.uid === meuUid);
+    const fichaAntigaNesteGrupo = membroAtual?.fichaId || "";
+
+    if (fichaAntigaNesteGrupo && fichaAntigaNesteGrupo !== novoFichaId) {
+      try {
+        await setDoc(doc(db, "usuarios", meuUid, "fichas", fichaAntigaNesteGrupo), { grupoAtivo: "" }, { merge: true });
+        const fichaLocalAntiga = (window.personagens || []).find(f => String(f.id) === String(fichaAntigaNesteGrupo));
+        if (fichaLocalAntiga) fichaLocalAntiga.grupoAtivo = "";
+      } catch (e) {
+        console.warn("Não consegui limpar a ficha antiga:", e);
+      }
+    }
+
+    let veioDeOutroGrupo = false;
+
+    if (novoFichaId) {
+      // varre TODOS os grupos que você participa, não só o que o campo grupoAtivo aponta
+      const meusGruposSnap = await getDocs(query(collection(db, "grupos"), where("membrosUids", "array-contains", meuUid)));
+
+      for (const outroDoc of meusGruposSnap.docs) {
+        if (outroDoc.id === grupoId) continue;
+
+        const outroGrupo = outroDoc.data();
+        const meuMembroLa = outroGrupo.membros.find(m => m.uid === meuUid);
+
+        if (meuMembroLa?.fichaId === novoFichaId) {
+          veioDeOutroGrupo = true;
+          try {
+            const membrosAtualizados = outroGrupo.membros.map(m =>
+              m.uid === meuUid ? { ...m, fichaId: "" } : m
+            );
+            await updateDoc(doc(db, "grupos", outroDoc.id), { membros: membrosAtualizados });
+          } catch (e) {
+            console.warn("Não consegui desvincular do grupo antigo:", e);
+          }
+        }
+      }
+
+      await setDoc(doc(db, "usuarios", meuUid, "fichas", novoFichaId), { grupoAtivo: grupoId }, { merge: true });
+
+      const fichaLocalNova = (window.personagens || []).find(f => String(f.id) === String(novoFichaId));
+      if (fichaLocalNova) fichaLocalNova.grupoAtivo = grupoId;
+    }
+
+    const novosMembros = g.membros.map(m => m.uid === meuUid ? { ...m, fichaId: novoFichaId } : m);
+    await updateDoc(grupoRef, { membros: novosMembros });
+
+    if (novoFichaId) {
+      const mestresUids = g.membros.filter(m => m.papel === "mestre").map(m => m.uid);
+      if (mestresUids.length > 0) {
+        await setDoc(doc(db, "usuarios", meuUid, "fichas", novoFichaId), {
+          mestresAutorizados: arrayUnion(...mestresUids)
+        }, { merge: true });
+      }
+    }
+
+    if (veioDeOutroGrupo) {
+      alert("Essa ficha já estava vinculada a outro grupo — ela foi movida pra cá.");
+    }
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao vincular ficha: " + (e.code || e.message));
+  }
+};
+
+window._grupoMasterUnsubs = [];
+window._grupoMasterAbertos = {};
+
+window._grupoMasterUnsubs = [];
+window._grupoMasterAbertos = {};
+
+window.renderGrupoMaster = async function () {
+  const conteudo = document.getElementById("grupoMasterConteudo");
+  window._grupoMasterUnsubs.forEach(unsub => unsub());
+  window._grupoMasterUnsubs = [];
+
+  const campanha = campanhasMaster[campanhaAtualMaster];
+  const grupoId = campanha?.grupoVinculado;
+
+  if (!grupoId) {
+    conteudo.innerHTML = `<p style="color:#9A8A70;font-size:13px;text-align:center;padding:20px 0;font-style:italic;">Essa campanha não tem um grupo vinculado. Edite a campanha pra escolher um.</p>`;
+    return;
+  }
+
+  conteudo.innerHTML = `<p style="color:#9A8A70;font-size:13px;text-align:center;">Carregando grupo...</p>`;
+
+  const grupoSnap = await getDoc(doc(db, "grupos", grupoId));
+  if (!grupoSnap.exists()) {
+    conteudo.innerHTML = `<p style="color:#e07a7a;font-size:13px;text-align:center;">Esse grupo não existe mais.</p>`;
+    return;
+  }
+  const g = grupoSnap.data();
+  const meuUid = window.usuarioAtual.uid;
+  const alvos = g.membros.filter(m => m.uid !== meuUid && m.fichaId);
+
+  if (alvos.length === 0) {
+    conteudo.innerHTML = `<p style="color:#9A8A70;font-size:13px;text-align:center;padding:20px 0;font-style:italic;">Nenhum jogador vinculou uma ficha a esse grupo ainda.</p>`;
+    return;
+  }
+
+  conteudo.innerHTML = alvos.map(m => `
+    <div id="dashCard-${m.uid}" style="background:#FDFAF0;border:1px solid rgba(196,169,91,0.28);border-radius:16px;margin-bottom:14px;overflow:hidden;box-shadow:0 2px 12px rgba(42,26,16,0.10);">
+      <p style="color:#7A6A50;font-size:12px;padding:14px;">Carregando ${escapeHtml(m.nickname)}...</p>
+    </div>
+  `).join("");
+
+  alvos.forEach(m => {
+    if (window._grupoMasterAbertos[m.uid] === undefined) window._grupoMasterAbertos[m.uid] = true;
+
+    const ref = doc(db, "usuarios", m.uid, "fichas", m.fichaId);
+    const unsub = onSnapshot(ref, snap => {
+      const card = document.getElementById(`dashCard-${m.uid}`);
+      if (!card) return;
+
+      if (!snap.exists()) {
+        card.innerHTML = `<p style="color:#b83a2f;font-size:12px;padding:14px;">Ficha de ${escapeHtml(m.nickname)} não encontrada.</p>`;
+        return;
+      }
+
+      const f = snap.data();
+      const vidaMax = f.vidaMax || 1;
+      const vidaAtual = f.vidaAtual ?? vidaMax;
+      const pctVida = Math.max(0, Math.min(100, (vidaAtual / vidaMax) * 100));
+      const corVida = pctVida <= 25 ? "#8a2c22" : pctVida <= 60 ? "#a9822f" : "#4a6b32";
+      const aberto = window._grupoMasterAbertos[m.uid];
+
+      const pillCirculo = (c) => {
+        if (c === "" || c == null) return "";
+        let texto = c === "talento" ? "Talento" : c === "passiva" ? "Passiva" : `Círculo ${c}`;
+        return `<span style="display:inline-block;font-size:9.5px;font-weight:bold;padding:2px 8px;border-radius:99px;background:#8a2c22;color:#f5ece0;margin-left:6px;letter-spacing:.02em;">${texto}</span>`;
+      };
+
+      const pillCargas = (item) => {
+        if (!item.temCargas) return "";
+        const gastas = (item.cargasGastas || []).filter(Boolean).length;
+        const max = item.maxCargas || 0;
+        const restantes = max - gastas;
+        const cor = restantes === 0 ? "#8a2c22" : "#7c6425";
+        return `<span style="display:inline-block;font-size:9.5px;font-weight:bold;padding:2px 8px;border-radius:99px;background:rgba(124,100,37,0.15);border:1px solid ${cor};color:${cor};margin-left:6px;">${restantes}/${max}</span>`;
+      };
+
+      let _contadorLinhaDash = 0;
+      const linhaComDesc = (nome, extra, pill, desc) => {
+        const idLinha = `dashLinha-${m.uid}-${_contadorLinhaDash++}`;
+        return `
+        <div style="padding:8px 0;border-bottom:1px solid rgba(74,55,40,0.12);${desc ? "cursor:pointer;" : ""}" ${desc ? `onclick="window.alternarDescDash('${idLinha}')"` : ""}>
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:13px;color:#2A1A10;font-weight:600;">${escapeHtml(nome)}${extra ? ` <span style="color:#6b5a42;font-weight:normal;font-size:11.5px;">· ${escapeHtml(extra)}</span>` : ""}</span>
+            <span style="flex-shrink:0;">${pill}</span>
+          </div>
+          ${desc ? `<div id="${idLinha}" data-aberto="0" style="font-size:11.5px;color:#5a4a38;margin-top:4px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;overflow-wrap:anywhere;">${escapeHtml(desc)}</div>` : ""}        </div>`;
+      };
+
+      const secao = (titulo, itens) => `
+        <div style="background:#E8E0CC;border-radius:10px;margin:10px 14px 0;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
+          <div style="background:#D4C9A8;padding:7px 12px;text-align:center;">
+            <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">${titulo}</span>
+          </div>
+          <div style="padding:8px 12px 10px;">
+            ${itens || `<p style="font-size:12px;color:#7A6A50;font-style:italic;padding:4px 0;text-align:center;">Nada aqui.</p>`}
+          </div>
+        </div>`;
+
+      const todosPoderes = f.poderes || [];
+      const poderesGerais = todosPoderes.filter(p => (p.circulo ?? "") === "").map(p => linhaComDesc(p.nome || "Sem nome", "", pillCargas(p), p.desc)).join("");
+      const talentos = todosPoderes.filter(p => p.circulo === "talento").map(p => linhaComDesc(p.nome || "Sem nome", "", pillCargas(p), p.desc)).join("");
+      const passivas = todosPoderes.filter(p => p.circulo === "passiva").map(p => linhaComDesc(p.nome || "Sem nome", "", pillCargas(p), p.desc)).join("");
+
+      const gastos = f.gastosCirculos || {};
+      const bolinhasCirculo = (circulo) => {
+        const arr = gastos[circulo] || [];
+        if (arr.length === 0) return "";
+        return `<div style="display:flex;gap:6px;margin:6px 0 8px;justify-content:center;">${arr.map(gasta => `<span style="width:13px;height:13px;border-radius:50%;display:inline-block;background:${gasta ? "#8a2c22" : "transparent"};border:2px solid #8a2c22;"></span>`).join("")}</div>`;
+      };
+
+      let magias = "";
+      for (let c = 0; c <= 9; c++) {
+        const magiasDoCirculo = todosPoderes.filter(p => String(p.circulo) === String(c));
+        if (magiasDoCirculo.length === 0 && (!gastos[c] || gastos[c].length === 0)) continue;
+
+        magias += `
+          <div style="margin-top:10px;text-align:center;">
+            <div style="font-size:11px;color:#4A3728;font-weight:bold;text-transform:uppercase;letter-spacing:.05em;">Círculo ${c}</div>
+            ${bolinhasCirculo(c)}
+            ${magiasDoCirculo.map(p => linhaComDesc(p.nome || "Sem nome", "", pillCargas(p), p.desc)).join("") || `<p style="font-size:11px;color:#8a7860;font-style:italic;">Sem magias registradas.</p>`}
+          </div>`;
+      }
+      if (!magias) magias = "";
+
+      const armas = (f.armas || []).map(a => linhaComDesc(a.nome || "Sem nome", a.dano || "", pillCargas(a), a.desc)).join("");
+      const armaduras = (f.armaduras || []).map(a => linhaComDesc(a.nome || "Sem nome", a.ca ? "CA " + a.ca : "", pillCargas(a), a.desc)).join("");
+      const inventario = (f.inventario || []).map(i => linhaComDesc(i.nome || "Sem nome", "", `<span style="font-size:11px;color:#6b5a42;">x${i.qtd || 1}</span>`, i.desc)).join("");
+
+      const dominioArr = f.dominio || [];
+      const dominioHtml = `
+        <div style="display:flex;gap:7px;flex-wrap:wrap;padding:10px 0 4px;justify-content:center;">
+          ${dominioArr.map(marcado => `<span style="width:16px;height:16px;border-radius:50%;display:inline-block;background:${marcado ? "#8a2c22" : "transparent"};border:2px solid #8a2c22;"></span>`).join("")}
+        </div>`;
+
+      const efeitosExaustaoDash = ["Sem exaustão","Desvantagem em testes de habilidade","Metade da velocidade","Desvantagem em ataques e testes de resistência","Metade do HP máximo","Velocidade = 0","Morte"];
+      const nivelExaustao = f.exaustao ?? 0;
+      const exaustaoHtml = `
+        <div style="font-size:12px;color:#2A1A10;padding:10px 0 4px;">
+          Nível ${nivelExaustao} ${nivelExaustao > 0 ? `<span style="color:#6b5a42;">— ${escapeHtml(efeitosExaustaoDash[nivelExaustao] || "")}</span>` : ""}
+        </div>`;
+
+      card.innerHTML = `
+        <div id="dashHeader-${m.uid}" onclick="window.alternarCardGrupoMaster('${m.uid}')" style="cursor:pointer;padding:14px;display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-family:'Cinzel',serif;font-weight:bold;font-size:15px;color:#4A3728;">${escapeHtml(f.nome || "Sem nome")}</div>
+            <div style="font-size:11px;color:#6b5a42;margin-top:2px;">${escapeHtml(m.nickname)} · ${escapeHtml(f.classe || "")}${f.nivel ? " · Nv " + escapeHtml(String(f.nivel)) : ""} · CA ${escapeHtml(String(f.ca ?? "-"))}</div>
+          </div>
+          <span id="dashArrow-${m.uid}" style="font-size:14px;color:#8a2c22;transform:rotate(${aberto ? "180deg" : "0deg"});transition:transform .25s ease;">▾</span>
+        </div>
+
+        <div style="height:6px;background:rgba(74,55,40,0.15);margin:0 14px;border-radius:99px;overflow:hidden;">
+          <div style="height:100%;width:${pctVida}%;background:${corVida};transition:width .4s ease;"></div>
+        </div>
+        <div style="font-size:11px;color:#6b5a42;padding:4px 14px 12px;">HP: ${vidaAtual} / ${vidaMax}</div>
+
+        <div id="dashBody-${m.uid}" style="max-height:${aberto ? "none" : "0"};overflow:hidden;transition:max-height .35s ease-out;">
+          ${secao("Poderes", poderesGerais)}
+          ${secao("Magias", magias)}
+          ${secao("Talentos", talentos)}
+          ${secao("Passivas", passivas)}
+          ${secao("Armas", armas)}
+          ${secao("Armaduras", armaduras)}
+          ${secao("Inventário", inventario)}
+          ${dominioArr.length ? secao("Pontos de Domínio", dominioHtml) : ""}
+          ${secao("Exaustão", exaustaoHtml)}
+          <div style="height:10px;"></div>
+        </div>
+      `;
+    }, err => {
+      console.error(err);
+      const card = document.getElementById(`dashCard-${m.uid}`);
+      if (card) card.innerHTML = `<p style="color:#8a2c22;font-size:12px;padding:14px;">Sem permissão pra ver essa ficha ainda.</p>`;
+    });
+
+    window._grupoMasterUnsubs.push(unsub);
+  });
+};
+
+window.alternarCardGrupoMaster = function (uid) {
+  window._grupoMasterAbertos[uid] = !window._grupoMasterAbertos[uid];
+  const aberto = window._grupoMasterAbertos[uid];
+
+  const body = document.getElementById(`dashBody-${uid}`);
+  const arrow = document.getElementById(`dashArrow-${uid}`);
+
+  if (body) {
+    if (aberto) {
+      body.style.maxHeight = body.scrollHeight + "px";
+      setTimeout(() => { if (window._grupoMasterAbertos[uid]) body.style.maxHeight = "none"; }, 400);
+    } else {
+      body.style.maxHeight = body.scrollHeight + "px";
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => { body.style.maxHeight = "0"; });
+      });
+    }
+  }
+  if (arrow) arrow.style.transform = `rotate(${aberto ? "180deg" : "0deg"})`;
+};
+
+window.alternarDescDash = function (idLinha) {
+  const el = document.getElementById(idLinha);
+  if (!el) return;
+  const aberto = el.dataset.aberto === "1";
+  if (aberto) {
+    el.style.webkitLineClamp = "2";
+    el.style.overflow = "hidden";
+    el.dataset.aberto = "0";
+  } else {
+    el.style.webkitLineClamp = "unset";
+    el.style.overflow = "visible";
+    el.dataset.aberto = "1";
+  }
+};
+
+window.alternarDescDash = function (idLinha) {
+  const el = document.getElementById(idLinha);
+  if (!el) return;
+  const aberto = el.dataset.aberto === "1";
+  if (aberto) {
+    el.style.webkitLineClamp = "2";
+    el.style.overflow = "hidden";
+    el.dataset.aberto = "0";
+  } else {
+    el.style.webkitLineClamp = "unset";
+    el.style.overflow = "visible";
+    el.dataset.aberto = "1";
+  }
+};
+
+window.alternarCardGrupoMaster = function (uid) {
+  window._grupoMasterAbertos[uid] = !window._grupoMasterAbertos[uid];
+  const aberto = window._grupoMasterAbertos[uid];
+
+  const body = document.getElementById(`dashBody-${uid}`);
+  const arrow = document.getElementById(`dashArrow-${uid}`);
+  const header = document.getElementById(`dashHeader-${uid}`);
+
+  if (body) body.style.maxHeight = aberto ? "4000px" : "0";
+  if (arrow) arrow.style.transform = `rotate(${aberto ? "180deg" : "0deg"})`;
+  if (header) header.style.background = aberto ? "rgba(124,31,42,0.06)" : "transparent";
+};
+
+
+window._dashboardUnsubs = [];
+
+window.abrirDashboardMestre = async function (grupoId) {
+  document.getElementById("modalDashboardOverlay").style.display = "block";
+  document.getElementById("modalDashboard").style.display = "block";
+
+  const conteudo = document.getElementById("dashboardConteudo");
+  conteudo.innerHTML = `<p style="color:#9A8A70;font-size:13px;text-align:center;">Carregando...</p>`;
+
+  window._dashboardUnsubs.forEach(unsub => unsub());
+  window._dashboardUnsubs = [];
+
+  const grupoSnap = await getDoc(doc(db, "grupos", grupoId));
+  if (!grupoSnap.exists()) return;
+  const g = grupoSnap.data();
+  const meuUid = window.usuarioAtual.uid;
+
+  const alvos = g.membros.filter(m => m.uid !== meuUid && m.fichaId);
+
+  if (alvos.length === 0) {
+    conteudo.innerHTML = `<p style="color:#9A8A70;font-size:13px;text-align:center;padding:20px 0;font-style:italic;">Nenhum jogador vinculou uma ficha a esse grupo ainda.</p>`;
+    return;
+  }
+
+  conteudo.innerHTML = alvos.map(m => `
+    <div id="dashCard-${m.uid}" style="background:rgba(255,255,255,0.03);border:1px solid rgba(196,169,91,0.15);border-radius:12px;padding:12px;">
+      <p style="color:#9A8A70;font-size:12px;">Carregando ${escapeHtml(m.nickname)}...</p>
+    </div>
+  `).join("");
+
+  alvos.forEach(m => {
+    const ref = doc(db, "usuarios", m.uid, "fichas", m.fichaId);
+    const unsub = onSnapshot(ref, snap => {
+      const card = document.getElementById(`dashCard-${m.uid}`);
+      if (!card) return;
+
+      if (!snap.exists()) {
+        card.innerHTML = `<p style="color:#e07a7a;font-size:12px;">Ficha de ${escapeHtml(m.nickname)} não encontrada.</p>`;
+        return;
+      }
+
+      const f = snap.data();
+      const vidaMax = f.vidaMax || 1;
+      const vidaAtual = f.vidaAtual ?? vidaMax;
+      const pctVida = Math.max(0, Math.min(100, (vidaAtual / vidaMax) * 100));
+
+      card.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+          <span style="font-weight:bold;font-size:14px;">${escapeHtml(f.nome || "Sem nome")}</span>
+          <span style="font-size:11px;color:#9A8A70;">${escapeHtml(m.nickname)}</span>
+        </div>
+        <div style="font-size:12px;color:#9A8A70;margin-bottom:8px;">${escapeHtml(f.classe || "")}${f.nivel ? " · Nv " + escapeHtml(String(f.nivel)) : ""} · CA ${escapeHtml(String(f.ca ?? "-"))}</div>
+
+        <div style="font-size:11px;color:#9A8A70;margin-bottom:2px;">HP: ${vidaAtual} / ${vidaMax}</div>
+        <div style="height:8px;background:rgba(255,255,255,0.08);border-radius:99px;overflow:hidden;margin-bottom:10px;">
+          <div style="height:100%;width:${pctVida}%;background:${pctVida <= 25 ? "#7B1E28" : "#4a7c3a"};"></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;color:#cdb791;">
+          <div>Itens: ${(f.inventario || []).length}</div>
+          <div>Armas: ${(f.armas || []).length}</div>
+          <div>Armaduras: ${(f.armaduras || []).length}</div>
+          <div>Poderes: ${(f.poderes || []).length}</div>
+        </div>
+      `;
+    }, err => {
+      console.error(err);
+      const card = document.getElementById(`dashCard-${m.uid}`);
+      if (card) card.innerHTML = `<p style="color:#e07a7a;font-size:12px;">Sem permissão pra ver essa ficha ainda.</p>`;
+    });
+
+    window._dashboardUnsubs.push(unsub);
+  });
+};
+
+window.fecharDashboardMestre = function () {
+  document.getElementById("modalDashboardOverlay").style.display = "none";
+  document.getElementById("modalDashboard").style.display = "none";
+  window._dashboardUnsubs.forEach(unsub => unsub());
+  window._dashboardUnsubs = [];
+};
+
+window.fecharDetalheGrupo = function () {
+  document.getElementById("modalGrupoDetalheOverlay").style.display = "none";
+  document.getElementById("modalGrupoDetalhe").style.display = "none";
+  window._grupoAtualId = null;
+};
+
+window.mostrarRenomearGrupo = function (nomeAtual) {
+  const div = document.getElementById("detalheGrupoRenomear");
+  div.style.display = "flex";
+  document.getElementById("renomearGrupoInput").value = nomeAtual;
+};
+
+window.salvarRenomearGrupo = async function () {
+  const novoNome = document.getElementById("renomearGrupoInput").value.trim();
+  if (!novoNome || !window._grupoAtualId) return;
+  try {
+    await updateDoc(doc(db, "grupos", window._grupoAtualId), { nome: novoNome });
+    await window.abrirDetalheGrupo(window._grupoAtualId);
+    carregarGrupos();
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao renomear: " + (e.code || e.message));
+  }
+};
+
+window.alternarPapelMembro = async function (uidAlvo) {
+  const grupoId = window._grupoAtualId;
+  if (!grupoId) return;
+  try {
+    const grupoRef = doc(db, "grupos", grupoId);
+    const snap = await getDoc(grupoRef);
+    const g = snap.data();
+    const novosMembros = g.membros.map(m =>
+      m.uid === uidAlvo ? { ...m, papel: m.papel === "mestre" ? "jogador" : "mestre" } : m
+    );
+    const novosMestresUids = novosMembros.filter(m => m.papel === "mestre").map(m => m.uid);
+    await updateDoc(grupoRef, { membros: novosMembros, mestresUids: novosMestresUids });
+    await window.abrirDetalheGrupo(grupoId);
+  } catch (e) {
+    console.error(e);
+    alert("Erro: " + (e.code || e.message));
+  }
+};
+
+window.removerMembroGrupo = async function (uidAlvo) {
+  const grupoId = window._grupoAtualId;
+  if (!grupoId) return;
+  if (!confirm("Remover esse membro do grupo?")) return;
+  try {
+    const grupoRef = doc(db, "grupos", grupoId);
+    const snap = await getDoc(grupoRef);
+    const g = snap.data();
+    await updateDoc(grupoRef, {
+      membros: g.membros.filter(m => m.uid !== uidAlvo),
+      membrosUids: g.membrosUids.filter(u => u !== uidAlvo),
+      mestresUids: (g.mestresUids || []).filter(u => u !== uidAlvo)
+    });
+    await window.abrirDetalheGrupo(grupoId);
+    carregarGrupos();
+  } catch (e) {
+    console.error(e);
+    alert("Erro: " + (e.code || e.message));
+  }
+};
+
+window.sairDoGrupo = async function () {
+  const grupoId = window._grupoAtualId;
+  const meuUid = window.usuarioAtual.uid;
+  if (!grupoId) return;
+  if (!confirm("Sair desse grupo?")) return;
+  try {
+    const grupoRef = doc(db, "grupos", grupoId);
+    const snap = await getDoc(grupoRef);
+    const g = snap.data();
+    await updateDoc(grupoRef, {
+      membros: g.membros.filter(m => m.uid !== meuUid),
+      membrosUids: g.membrosUids.filter(u => u !== meuUid),
+      mestresUids: (g.mestresUids || []).filter(u => u !== meuUid)
+    });
+    fecharDetalheGrupo();
+    carregarGrupos();
+  } catch (e) {
+    console.error(e);
+    alert("Erro: " + (e.code || e.message));
+  }
+};
+
+window.excluirGrupo = async function () {
+  const grupoId = window._grupoAtualId;
+  if (!grupoId) return;
+  if (!confirm("Excluir esse grupo pra sempre? Não dá pra desfazer.")) return;
+  try {
+    await deleteDoc(doc(db, "grupos", grupoId));
+    fecharDetalheGrupo();
+    carregarGrupos();
+  } catch (e) {
+    console.error(e);
+    alert("Erro: " + (e.code || e.message));
+  }
+};
 
 function renderEtapasForm() {
   const lista = document.getElementById("mundoMissaoEtapasList");
