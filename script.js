@@ -1582,13 +1582,26 @@ function controlarHeader(mostrar) {
   }
 }
 
+const ORDEM_ABAS_FICHA = ["personagem", "atributos", "combate", "inventario", "poderes"];
+window._abaFichaAtualId = window._abaFichaAtualId || "personagem";
+
 function trocarAba(id, btn = null) {
   document.body.classList.remove("ocultar-logo");
+  if (document.activeElement && document.activeElement.classList.contains("tab-btn")) {
+    document.activeElement.blur();
+  }
   const abas = document.querySelectorAll(".aba");
   const novaAba = document.getElementById(id);
   const abaAtual = document.querySelector(".aba.active");
   const saindoDoCombate =
     abaAtual && abaAtual.id === "combate" && id !== "combate";
+
+  const indexAntigo = ORDEM_ABAS_FICHA.indexOf(window._abaFichaAtualId);
+  const indexNovo = ORDEM_ABAS_FICHA.indexOf(id);
+  if (indexAntigo !== -1 && indexNovo !== -1 && indexAntigo !== indexNovo) {
+    document.documentElement.style.setProperty("--swipe-dir", indexNovo > indexAntigo ? "1" : "-1");
+  }
+  window._abaFichaAtualId = id;
 
   if (saindoDoCombate) {
     document.body.classList.remove("low-hp");
@@ -1626,32 +1639,51 @@ function trocarAba(id, btn = null) {
     if (botao) botao.classList.add("active");
   }
 
+const dir = indexNovo > indexAntigo ? 1 : -1;
+
   if (abaAtual) {
-    abaAtual.classList.remove("show");
-    abaAtual.classList.add("hiding");
+    const rect = abaAtual.getBoundingClientRect();
+    abaAtual.style.position = "fixed";
+    abaAtual.style.top = rect.top + "px";
+    abaAtual.style.left = rect.left + "px";
+    abaAtual.style.width = rect.width + "px";
+    abaAtual.style.margin = "0";
+    abaAtual.style.zIndex = "2";
 
-    setTimeout(() => {
-      abaAtual.classList.remove("active", "hiding");
+    const animSaida = abaAtual.animate(
+      [
+        { opacity: 1, transform: "translateX(0)" },
+        { opacity: 0, transform: `translateX(${dir * -30}px)` }
+      ],
+      { duration: 320, easing: "cubic-bezier(0.22,1,0.36,1)", fill: "forwards" }
+    );
+
+    animSaida.onfinish = () => {
+      abaAtual.classList.remove("active");
       abaAtual.style.display = "none";
-    }, 250);
+      abaAtual.style.position = "";
+      abaAtual.style.top = "";
+      abaAtual.style.left = "";
+      abaAtual.style.width = "";
+      abaAtual.style.margin = "";
+      abaAtual.style.zIndex = "";
+      abaAtual.style.opacity = "";
+      abaAtual.style.transform = "";
+    };
   }
-
-  abas.forEach((aba) => {
-    if (aba !== novaAba) {
-      aba.classList.remove("show", "hiding");
-    }
-  });
 
   novaAba.style.display = "block";
   novaAba.classList.add("active");
 
-  atualizarEstadoLowHP();
+  novaAba.animate(
+    [
+      { opacity: 0, transform: `translateX(${dir * 30}px)` },
+      { opacity: 1, transform: "translateX(0)" }
+    ],
+    { duration: 320, easing: "cubic-bezier(0.22,1,0.36,1)", fill: "forwards" }
+  );
 
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      novaAba.classList.add("show");
-    });
-  });
+  atualizarEstadoLowHP();
 
   setTimeout(() => {
     if (id === "personagem") {
@@ -2529,6 +2561,7 @@ function carregarPersonagem(index) {
   };
   document.getElementById("idade").value = p.idade || "";
   document.getElementById("altura").value = p.altura || "";
+  document.getElementById("lorePersonagem").value = p.lore || "";
   document.getElementById("nivel").value = p.nivel || "";
   document.getElementById("antecedentes").value = p.antecedentes || "";
   document.getElementById("vidaMax").value = p.vidaMax ?? 50;
@@ -2760,6 +2793,20 @@ window.abrirPerfil = async function (uid) {
     document.getElementById("perfilFundo").style.backgroundImage = d.fotoFundo ? `url('${d.fotoFundo}')` : "none";
     document.getElementById("perfilAvatar").style.backgroundImage = d.fotoPerfil ? `url('${d.fotoPerfil}')` : "none";
 
+    const corBase = d.corBase || "#0e0907";
+    const corNome = d.corNome || "#E8CC80";
+    const corLinha = d.corLinha || "rgba(196,169,91,0.3)";
+    const corTexto = corContraste(corBase);
+    document.getElementById("modalPerfil").style.backgroundColor = corBase;
+    document.getElementById("modalPerfil").style.setProperty("--perfil-linha", corLinha);
+    document.getElementById("modalPerfil").style.setProperty("--perfil-texto", corTexto);
+    document.getElementById("perfilNomeTag").style.color = corNome;
+    document.getElementById("corBaseInput").value = corBase;
+    document.getElementById("corNomeInput").value = corNome;
+    document.getElementById("corLinhaInput").value = corLinha.startsWith("#") ? corLinha : "#c4a95b";
+    document.getElementById("perfilCoresBtn").style.display = ehMeu ? "flex" : "none";
+    document.getElementById("perfilCoresBox").style.display = "none";
+
     const bioView = document.getElementById("perfilBioView");
     bioView.textContent = d.bio || (ehMeu ? "Adicione uma bio..." : "Sem bio ainda.");
     document.getElementById("perfilBioEdit").value = d.bio || "";
@@ -2772,16 +2819,17 @@ window.abrirPerfil = async function (uid) {
 
     const showcase = document.getElementById("perfilShowcase");
     const destaque = d.personagensDestaque || [];
+    window._perfilDestaqueAtual = destaque;
     if (destaque.length === 0) {
       showcase.innerHTML = `<p style="grid-column:1/-1;text-align:center;color:#9A8A70;font-size:12px;font-style:italic;padding:10px 0;">Nenhum personagem em destaque.</p>`;
     } else {
-      showcase.innerHTML = destaque.map(f => `
-        <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(196,169,91,0.15);border-radius:10px;overflow:hidden;">
+      showcase.innerHTML = destaque.map((f, i) => `
+        <div onclick="abrirPreviewFicha(${i})" style="cursor:pointer;background:rgba(255,255,255,0.05);border:1px solid var(--perfil-linha, rgba(196,169,91,0.3));border-radius:10px;overflow:hidden;">
           <div style="height:80px;background-image:url('${f.imagem || ""}');background-size:cover;background-position:center;background-color:#1b120c;"></div>
           <div style="padding:8px;">
-            <div style="font-size:12px;font-weight:bold;color:#F8F4E3;">${escapeHtml(f.nome || "Sem nome")}</div>
-            <div style="font-size:11px;color:#9A8A70;">${escapeHtml(f.classe || "")}${f.nivel ? " · Nv " + escapeHtml(String(f.nivel)) : ""}</div>
-            ${!ehMeu && f.publica ? `<button onclick="pegarFichaPublica('${uid}','${f.fichaId}')" style="margin-top:6px;width:100%;padding:5px;border-radius:6px;border:none;background:#C4A95B;color:#1a0e05;font-size:11px;font-weight:bold;cursor:pointer;">Pegar</button>` : ""}
+            <div style="font-size:12px;font-weight:bold;color:var(--perfil-texto, #F8F4E3);">${escapeHtml(f.nome || "Sem nome")}</div>
+            <div style="font-size:11px;color:var(--perfil-texto, #9A8A70);opacity:.75;">${escapeHtml(f.classe || "")}${f.nivel ? " · Nv " + escapeHtml(String(f.nivel)) : ""}</div>
+            ${!ehMeu && f.publica ? `<button onclick="event.stopPropagation(); pegarFichaPublica('${uid}','${f.fichaId}')" style="margin-top:6px;width:100%;padding:5px;border-radius:6px;border:none;background:#C4A95B;color:#1a0e05;font-size:11px;font-weight:bold;cursor:pointer;">Pegar</button>` : ""}
           </div>
         </div>
       `).join("");
@@ -2897,13 +2945,21 @@ window.salvarDestaquePerfil = async function () {
 
   const destaque = Array.from(checksExibir).map(chk => {
     const f = fichas[parseInt(chk.dataset.index)];
+    const arma = (f.armas || [])[0];
+    const armadura = (f.armaduras || [])[0];
+    const poderes = (f.poderes || []).slice(0, 3);
     return {
       fichaId: String(f.id),
       nome: f.nome || "",
       classe: f.classe || "",
       nivel: f.nivel || "",
       imagem: f.imagem || "",
-      publica: !!f.publica
+      publica: !!f.publica,
+      previewLore: (f.lore || "").trim().slice(0, 220),
+      previewEquip: arma
+        ? { tipo: "arma", nome: arma.nome || "", extra: arma.dano || "" }
+        : (armadura ? { tipo: "armadura", nome: armadura.nome || "", extra: armadura.ca ? "CA " + armadura.ca : "" } : null),
+      previewPoderes: poderes.map(p => p.nome || "").filter(Boolean)
     };
   });
 
@@ -2917,6 +2973,75 @@ window.salvarDestaquePerfil = async function () {
     console.error(e);
     alertBonito("Erro ao salvar: " + (e.code || e.message));
   }
+};
+
+
+function corContraste(hex) {
+  const c = hex.replace("#", "");
+  const r = parseInt(c.substring(0,2), 16);
+  const g = parseInt(c.substring(2,4), 16);
+  const b = parseInt(c.substring(4,6), 16);
+  const luminancia = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminancia > 0.55 ? "#1a0e05" : "#F8F4E3";
+}
+
+window.salvarCoresPerfil = async function () {
+  const corBase = document.getElementById("corBaseInput").value;
+  const corNome = document.getElementById("corNomeInput").value;
+  const corLinha = document.getElementById("corLinhaInput").value;
+  try {
+    await setDoc(doc(db, "usuarios", window.usuarioAtual.uid), { corBase, corNome, corLinha }, { merge: true });
+    window.abrirPerfil(window.usuarioAtual.uid);
+  } catch (e) {
+    console.error(e);
+    alertBonito("Erro ao salvar cores: " + (e.code || e.message));
+  }
+};
+
+window.abrirPreviewFicha = function (i) {
+  const f = (window._perfilDestaqueAtual || [])[i];
+  if (!f) return;
+
+  document.getElementById("previewFichaNome").textContent = f.nome || "Sem nome";
+
+  let html = "";
+  if (f.previewLore) {
+    html += `<div style="border-left:2px solid rgba(196,169,91,0.35);padding-left:12px;font-style:italic;color:#cdb791;line-height:1.6;font-size:12.5px;">"${escapeHtml(f.previewLore)}${f.previewLore.length >= 220 ? "..." : ""}"</div>`;
+  }
+  if (f.previewEquip) {
+    const icone = f.previewEquip.tipo === "arma" ? "⚔️" : "🛡️";
+    const rotulo = f.previewEquip.tipo === "arma" ? "Arma" : "Armadura";
+    html += `
+      <div style="display:flex;align-items:flex-start;gap:10px;padding-top:14px;border-top:1px solid rgba(196,169,91,0.12);">
+        <div style="width:30px;height:30px;flex-shrink:0;border-radius:50%;background:rgba(196,169,91,0.1);border:1px solid rgba(196,169,91,0.3);display:flex;align-items:center;justify-content:center;font-size:14px;">${icone}</div>
+        <div>
+          <div style="font-family:'Cinzel',serif;color:#E8CC80;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;">${rotulo}</div>
+          <div style="color:#F8F4E3;">${escapeHtml(f.previewEquip.nome)}${f.previewEquip.extra ? ` <span style="color:#9A8A70;">— ${escapeHtml(f.previewEquip.extra)}</span>` : ""}</div>
+        </div>
+      </div>`;
+  }
+  if (f.previewPoderes && f.previewPoderes.length > 0) {
+    html += `
+      <div style="display:flex;align-items:flex-start;gap:10px;padding-top:14px;border-top:1px solid rgba(196,169,91,0.12);">
+        <div style="width:30px;height:30px;flex-shrink:0;border-radius:50%;background:rgba(196,169,91,0.1);border:1px solid rgba(196,169,91,0.3);display:flex;align-items:center;justify-content:center;font-size:14px;">🔥</div>
+        <div>
+          <div style="font-family:'Cinzel',serif;color:#E8CC80;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;">Poderes</div>
+          <div style="color:#F8F4E3;">${f.previewPoderes.map(p => escapeHtml(p)).join(" · ")}</div>
+        </div>
+      </div>`;
+  }
+  if (!html) {
+    html = `<p style="text-align:center;color:#9A8A70;font-style:italic;">Sem itens pra mostrar ainda.</p>`;
+  }
+
+  document.getElementById("previewFichaConteudo").innerHTML = html;
+  document.getElementById("modalPreviewFichaOverlay").style.display = "block";
+  document.getElementById("modalPreviewFicha").style.display = "block";
+};
+
+window.fecharPreviewFicha = function () {
+  document.getElementById("modalPreviewFichaOverlay").style.display = "none";
+  document.getElementById("modalPreviewFicha").style.display = "none";
 };
 
 window.pegarFichaPublica = async function (donoUid, fichaId) {
@@ -2943,6 +3068,13 @@ window.pegarFichaPublica = async function (donoUid, fichaId) {
     alertBonito("Erro ao copiar ficha: " + (e.code || e.message));
   }
 };
+
+function salvarLorePersonagem() {
+  const p = personagens[personagemAtual];
+  if (!p) return;
+  p.lore = document.getElementById("lorePersonagem").value;
+  salvarTudo();
+}
 
 window.abrirAcoesMembro = function (uid, nickname, tag) {
   document.getElementById("acoesMembroNome").textContent = `${nickname}#${tag}`;
@@ -10877,3 +11009,54 @@ if (window.Capacitor?.Plugins?.App) {
     if (!isActive) flushSalvamentoPendente();
   });
 }
+
+// ================= SWIPE ENTRE ABAS DA FICHA =================
+(function () {
+  function irParaAba(index) {
+    const total = ORDEM_ABAS_FICHA.length;
+    const novoIndex = ((index % total) + total) % total; // loop nas pontas
+    const id = ORDEM_ABAS_FICHA[novoIndex];
+    const botao = document.querySelector(`.tab-btn[onclick*="'${id}'"]`);
+    trocarAba(id, botao);
+  }
+
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchando = false;
+  let travado = false;
+
+  document.addEventListener("touchstart", (e) => {
+    if (travado) return;
+    const dentroDaFicha = e.target.closest("#ficha .aba.active");
+    if (!dentroDaFicha) return;
+    if (e.target.closest("textarea, input, select, .mapa-viewer, .sheet-monstro")) return;
+
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchando = true;
+  }, { passive: true });
+
+  document.addEventListener("touchend", (e) => {
+    if (!touchando || travado) return;
+    touchando = false;
+
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+
+    const DISTANCIA_MINIMA = 60;
+    if (Math.abs(deltaX) < DISTANCIA_MINIMA || Math.abs(deltaX) < Math.abs(deltaY) * 1.5) return;
+
+    const indexAtual = ORDEM_ABAS_FICHA.indexOf(window._abaFichaAtualId);
+
+    travado = true;
+    setTimeout(() => { travado = false; }, 300);
+
+    if (deltaX < 0) {
+      irParaAba(indexAtual + 1);
+    } else {
+      irParaAba(indexAtual - 1);
+    }
+  }, { passive: true });
+})();
