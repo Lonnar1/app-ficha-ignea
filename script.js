@@ -2944,6 +2944,57 @@ window.pegarFichaPublica = async function (donoUid, fichaId) {
   }
 };
 
+window.abrirAcoesMembro = function (uid, nickname, tag) {
+  document.getElementById("acoesMembroNome").textContent = `${nickname}#${tag}`;
+
+  document.getElementById("acoesMembroBtnPerfil").onclick = function () {
+    fecharAcoesMembro();
+    window.abrirPerfil(uid);
+  };
+
+  document.getElementById("acoesMembroBtnAmizade").onclick = function () {
+    fecharAcoesMembro();
+    window.enviarSolicitacaoAmizadePorUid(uid, nickname, tag);
+  };
+
+  document.getElementById("modalAcoesMembroOverlay").style.display = "block";
+  document.getElementById("modalAcoesMembro").style.display = "block";
+};
+
+window.fecharAcoesMembro = function () {
+  document.getElementById("modalAcoesMembroOverlay").style.display = "none";
+  document.getElementById("modalAcoesMembro").style.display = "none";
+};
+
+window.enviarSolicitacaoAmizadePorUid = async function (alvoUid, alvoNickname, alvoTag) {
+  const meuUid = window.usuarioAtual.uid;
+
+  if (alvoUid === meuUid) return;
+
+  try {
+    const jaAmigo = await getDoc(doc(db, "usuarios", meuUid, "amigos", alvoUid));
+    if (jaAmigo.exists()) {
+      alert("Vocês já são amigos.");
+      return;
+    }
+
+    const meuSnap = await getDoc(doc(db, "usuarios", meuUid));
+    const meuDados = meuSnap.exists() ? meuSnap.data() : {};
+
+    await setDoc(doc(db, "usuarios", alvoUid, "solicitacoesRecebidas", meuUid), {
+      deUid: meuUid,
+      deNickname: meuDados.nickname || "",
+      deTag: meuDados.tag || "",
+      criadoEm: new Date().toISOString()
+    });
+
+    alert(`Solicitação enviada pra ${alvoNickname}!`);
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao enviar solicitação: " + (e.code || e.message));
+  }
+};
+
 function previewImagem() {
   const input = document.getElementById("imagem");
   const preview = document.getElementById("preview");
@@ -9909,8 +9960,7 @@ window.abrirDetalheGrupo = async function (grupoId) {
   membrosDiv.innerHTML = g.membros.map(m => `
     <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(196,169,91,0.12);border-radius:8px;padding:8px 10px;">
       <div style="display:flex;align-items:center;gap:8px;">
-        <div style="flex:1;font-size:13px;">${escapeHtml(m.nickname)}<span style="opacity:.5;">#${escapeHtml(m.tag)}</span></div>
-        ${souMestre && m.uid !== meuUid ? `
+<div ${m.uid !== meuUid ? `onclick="abrirAcoesMembro('${m.uid}','${escapeHtml(m.nickname)}','${escapeHtml(m.tag)}')" style="cursor:pointer;flex:1;font-size:13px;"` : `style="flex:1;font-size:13px;"`}>${escapeHtml(m.nickname)}<span style="opacity:.5;">#${escapeHtml(m.tag)}</span></div>        ${souMestre && m.uid !== meuUid ? `
           <button onclick="alternarPapelMembro('${m.uid}')" style="font-size:10px;padding:4px 8px;border-radius:6px;border:1px solid rgba(196,169,91,0.3);background:transparent;color:#C4A95B;cursor:pointer;text-transform:uppercase;">${m.papel === "mestre" ? "Mestre" : "Jogador"}</button>
           <button onclick="removerMembroGrupo('${m.uid}')" style="width:22px;height:22px;border-radius:50%;border:none;background:#7B1E28;color:#fff;cursor:pointer;font-size:11px;">✕</button>
         ` : `<span style="font-size:10px;color:#9A8A70;text-transform:uppercase;">${m.papel === "mestre" ? "Mestre" : "Jogador"}</span>`}
@@ -10154,27 +10204,31 @@ window.renderGrupoMaster = async function () {
   const meuUid = window.usuarioAtual.uid;
   const alvos = g.membros.filter(m => m.uid !== meuUid && m.fichaId);
 
+  window._grupoMasterAlvos = alvos;
+
   if (alvos.length === 0) {
     conteudo.innerHTML = `<p style="color:#9A8A70;font-size:13px;text-align:center;padding:20px 0;font-style:italic;">Nenhum jogador vinculou uma ficha a esse grupo ainda.</p>`;
     return;
   }
 
-  conteudo.innerHTML = alvos.map(m => `
-    <div id="dashCard-${m.uid}" style="background:#FDFAF0;border:1px solid rgba(196,169,91,0.28);border-radius:16px;margin-bottom:14px;overflow:hidden;box-shadow:0 2px 12px rgba(42,26,16,0.10);">
-      <p style="color:#7A6A50;font-size:12px;padding:14px;">Carregando ${escapeHtml(m.nickname)}...</p>
+  conteudo.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      ${alvos.map(m => `
+        <div id="dashCard-${m.uid}" onclick="window.abrirFichaFlutuante('${m.uid}')" style="cursor:pointer;aspect-ratio:1;border-radius:16px;overflow:hidden;position:relative;background:#1a1310 center/cover no-repeat;border:1px solid rgba(196,169,91,0.25);box-shadow:0 4px 14px rgba(0,0,0,0.35);">
+          <p style="color:#9A8A70;font-size:11px;padding:10px;">Carregando...</p>
+        </div>
+      `).join("")}
     </div>
-  `).join("");
+  `;
 
   alvos.forEach(m => {
-    if (window._grupoMasterAbertos[m.uid] === undefined) window._grupoMasterAbertos[m.uid] = true;
-
     const ref = doc(db, "usuarios", m.uid, "fichas", m.fichaId);
     const unsub = onSnapshot(ref, snap => {
       const card = document.getElementById(`dashCard-${m.uid}`);
       if (!card) return;
 
       if (!snap.exists()) {
-        card.innerHTML = `<p style="color:#b83a2f;font-size:12px;padding:14px;">Ficha de ${escapeHtml(m.nickname)} não encontrada.</p>`;
+        card.innerHTML = `<p style="color:#e07a7a;font-size:11px;padding:10px;">Ficha não encontrada.</p>`;
         return;
       }
 
@@ -10182,146 +10236,253 @@ window.renderGrupoMaster = async function () {
       const vidaMax = f.vidaMax || 1;
       const vidaAtual = f.vidaAtual ?? vidaMax;
       const pctVida = Math.max(0, Math.min(100, (vidaAtual / vidaMax) * 100));
-      const corVida = pctVida <= 25 ? "#8a2c22" : pctVida <= 60 ? "#a9822f" : "#4a6b32";
-      const aberto = window._grupoMasterAbertos[m.uid];
+      const corVida = pctVida <= 25 ? "#e05050" : pctVida <= 60 ? "#e0b050" : "#6bbf59";
 
-      const pillCirculo = (c) => {
-        if (c === "" || c == null) return "";
-        let texto = c === "talento" ? "Talento" : c === "passiva" ? "Passiva" : `Círculo ${c}`;
-        return `<span style="display:inline-block;font-size:9.5px;font-weight:bold;padding:2px 8px;border-radius:99px;background:#8a2c22;color:#f5ece0;margin-left:6px;letter-spacing:.02em;">${texto}</span>`;
-      };
-
-      const pillCargas = (item) => {
-        if (!item.temCargas) return "";
-        const gastas = (item.cargasGastas || []).filter(Boolean).length;
-        const max = item.maxCargas || 0;
-        const restantes = max - gastas;
-        const cor = restantes === 0 ? "#8a2c22" : "#7c6425";
-        return `<span style="display:inline-block;font-size:9.5px;font-weight:bold;padding:2px 8px;border-radius:99px;background:rgba(124,100,37,0.15);border:1px solid ${cor};color:${cor};margin-left:6px;">${restantes}/${max}</span>`;
-      };
-
-      let _contadorLinhaDash = 0;
-      const linhaComDesc = (nome, extra, pill, desc) => {
-        const idLinha = `dashLinha-${m.uid}-${_contadorLinhaDash++}`;
-        return `
-        <div style="padding:8px 0;border-bottom:1px solid rgba(74,55,40,0.12);${desc ? "cursor:pointer;" : ""}" ${desc ? `onclick="window.alternarDescDash('${idLinha}')"` : ""}>
-          <div style="display:flex;align-items:center;justify-content:space-between;">
-            <span style="font-size:13px;color:#2A1A10;font-weight:600;">${escapeHtml(nome)}${extra ? ` <span style="color:#6b5a42;font-weight:normal;font-size:11.5px;">· ${escapeHtml(extra)}</span>` : ""}</span>
-            <span style="flex-shrink:0;">${pill}</span>
-          </div>
-          ${desc ? `<div id="${idLinha}" data-aberto="0" style="font-size:11.5px;color:#5a4a38;margin-top:4px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;overflow-wrap:anywhere;">${escapeHtml(desc)}</div>` : ""}        </div>`;
-      };
-
-      const secao = (titulo, itens) => `
-        <div style="background:#E8E0CC;border-radius:10px;margin:10px 14px 0;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
-          <div style="background:#D4C9A8;padding:7px 12px;text-align:center;">
-            <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">${titulo}</span>
-          </div>
-          <div style="padding:8px 12px 10px;">
-            ${itens || `<p style="font-size:12px;color:#7A6A50;font-style:italic;padding:4px 0;text-align:center;">Nada aqui.</p>`}
-          </div>
-        </div>`;
-
-      const todosPoderes = f.poderes || [];
-      const poderesGerais = todosPoderes.filter(p => (p.circulo ?? "") === "").map(p => linhaComDesc(p.nome || "Sem nome", "", pillCargas(p), p.desc)).join("");
-      const talentos = todosPoderes.filter(p => p.circulo === "talento").map(p => linhaComDesc(p.nome || "Sem nome", "", pillCargas(p), p.desc)).join("");
-      const passivas = todosPoderes.filter(p => p.circulo === "passiva").map(p => linhaComDesc(p.nome || "Sem nome", "", pillCargas(p), p.desc)).join("");
-
-      const gastos = f.gastosCirculos || {};
-      const bolinhasCirculo = (circulo) => {
-        const arr = gastos[circulo] || [];
-        if (arr.length === 0) return "";
-        return `<div style="display:flex;gap:6px;margin:6px 0 8px;justify-content:center;">${arr.map(gasta => `<span style="width:13px;height:13px;border-radius:50%;display:inline-block;background:${gasta ? "#8a2c22" : "transparent"};border:2px solid #8a2c22;"></span>`).join("")}</div>`;
-      };
-
-      let magias = "";
-      for (let c = 0; c <= 9; c++) {
-        const magiasDoCirculo = todosPoderes.filter(p => String(p.circulo) === String(c));
-        if (magiasDoCirculo.length === 0 && (!gastos[c] || gastos[c].length === 0)) continue;
-
-        magias += `
-          <div style="margin-top:10px;text-align:center;">
-            <div style="font-size:11px;color:#4A3728;font-weight:bold;text-transform:uppercase;letter-spacing:.05em;">Círculo ${c}</div>
-            ${bolinhasCirculo(c)}
-            ${magiasDoCirculo.map(p => linhaComDesc(p.nome || "Sem nome", "", pillCargas(p), p.desc)).join("") || `<p style="font-size:11px;color:#8a7860;font-style:italic;">Sem magias registradas.</p>`}
-          </div>`;
-      }
-      if (!magias) magias = "";
-
-      const armas = (f.armas || []).map(a => linhaComDesc(a.nome || "Sem nome", a.dano || "", pillCargas(a), a.desc)).join("");
-      const armaduras = (f.armaduras || []).map(a => linhaComDesc(a.nome || "Sem nome", a.ca ? "CA " + a.ca : "", pillCargas(a), a.desc)).join("");
-      const inventario = (f.inventario || []).map(i => linhaComDesc(i.nome || "Sem nome", "", `<span style="font-size:11px;color:#6b5a42;">x${i.qtd || 1}</span>`, i.desc)).join("");
-
-      const dominioArr = f.dominio || [];
-      const dominioHtml = `
-        <div style="display:flex;gap:7px;flex-wrap:wrap;padding:10px 0 4px;justify-content:center;">
-          ${dominioArr.map(marcado => `<span style="width:16px;height:16px;border-radius:50%;display:inline-block;background:${marcado ? "#8a2c22" : "transparent"};border:2px solid #8a2c22;"></span>`).join("")}
-        </div>`;
-
-      const efeitosExaustaoDash = ["Sem exaustão","Desvantagem em testes de habilidade","Metade da velocidade","Desvantagem em ataques e testes de resistência","Metade do HP máximo","Velocidade = 0","Morte"];
-      const nivelExaustao = f.exaustao ?? 0;
-      const exaustaoHtml = `
-        <div style="font-size:12px;color:#2A1A10;padding:10px 0 4px;">
-          Nível ${nivelExaustao} ${nivelExaustao > 0 ? `<span style="color:#6b5a42;">— ${escapeHtml(efeitosExaustaoDash[nivelExaustao] || "")}</span>` : ""}
-        </div>`;
-
+      card.style.backgroundImage = f.imagem ? `url('${f.imagem}')` : "none";
       card.innerHTML = `
-        <div id="dashHeader-${m.uid}" onclick="window.alternarCardGrupoMaster('${m.uid}')" style="cursor:pointer;padding:14px;display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <div style="font-family:'Cinzel',serif;font-weight:bold;font-size:15px;color:#4A3728;">${escapeHtml(f.nome || "Sem nome")}</div>
-            <div style="font-size:11px;color:#6b5a42;margin-top:2px;">${escapeHtml(m.nickname)} · ${escapeHtml(f.classe || "")}${f.nivel ? " · Nv " + escapeHtml(String(f.nivel)) : ""} · CA ${escapeHtml(String(f.ca ?? "-"))}</div>
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 40%,rgba(0,0,0,0.88) 100%);"></div>
+        <div style="position:absolute;left:0;right:0;bottom:0;padding:10px;">
+          <div style="font-family:'Cinzel',serif;font-weight:bold;font-size:13px;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.8);line-height:1.2;">${escapeHtml(f.nome || "Sem nome")}</div>
+          <div style="font-size:10.5px;color:#e0d5c0;margin-top:1px;text-shadow:0 1px 4px rgba(0,0,0,0.8);">${escapeHtml(f.classe || "")}${f.nivel ? " · Nv " + escapeHtml(String(f.nivel)) : ""}</div>
+          <div style="height:5px;background:rgba(255,255,255,0.2);border-radius:99px;overflow:hidden;margin-top:6px;">
+            <div style="height:100%;width:${pctVida}%;background:${corVida};"></div>
           </div>
-          <span id="dashArrow-${m.uid}" style="font-size:14px;color:#8a2c22;transform:rotate(${aberto ? "180deg" : "0deg"});transition:transform .25s ease;">▾</span>
-        </div>
-
-        <div style="height:6px;background:rgba(74,55,40,0.15);margin:0 14px;border-radius:99px;overflow:hidden;">
-          <div style="height:100%;width:${pctVida}%;background:${corVida};transition:width .4s ease;"></div>
-        </div>
-        <div style="font-size:11px;color:#6b5a42;padding:4px 14px 12px;">HP: ${vidaAtual} / ${vidaMax}</div>
-
-        <div id="dashBody-${m.uid}" style="max-height:${aberto ? "none" : "0"};overflow:hidden;transition:max-height .35s ease-out;">
-          ${secao("Poderes", poderesGerais)}
-          ${secao("Magias", magias)}
-          ${secao("Talentos", talentos)}
-          ${secao("Passivas", passivas)}
-          ${secao("Armas", armas)}
-          ${secao("Armaduras", armaduras)}
-          ${secao("Inventário", inventario)}
-          ${dominioArr.length ? secao("Pontos de Domínio", dominioHtml) : ""}
-          ${secao("Exaustão", exaustaoHtml)}
-          <div style="height:10px;"></div>
+          <div style="font-size:9.5px;color:#cbbfa7;margin-top:2px;">HP ${vidaAtual}/${vidaMax}</div>
         </div>
       `;
+
+      if (window._fichaFlutuanteUid === m.uid) window._renderFichaFlutuanteConteudo(m, f);
     }, err => {
       console.error(err);
       const card = document.getElementById(`dashCard-${m.uid}`);
-      if (card) card.innerHTML = `<p style="color:#8a2c22;font-size:12px;padding:14px;">Sem permissão pra ver essa ficha ainda.</p>`;
+      if (card) card.innerHTML = `<p style="color:#e05050;font-size:11px;padding:10px;">Sem permissão pra ver essa ficha ainda.</p>`;
     });
 
     window._grupoMasterUnsubs.push(unsub);
   });
 };
 
-window.alternarCardGrupoMaster = function (uid) {
-  window._grupoMasterAbertos[uid] = !window._grupoMasterAbertos[uid];
-  const aberto = window._grupoMasterAbertos[uid];
+/* ================= CARD FLUTUANTE DO JOGADOR (visão detalhada do mestre) ================= */
 
-  const body = document.getElementById(`dashBody-${uid}`);
-  const arrow = document.getElementById(`dashArrow-${uid}`);
+function _fichaDashPillCirculo(c) {
+  if (c === "" || c == null) return "";
+  let texto = c === "talento" ? "Talento" : c === "passiva" ? "Passiva" : `Círculo ${c}`;
+  return `<span style="display:inline-block;font-size:9.5px;font-weight:bold;padding:2px 8px;border-radius:99px;background:#8a2c22;color:#f5ece0;margin-left:6px;letter-spacing:.02em;">${texto}</span>`;
+}
 
-  if (body) {
-    if (aberto) {
-      body.style.maxHeight = body.scrollHeight + "px";
-      setTimeout(() => { if (window._grupoMasterAbertos[uid]) body.style.maxHeight = "none"; }, 400);
-    } else {
-      body.style.maxHeight = body.scrollHeight + "px";
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => { body.style.maxHeight = "0"; });
-      });
+function _fichaDashPillCargas(item) {
+  if (!item.temCargas) return "";
+  const gastas = (item.cargasGastas || []).filter(Boolean).length;
+  const max = item.maxCargas || 0;
+  const restantes = max - gastas;
+  const cor = restantes === 0 ? "#8a2c22" : "#7c6425";
+  return `<span style="display:inline-block;font-size:9.5px;font-weight:bold;padding:2px 8px;border-radius:99px;background:rgba(124,100,37,0.15);border:1px solid ${cor};color:${cor};margin-left:6px;">${restantes}/${max}</span>`;
+}
+
+let _fichaDashContadorLinha = 0;
+function _fichaDashLinha(uid, nome, extra, pill, desc) {
+  const idLinha = `fichaFlutLinha-${uid}-${_fichaDashContadorLinha++}`;
+  return `
+  <div style="padding:8px 0;border-bottom:1px solid rgba(74,55,40,0.12);${desc ? "cursor:pointer;" : ""}" ${desc ? `onclick="window.alternarDescDash('${idLinha}')"` : ""}>
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:13px;color:#2A1A10;font-weight:600;">${escapeHtml(nome)}${extra ? ` <span style="color:#6b5a42;font-weight:normal;font-size:11.5px;">· ${escapeHtml(extra)}</span>` : ""}</span>
+      <span style="flex-shrink:0;">${pill}</span>
+    </div>
+    ${desc ? `<div id="${idLinha}" data-aberto="0" style="font-size:11.5px;color:#5a4a38;margin-top:4px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word;overflow-wrap:anywhere;">${escapeHtml(desc)}</div>` : ""}  </div>`;
+}
+
+function _fichaDashSecao(titulo, itens) {
+  return `
+  <div style="background:#E8E0CC;border-radius:10px;margin:10px 14px 0;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
+    <div style="background:#D4C9A8;padding:7px 12px;text-align:center;">
+      <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">${titulo}</span>
+    </div>
+    <div style="padding:8px 12px 10px;">
+      ${itens || `<p style="font-size:12px;color:#7A6A50;font-style:italic;padding:4px 0;text-align:center;">Nada aqui.</p>`}
+    </div>
+  </div>`;
+}
+
+window._renderFichaFlutuanteConteudo = function (m, f) {
+  const vidaMax = f.vidaMax || 1;
+  const vidaAtual = f.vidaAtual ?? vidaMax;
+  const pctVida = Math.max(0, Math.min(100, (vidaAtual / vidaMax) * 100));
+  const corVida = pctVida <= 25 ? "#8a2c22" : pctVida <= 60 ? "#a9822f" : "#4a6b32";
+
+  const todosPoderes = f.poderes || [];
+  const poderesGerais = todosPoderes.filter(p => (p.circulo ?? "") === "").map(p => _fichaDashLinha(m.uid, p.nome || "Sem nome", "", _fichaDashPillCargas(p), p.desc)).join("");
+  const talentos = todosPoderes.filter(p => p.circulo === "talento").map(p => _fichaDashLinha(m.uid, p.nome || "Sem nome", "", _fichaDashPillCargas(p), p.desc)).join("");
+  const passivas = todosPoderes.filter(p => p.circulo === "passiva").map(p => _fichaDashLinha(m.uid, p.nome || "Sem nome", "", _fichaDashPillCargas(p), p.desc)).join("");
+
+  const gastos = f.gastosCirculos || {};
+  const bolinhasCirculo = (circulo) => {
+    const arr = gastos[circulo] || [];
+    if (arr.length === 0) return "";
+    return `<div style="display:flex;gap:6px;margin:6px 0 8px;justify-content:center;">${arr.map(gasta => `<span style="width:13px;height:13px;border-radius:50%;display:inline-block;background:${gasta ? "#8a2c22" : "transparent"};border:2px solid #8a2c22;"></span>`).join("")}</div>`;
+  };
+
+  let magias = "";
+  for (let c = 0; c <= 9; c++) {
+    const magiasDoCirculo = todosPoderes.filter(p => String(p.circulo) === String(c));
+    if (magiasDoCirculo.length === 0 && (!gastos[c] || gastos[c].length === 0)) continue;
+
+    magias += `
+      <div style="margin-top:10px;text-align:center;">
+        <div style="font-size:11px;color:#4A3728;font-weight:bold;text-transform:uppercase;letter-spacing:.05em;">Círculo ${c}</div>
+        ${bolinhasCirculo(c)}
+        ${magiasDoCirculo.map(p => _fichaDashLinha(m.uid, p.nome || "Sem nome", "", _fichaDashPillCargas(p), p.desc)).join("") || `<p style="font-size:11px;color:#8a7860;font-style:italic;">Sem magias registradas.</p>`}
+      </div>`;
+  }
+
+  const armas = (f.armas || []).map(a => _fichaDashLinha(m.uid, a.nome || "Sem nome", a.dano || "", _fichaDashPillCargas(a), a.desc)).join("");
+  const armaduras = (f.armaduras || []).map(a => _fichaDashLinha(m.uid, a.nome || "Sem nome", a.ca ? "CA " + a.ca : "", _fichaDashPillCargas(a), a.desc)).join("");
+  const inventario = (f.inventario || []).map(i => _fichaDashLinha(m.uid, i.nome || "Sem nome", "", `<span style="font-size:11px;color:#6b5a42;">x${i.qtd || 1}</span>`, i.desc)).join("");
+
+  const dominioArr = f.dominio || [];
+  const dominioHtml = `
+    <div style="display:flex;gap:7px;flex-wrap:wrap;padding:10px 0 4px;justify-content:center;">
+      ${dominioArr.map(marcado => `<span style="width:16px;height:16px;border-radius:50%;display:inline-block;background:${marcado ? "#8a2c22" : "transparent"};border:2px solid #8a2c22;"></span>`).join("")}
+    </div>`;
+
+  const efeitosExaustaoDash = ["Sem exaustão","Desvantagem em testes de habilidade","Metade da velocidade","Desvantagem em ataques e testes de resistência","Metade do HP máximo","Velocidade = 0","Morte"];
+  const nivelExaustao = f.exaustao ?? 0;
+  const exaustaoHtml = `
+    <div style="font-size:12px;color:#2A1A10;padding:10px 0 4px;">
+      Nível ${nivelExaustao} ${nivelExaustao > 0 ? `<span style="color:#6b5a42;">— ${escapeHtml(efeitosExaustaoDash[nivelExaustao] || "")}</span>` : ""}
+    </div>`;
+
+  const alvos = window._grupoMasterAlvos || [];
+  document.getElementById("fichaFlutuanteContador").textContent = alvos.length > 1 ? `${window._fichaFlutuanteIndex + 1} / ${alvos.length}` : "";
+
+  document.getElementById("fichaFlutuanteConteudo").innerHTML = `
+    <div style="padding:14px 14px 0;">
+      <div style="font-family:'Cinzel',serif;font-weight:bold;font-size:17px;color:#4A3728;">${escapeHtml(f.nome || "Sem nome")}</div>
+      <div style="font-size:12px;color:#6b5a42;margin-top:2px;">${escapeHtml(m.nickname)} · ${escapeHtml(f.classe || "")}${f.nivel ? " · Nv " + escapeHtml(String(f.nivel)) : ""} · CA ${escapeHtml(String(f.ca ?? "-"))}</div>
+    </div>
+    <div style="height:6px;background:rgba(74,55,40,0.15);margin:10px 14px 0;border-radius:99px;overflow:hidden;">
+      <div style="height:100%;width:${pctVida}%;background:${corVida};transition:width .4s ease;"></div>
+    </div>
+    <div style="font-size:11px;color:#6b5a42;padding:4px 14px 4px;">HP: ${vidaAtual} / ${vidaMax}</div>
+    ${_fichaDashSecao("Poderes", poderesGerais)}
+    ${_fichaDashSecao("Magias", magias)}
+    ${_fichaDashSecao("Talentos", talentos)}
+    ${_fichaDashSecao("Passivas", passivas)}
+    ${_fichaDashSecao("Armas", armas)}
+    ${_fichaDashSecao("Armaduras", armaduras)}
+    ${_fichaDashSecao("Inventário", inventario)}
+    ${dominioArr.length ? _fichaDashSecao("Pontos de Domínio", dominioHtml) : ""}
+    ${_fichaDashSecao("Exaustão", exaustaoHtml)}
+    <div style="height:14px;"></div>
+  `;
+};
+
+window.abrirFichaFlutuante = function (uid) {
+  const idx = (window._grupoMasterAlvos || []).findIndex(m => m.uid === uid);
+  if (idx === -1) return;
+  window._fichaFlutuanteIndex = idx;
+  window._mostrarFichaFlutuanteAtual();
+};
+
+window._mostrarFichaFlutuanteAtual = function () {
+  const alvos = window._grupoMasterAlvos || [];
+  const m = alvos[window._fichaFlutuanteIndex];
+  if (!m) return;
+
+  window._fichaFlutuanteUid = m.uid;
+  if (window._fichaFlutuanteUnsub) window._fichaFlutuanteUnsub();
+
+  document.getElementById("fichaFlutuanteOverlay").style.display = "block";
+  document.getElementById("fichaFlutuante").style.display = "flex";
+  document.getElementById("fichaFlutuanteConteudo").innerHTML = `<p style="color:#9A8A70;font-size:13px;text-align:center;padding:20px 0;">Carregando ${escapeHtml(m.nickname)}...</p>`;
+
+  const ref = doc(db, "usuarios", m.uid, "fichas", m.fichaId);
+  window._fichaFlutuanteUnsub = onSnapshot(ref, snap => {
+    if (!snap.exists()) {
+      document.getElementById("fichaFlutuanteConteudo").innerHTML = `<p style="color:#e05050;font-size:13px;text-align:center;padding:20px 0;">Ficha não encontrada.</p>`;
+      return;
     }
-  }
-  if (arrow) arrow.style.transform = `rotate(${aberto ? "180deg" : "0deg"})`;
+    window._renderFichaFlutuanteConteudo(m, snap.data());
+  }, err => {
+    console.error(err);
+    document.getElementById("fichaFlutuanteConteudo").innerHTML = `<p style="color:#e05050;font-size:13px;text-align:center;padding:20px 0;">Sem permissão pra ver essa ficha ainda.</p>`;
+  });
 };
+
+
+window.fecharFichaFlutuante = function () {
+  document.getElementById("fichaFlutuanteOverlay").style.display = "none";
+  document.getElementById("fichaFlutuante").style.display = "none";
+  if (window._fichaFlutuanteUnsub) window._fichaFlutuanteUnsub();
+  window._fichaFlutuanteUnsub = null;
+  window._fichaFlutuanteUid = null;
+};
+
+window.trocarFichaFlutuante = function (direcao) {
+  const alvos = window._grupoMasterAlvos || [];
+  if (alvos.length <= 1) return;
+
+  const el = document.getElementById("fichaFlutuante");
+  const saida = direcao > 0 ? -60 : 60;
+
+  el.style.transition = "transform .22s ease, opacity .22s ease";
+  el.style.transform = `translate(-50%,-50%) translateX(${saida}px)`;
+  el.style.opacity = "0";
+
+  setTimeout(() => {
+    window._fichaFlutuanteIndex = (window._fichaFlutuanteIndex + direcao + alvos.length) % alvos.length;
+    window._mostrarFichaFlutuanteAtual();
+
+    el.style.transition = "none";
+    el.style.transform = `translate(-50%,-50%) translateX(${-saida}px)`;
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        el.style.transition = "transform .22s ease, opacity .22s ease";
+        el.style.transform = "translate(-50%,-50%) translateX(0)";
+        el.style.opacity = "1";
+      });
+    });
+  }, 220);
+};
+
+(function ativarGestosFichaFlutuante() {
+  const el = document.getElementById("fichaFlutuante");
+  if (!el) return;
+  let inicioX = 0, inicioY = 0, arrastando = false;
+
+  el.addEventListener("touchstart", e => {
+    const t = e.touches[0];
+    inicioX = t.clientX; inicioY = t.clientY; arrastando = true;
+    el.style.transition = "none";
+  }, { passive: true });
+
+  el.addEventListener("touchmove", e => {
+    if (!arrastando) return;
+    const t = e.touches[0];
+    const diffX = t.clientX - inicioX;
+    const diffY = t.clientY - inicioY;
+    if (Math.abs(diffX) > Math.abs(diffY)) {
+      el.style.transform = `translate(-50%,-50%) translateX(${diffX}px)`;
+      el.style.opacity = String(1 - Math.min(Math.abs(diffX) / 400, 0.5));
+    }
+  }, { passive: true });
+
+  el.addEventListener("touchend", e => {
+    if (!arrastando) return;
+    arrastando = false;
+    const t = e.changedTouches[0];
+    const diffX = t.clientX - inicioX;
+    const diffY = t.clientY - inicioY;
+
+    if (Math.abs(diffX) > 60 && Math.abs(diffX) > Math.abs(diffY)) {
+      window.trocarFichaFlutuante(diffX < 0 ? 1 : -1);
+    } else {
+      el.style.transition = "transform .2s ease, opacity .2s ease";
+      el.style.transform = "translate(-50%,-50%) translateX(0)";
+      el.style.opacity = "1";
+    }
+  }, { passive: true });
+})();
 
 window.alternarDescDash = function (idLinha) {
   const el = document.getElementById(idLinha);
@@ -10352,20 +10513,6 @@ window.alternarDescDash = function (idLinha) {
     el.dataset.aberto = "1";
   }
 };
-
-window.alternarCardGrupoMaster = function (uid) {
-  window._grupoMasterAbertos[uid] = !window._grupoMasterAbertos[uid];
-  const aberto = window._grupoMasterAbertos[uid];
-
-  const body = document.getElementById(`dashBody-${uid}`);
-  const arrow = document.getElementById(`dashArrow-${uid}`);
-  const header = document.getElementById(`dashHeader-${uid}`);
-
-  if (body) body.style.maxHeight = aberto ? "4000px" : "0";
-  if (arrow) arrow.style.transform = `rotate(${aberto ? "180deg" : "0deg"})`;
-  if (header) header.style.background = aberto ? "rgba(124,31,42,0.06)" : "transparent";
-};
-
 
 window._dashboardUnsubs = [];
 
