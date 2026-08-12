@@ -400,7 +400,7 @@ const efeitosExaustao = [
 
 function ativarModoExportacao() {
   if (!personagens || personagens.length === 0) {
-    alert("Você ainda não tem fichas para exportar.");
+    alertBonito("Você ainda não tem fichas para exportar.");
     return;
   }
 
@@ -523,7 +523,7 @@ function criarCampanhaMaster() {
   const descricao = document.getElementById("novaCampanhaDescricao").value.trim();
 
   if (!nome) {
-    alert("Digite o nome da campanha.");
+    alertBonito("Digite o nome da campanha.");
     return;
   }
 
@@ -853,7 +853,7 @@ function get(id) {
 
 function exportarFichaAtual() {
   if (personagemAtual === null || personagemAtual === undefined) {
-    alert("Selecione uma ficha primeiro.");
+    alertBonito("Selecione uma ficha primeiro.");
     return;
   }
 
@@ -1077,11 +1077,11 @@ function abrirPopup(titulo, conteudo, usarHTML = false, onEditar = null) {
   popup.style.display = "flex";
 }
 
-function editarQuantidadeSlotsCirculo(circulo) {
+async function editarQuantidadeSlotsCirculo(circulo) {
   if (!gastosCirculos[circulo]) gastosCirculos[circulo] = [];
 
   const atual = gastosCirculos[circulo].length;
-  const resposta = prompt(`Quantas bolinhas no círculo ${circulo}?`, atual);
+  const resposta = await promptBonito(`Quantas bolinhas no círculo ${circulo}?`, atual);
 
   if (resposta === null) return;
 
@@ -1204,7 +1204,7 @@ async function salvarEdicaoItem(index) {
   } else if (editItemImagemBase64Temp) {
     const resultado = await uploadImagemFirebase(editItemImagemBase64Temp, "item");
     if (resultado.erro || !resultado.url) {
-      alert("Não consegui enviar a imagem (internet?). A imagem anterior foi mantida.");
+      alertBonito("Não consegui enviar a imagem (internet?). A imagem anterior foi mantida.");
     } else {
       imagemUrl = resultado.url;
       imagemDeleteUrl = resultado.deleteUrl;
@@ -1548,7 +1548,7 @@ async function salvarEdicaoArma(index) {
   } else if (editArmaImagemBase64Temp) {
     const resultado = await uploadImagemFirebase(editArmaImagemBase64Temp, "arma");
     if (resultado.erro || !resultado.url) {
-      alert("Não consegui enviar a imagem (internet?). A imagem anterior foi mantida.");
+      alertBonito("Não consegui enviar a imagem (internet?). A imagem anterior foi mantida.");
     } else {
       imagemUrl = resultado.url;
       imagemDeleteUrl = resultado.deleteUrl;
@@ -1899,9 +1899,9 @@ function toggleDominio(index) {
   salvarTudo();
 }
 
-function editarQuantidadePontosDominio() {
+async function editarQuantidadePontosDominio() {
   const atual = dominio.length;
-  const resposta = prompt("Quantos Pontos de Domínio?", atual);
+  const resposta = await promptBonito("Quantos Pontos de Domínio?", atual);
 
   if (resposta === null) return;
 
@@ -2183,7 +2183,7 @@ async function addArmadura() {
   } else if (armaduraImagemBase64Temp) {
     const resultado = await uploadImagemFirebase(armaduraImagemBase64Temp, "armadura");
     if (resultado.erro || !resultado.url) {
-      alert("Não consegui enviar a imagem (internet?). A armadura foi salva sem imagem.");
+      alertBonito("Não consegui enviar a imagem (internet?). A armadura foi salva sem imagem.");
     } else {
       imagemUrl = resultado.url;
       imagemDeleteUrl = resultado.deleteUrl;
@@ -2357,7 +2357,7 @@ function fecharTelaPlanos() {
 }
 
 function assinarPlano(plano) {
-  alert("Em breve! O sistema de pagamento estará disponível no lançamento.");
+  alertBonito("Em breve! O sistema de pagamento estará disponível no lançamento.");
 }
 
 function editarArmadura(index) {
@@ -2471,7 +2471,7 @@ async function salvarEdicaoArmadura(index) {
   } else if (editArmaduraImagemBase64Temp) {
     const resultado = await uploadImagemFirebase(editArmaduraImagemBase64Temp, "armadura");
     if (resultado.erro || !resultado.url) {
-      alert("Não consegui enviar a imagem (internet?). A imagem anterior foi mantida.");
+      alertBonito("Não consegui enviar a imagem (internet?). A imagem anterior foi mantida.");
     } else {
       imagemUrl = resultado.url;
       imagemDeleteUrl = resultado.deleteUrl;
@@ -2788,7 +2788,7 @@ window.abrirPerfil = async function (uid) {
     }
   } catch (e) {
     console.error(e);
-    alert("Erro ao carregar perfil: " + (e.code || e.message));
+    alertBonito("Erro ao carregar perfil: " + (e.code || e.message));
   }
 };
 
@@ -2810,7 +2810,7 @@ window.salvarBioPerfil = async function () {
     window.abrirPerfil(window.usuarioAtual.uid);
   } catch (e) {
     console.error(e);
-    alert("Erro ao salvar bio: " + (e.code || e.message));
+    alertBonito("Erro ao salvar bio: " + (e.code || e.message));
   }
 };
 
@@ -2820,7 +2820,7 @@ window.uploadImagemPerfil = async function (input, tipo) {
     const base64 = await comprimirImagem(input.files[0]);
     const resultado = await uploadImagemFirebase(base64, tipo);
     if (resultado.erro || !resultado.url) {
-      alert("Não consegui enviar a imagem. Tente outra.");
+      alertBonito("Não consegui enviar a imagem. Tente outra.");
       return;
     }
     const campo = tipo === "fundo" ? "fotoFundo" : "fotoPerfil";
@@ -2828,7 +2828,7 @@ window.uploadImagemPerfil = async function (input, tipo) {
     window.abrirPerfil(window.usuarioAtual.uid);
   } catch (e) {
     console.error(e);
-    alert("Erro ao enviar imagem: " + (e.code || e.message));
+    alertBonito("Erro ao enviar imagem: " + (e.code || e.message));
   } finally {
     input.value = "";
   }
@@ -2884,7 +2884,7 @@ window.fecharEscolherDestaque = function () {
 window.salvarDestaquePerfil = async function () {
   const checksExibir = document.querySelectorAll(".checkDestaqueFicha:checked");
   if (checksExibir.length > 4) {
-    alert("Escolha no máximo 4 pra exibir.");
+    alertBonito("Escolha no máximo 4 pra exibir.");
     return;
   }
 
@@ -2915,7 +2915,7 @@ window.salvarDestaquePerfil = async function () {
     window.abrirPerfil(window.usuarioAtual.uid);
   } catch (e) {
     console.error(e);
-    alert("Erro ao salvar: " + (e.code || e.message));
+    alertBonito("Erro ao salvar: " + (e.code || e.message));
   }
 };
 
@@ -2924,7 +2924,7 @@ window.pegarFichaPublica = async function (donoUid, fichaId) {
   try {
     const snap = await getDoc(doc(db, "usuarios", donoUid, "fichas", fichaId));
     if (!snap.exists()) {
-      alert("Essa ficha não está mais disponível.");
+      alertBonito("Essa ficha não está mais disponível.");
       return;
     }
     const original = snap.data();
@@ -2937,10 +2937,10 @@ window.pegarFichaPublica = async function (donoUid, fichaId) {
     if (typeof salvarPersonagens === "function") salvarPersonagens();
     if (typeof renderPersonagens === "function") renderPersonagens();
 
-    alert("Ficha copiada! Ela já está na sua lista de personagens.");
+    alertBonito("Ficha copiada! Ela já está na sua lista de personagens.");
   } catch (e) {
     console.error(e);
-    alert("Erro ao copiar ficha: " + (e.code || e.message));
+    alertBonito("Erro ao copiar ficha: " + (e.code || e.message));
   }
 };
 
@@ -2974,7 +2974,7 @@ window.enviarSolicitacaoAmizadePorUid = async function (alvoUid, alvoNickname, a
   try {
     const jaAmigo = await getDoc(doc(db, "usuarios", meuUid, "amigos", alvoUid));
     if (jaAmigo.exists()) {
-      alert("Vocês já são amigos.");
+      alertBonito("Vocês já são amigos.");
       return;
     }
 
@@ -2988,10 +2988,10 @@ window.enviarSolicitacaoAmizadePorUid = async function (alvoUid, alvoNickname, a
       criadoEm: new Date().toISOString()
     });
 
-    alert(`Solicitação enviada pra ${alvoNickname}!`);
+    alertBonito(`Solicitação enviada pra ${alvoNickname}!`);
   } catch (e) {
     console.error(e);
-    alert("Erro ao enviar solicitação: " + (e.code || e.message));
+    alertBonito("Erro ao enviar solicitação: " + (e.code || e.message));
   }
 };
 
@@ -3019,7 +3019,7 @@ function previewImagem() {
     const resultado = await uploadImagemFirebase(base64Local, `personagens/${Date.now()}.jpg`);
     if (resultado.erro || !resultado.url) {
       if (nomeArquivo) nomeArquivo.innerText = "Falha ao enviar imagem";
-      alert("Não consegui enviar a foto agora. Tente de novo com internet melhor.");
+      alertBonito("Não consegui enviar a foto agora. Tente de novo com internet melhor.");
       return;
     }
     imagemBase64 = resultado.url;
@@ -3045,7 +3045,7 @@ let editorImg = new Image();
 
 function abrirEditorImagem() {
   if (!imagemBase64) {
-    alert("Escolha uma imagem primeiro.");
+    alertBonito("Escolha uma imagem primeiro.");
     return;
   }
 
@@ -3064,7 +3064,7 @@ function abrirEditorImagem() {
     ativarDragEditorCanvas();
   };
   editorImg.onerror = function () {
-    alert("Não foi possível carregar a imagem para edição. Tente escolher a imagem novamente.");
+    alertBonito("Não foi possível carregar a imagem para edição. Tente escolher a imagem novamente.");
   };
   editorImg.src = imagemOriginalBase64 || imagemBase64;
 
@@ -3190,7 +3190,7 @@ async function salvarEditorImagem() {
 
   const resultado = await uploadImagemFirebase(base64Local, `personagens/${Date.now()}.jpg`);
   if (resultado.erro || !resultado.url) {
-    alert("Não consegui enviar a foto agora. Tente de novo com internet melhor.");
+    alertBonito("Não consegui enviar a foto agora. Tente de novo com internet melhor.");
     return;
   }
   imagemBase64 = resultado.url;
@@ -3224,7 +3224,7 @@ async function addItem() {
   } else if (itemImagemBase64Temp) {
     const resultado = await uploadImagemFirebase(itemImagemBase64Temp, "item");
     if (resultado.erro || !resultado.url) {
-      alert("Não consegui enviar a imagem (internet?). O item foi salvo sem imagem.");
+      alertBonito("Não consegui enviar a imagem (internet?). O item foi salvo sem imagem.");
     } else {
       imagemUrl = resultado.url;
       imagemDeleteUrl = resultado.deleteUrl;
@@ -3493,7 +3493,7 @@ async function addArma() {
   } else if (armaImagemBase64Temp) {
     const resultado = await uploadImagemFirebase(armaImagemBase64Temp, "arma");
     if (resultado.erro || !resultado.url) {
-      alert("Não consegui enviar a imagem (internet?). A arma foi salva sem imagem.");
+      alertBonito("Não consegui enviar a imagem (internet?). A arma foi salva sem imagem.");
     } else {
       imagemUrl = resultado.url;
       imagemDeleteUrl = resultado.deleteUrl;
@@ -3879,7 +3879,7 @@ function abrirImportacao() {
   const input = document.getElementById("importarFicha");
 
   if (!input) {
-    alert("Input de importação não encontrado no HTML.");
+    alertBonito("Input de importação não encontrado no HTML.");
     console.error("Elemento #importarFicha não existe.");
     return;
   }
@@ -3909,13 +3909,13 @@ function importarFichaArquivo(e) {
   if (!file) return;
 
   if (!file.name.endsWith(".json")) {
-    alert("Apenas arquivos .json são aceitos.");
+    alertBonito("Apenas arquivos .json são aceitos.");
     e.target.value = "";
     return;
   }
 
   if (file.size > 2 * 1024 * 1024) {
-    alert("Arquivo muito grande. Máximo permitido: 2MB.");
+    alertBonito("Arquivo muito grande. Máximo permitido: 2MB.");
     e.target.value = "";
     return;
   }
@@ -3956,10 +3956,10 @@ function importarFichaArquivo(e) {
         renderPersonagens();
       }
 
-      alert("Ficha importada com sucesso! A imagem precisa ser adicionada separadamente.");
+      alertBonito("Ficha importada com sucesso! A imagem precisa ser adicionada separadamente.");
     } catch (erro) {
       console.error("Erro ao importar ficha:", erro);
-      alert("Arquivo inválido ou corrompido.");
+      alertBonito("Arquivo inválido ou corrompido.");
     }
 
     e.target.value = "";
@@ -3973,7 +3973,7 @@ function exportarFicha(index) {
   const ficha = personagens[index];
 
   if (!ficha) {
-    alert("Ficha não encontrada.");
+    alertBonito("Ficha não encontrada.");
     return;
   }
 
@@ -4004,13 +4004,13 @@ function exportarFicha(index) {
   URL.revokeObjectURL(url);
 }
 
-function colarFicha() {
-  const codigo = prompt("Cole o código:");
+async function colarFicha() {
+  const codigo = await promptBonito("Cole o código:");
+  if (!codigo) return;
   const dados = atob(codigo);
   localStorage.setItem("personagens", dados);
   location.reload();
 }
-
 function aoMover(ev) {
   atualizarDestino(ev.clientY);
 }
@@ -5388,7 +5388,7 @@ async function _previewImagemGenerica(inputId, previewId, setter) {
     if (preview) { preview.src = base64; preview.style.display = "block"; }
   } catch (e) {
     console.error("Erro ao processar imagem:", e);
-    alert("Não consegui processar essa imagem. Tente outra.");
+    alertBonito("Não consegui processar essa imagem. Tente outra.");
     input.value = "";
   }
 }
@@ -5425,7 +5425,7 @@ async function salvarMonstroMestre() {
   const regiao = document.getElementById("monstroRegiao")?.value.trim();
 
   if (!nome) {
-    alert("Coloque o nome do monstro.");
+    alertBonito("Coloque o nome do monstro.");
     return;
   }
 
@@ -5811,10 +5811,10 @@ async function addMapa() {
   const nome = document.getElementById("mapaNome").value.trim();
   const desc = document.getElementById("mapaDesc").value.trim();
 
-  if (!nome) { alert("Coloque o nome do mapa."); return; }
-  if (!mapaBase64Temp) { alert("Escolha uma imagem para o mapa."); return; }
+  if (!nome) { alertBonito("Coloque o nome do mapa."); return; }
+  if (!mapaBase64Temp) { alertBonito("Escolha uma imagem para o mapa."); return; }
 
-  if (mapas.length >= 15) { alert("Limite de 15 mapas por personagem."); return; }
+  if (mapas.length >= 15) { alertBonito("Limite de 15 mapas por personagem."); return; }
 
   const btn = document.querySelector("#boxMapasForm .inv-add-btn");
   if (btn) { btn.disabled = true; btn.textContent = "..."; }
@@ -5824,7 +5824,7 @@ async function addMapa() {
 
   const resultado = await uploadImagemFirebase(mapaBase64Temp, "mapa");
   if (resultado.erro || !resultado.url) {
-    alert("Não consegui enviar a imagem do mapa. Tente de novo com internet melhor.");
+    alertBonito("Não consegui enviar a imagem do mapa. Tente de novo com internet melhor.");
     if (btn) { btn.disabled = false; btn.textContent = "+"; }
     return;
   }
@@ -5928,7 +5928,7 @@ function editarMapa(index) {
 function salvarEdicaoMapa(index) {
   const nome = document.getElementById("editMapaNome")?.value.trim();
   const desc = document.getElementById("editMapaDesc")?.value.trim();
-  if (!nome) { alert("Nome obrigatório."); return; }
+  if (!nome) { alertBonito("Nome obrigatório."); return; }
   mapas[index].nome = nome;
   mapas[index].desc = desc;
   salvarTudo();
@@ -6123,7 +6123,7 @@ function ativarEventosMapaCanvas() {
     }
 
     if (["seta","x","caveira","pergaminho","interrogacao"].includes(mapaFerramentaAtiva)) {
-      if (mapaAnotacoes.length >= 30) { alert("Limite de 30 anotações atingido."); return; }
+      if (mapaAnotacoes.length >= 30) { alertBonito("Limite de 30 anotações atingido."); return; }
       mapaHistorico.push(JSON.parse(JSON.stringify(mapaAnotacoes)));
       const [rx, ry] = mapaCanvasParaRel(x, y);
       mapaAnotacoes.push({ tipo: mapaFerramentaAtiva, x: rx, y: ry, cor: mapaCorAtiva });
@@ -6131,7 +6131,7 @@ function ativarEventosMapaCanvas() {
       return;
     }
     if (mapaFerramentaAtiva === "pincel") {
-      if (mapaAnotacoes.length >= 30) { alert("Limite de 30 anotações atingido."); return; }
+      if (mapaAnotacoes.length >= 30) { alertBonito("Limite de 30 anotações atingido."); return; }
       mapaPintando = true;
       tracoAtual = { tipo: "pincel", pontos: [[x, y]], cor: mapaCorAtiva };
       mapaHistorico.push(JSON.parse(JSON.stringify(mapaAnotacoes)));
@@ -6243,7 +6243,7 @@ function selecionarFerramentaMapa(el) {
 function confirmarTextoMapa() {
   const texto = document.getElementById("mapaTextoValor").value.trim();
   if (!texto) { cancelarTextoMapa(); return; }
-  if (mapaAnotacoes.length >= 30) { alert("Limite de 30 anotações atingido."); cancelarTextoMapa(); return; }
+  if (mapaAnotacoes.length >= 30) { alertBonito("Limite de 30 anotações atingido."); cancelarTextoMapa(); return; }
   mapaHistorico.push(JSON.parse(JSON.stringify(mapaAnotacoes)));
   const [rx, ry] = mapaCanvasParaRel(mapaTextoX, mapaTextoY);
   mapaAnotacoes.push({ tipo: "texto", texto, x: rx, y: ry, cor: mapaCorAtiva });
@@ -6268,7 +6268,7 @@ function salvarAnotacoesMapa() {
   mapas[mapaAtual].anotacoes = JSON.parse(JSON.stringify(mapaAnotacoes));
   salvarTudo();
   renderMapas();
-  alert("Anotações salvas!");
+  alertBonito("Anotações salvas!");
 }
 
 function selecionarRaridade(valor, btn) {
@@ -6279,7 +6279,7 @@ function selecionarRaridade(valor, btn) {
 
 async function excluirEntradaCompendio(tipo, id) {
   const campanha = campanhasMaster[campanhaAtualMaster];
-  if (!confirm("Deseja excluir este item?")) return;
+  if (!(await confirmBonito("Deseja excluir este item?"))) return;
 
   // helper para deletar imagem do Storage
   async function deletarImagem(deleteUrl) {
@@ -6451,7 +6451,7 @@ window.abrirDarItemMestre = async function (itemId) {
   if (!campanha) return;
 
   if (!campanha.grupoVinculado) {
-    alert("Essa campanha não tem grupo vinculado. Edite a campanha e escolha um grupo primeiro.");
+    alertBonito("Essa campanha não tem grupo vinculado. Edite a campanha e escolha um grupo primeiro.");
     return;
   }
 
@@ -6557,10 +6557,10 @@ window.confirmarDarItemMestre = async function (uidDestino, fichaIdDestino, nome
     });
 
     window.fecharDarItemMestre();
-    alert("Item enviado!");
+    alertBonito("Item enviado!");
   } catch (e) {
     console.error(e);
-    alert("Erro ao dar item: " + (e.code || e.message));
+    alertBonito("Erro ao dar item: " + (e.code || e.message));
   }
 };
 
@@ -6839,14 +6839,14 @@ function iniciarDragSheet(e) {
 
 async function salvarBossMestre() {
   const nome = document.getElementById("bossNome")?.value.trim();
-  if (!nome) { alert("Coloque o nome do boss."); return; }
+  if (!nome) { alertBonito("Coloque o nome do boss."); return; }
 
   if (campanhaAtualMaster === null || campanhaAtualMaster === undefined) {
-    alert("Nenhuma campanha selecionada."); return;
+    alertBonito("Nenhuma campanha selecionada."); return;
   }
 
   const campanha = campanhasMaster[campanhaAtualMaster];
-  if (!campanha) { alert("Campanha não encontrada."); return; }
+  if (!campanha) { alertBonito("Campanha não encontrada."); return; }
 
   campanha.bosses ||= [];
   campanha.bosses.push({
@@ -6893,14 +6893,14 @@ async function salvarBossMestre() {
 
 async function salvarMapaMestre() {
   const nome = document.getElementById("mapaMasterNome")?.value.trim();
-  if (!nome) { alert("Coloque o nome do mapa."); return; }
+  if (!nome) { alertBonito("Coloque o nome do mapa."); return; }
 
   if (campanhaAtualMaster === null || campanhaAtualMaster === undefined) {
-    alert("Nenhuma campanha selecionada."); return;
+    alertBonito("Nenhuma campanha selecionada."); return;
   }
 
   const campanha = campanhasMaster[campanhaAtualMaster];
-  if (!campanha) { alert("Campanha não encontrada."); return; }
+  if (!campanha) { alertBonito("Campanha não encontrada."); return; }
 
   campanha.mapasMaster ||= [];
   campanha.mapasMaster.push({
@@ -6926,14 +6926,14 @@ async function salvarMapaMestre() {
 
 async function salvarItemMestre() {
   const nome = document.getElementById("itemMasterNome")?.value.trim();
-  if (!nome) { alert("Coloque o nome do item."); return; }
+  if (!nome) { alertBonito("Coloque o nome do item."); return; }
 
   if (campanhaAtualMaster === null || campanhaAtualMaster === undefined) {
-    alert("Nenhuma campanha selecionada."); return;
+    alertBonito("Nenhuma campanha selecionada."); return;
   }
 
   const campanha = campanhasMaster[campanhaAtualMaster];
-  if (!campanha) { alert("Campanha não encontrada."); return; }
+  if (!campanha) { alertBonito("Campanha não encontrada."); return; }
 
   campanha.itensMaster ||= [];
   campanha.itensMaster.push({
@@ -7026,6 +7026,37 @@ window.confirmBonito = function (mensagem) {
       document.getElementById("modalConfirmBonitoOverlay").style.display = "none";
       document.getElementById("modalConfirmBonito").style.display = "none";
       window._confirmBonitoResolve = null;
+      resolve(valor);
+    };
+  });
+};
+
+window.alertBonito = function (mensagem) {
+  return new Promise(resolve => {
+    document.getElementById("alertBonitoTexto").textContent = mensagem;
+    document.getElementById("modalAlertBonitoOverlay").style.display = "block";
+    document.getElementById("modalAlertBonito").style.display = "block";
+    window._alertBonitoResolve = () => {
+      document.getElementById("modalAlertBonitoOverlay").style.display = "none";
+      document.getElementById("modalAlertBonito").style.display = "none";
+      window._alertBonitoResolve = null;
+      resolve();
+    };
+  });
+};
+
+window.promptBonito = function (mensagem, valorPadrao) {
+  return new Promise(resolve => {
+    document.getElementById("promptBonitoTexto").textContent = mensagem;
+    const input = document.getElementById("promptBonitoInput");
+    input.value = valorPadrao != null ? valorPadrao : "";
+    document.getElementById("modalPromptBonitoOverlay").style.display = "block";
+    document.getElementById("modalPromptBonito").style.display = "block";
+    setTimeout(() => input.focus(), 50);
+    window._promptBonitoResolve = (valor) => {
+      document.getElementById("modalPromptBonitoOverlay").style.display = "none";
+      document.getElementById("modalPromptBonito").style.display = "none";
+      window._promptBonitoResolve = null;
       resolve(valor);
     };
   });
@@ -7151,7 +7182,7 @@ function enviarMonstroPadraoParaCombate(monstro) {
   salvarCombatesMestreStorage();
   renderCombatesMestre();
 
-  alert(`${monstro.nome} foi enviado para o combate.`);
+  alertBonito(`${monstro.nome} foi enviado para o combate.`);
 }
 
 function fecharSheetMonstro() {
@@ -7280,7 +7311,7 @@ function enviarMonstroParaCombate(index) {
   salvarCombatesMestreStorage();
   renderCombatesMestre();
 
-  alert(`${monstro.nome} foi enviado para o combate.`);
+  alertBonito(`${monstro.nome} foi enviado para o combate.`);
 }
 
 function gerarNomeInstanciaCombate(nomeBase) {
@@ -7896,7 +7927,7 @@ function salvarSessaoLore() {
   const campanha = campanhasMaster[campanhaAtualMaster];
   if (!campanha) return;
   const nome = document.getElementById("sessaoNome")?.value.trim();
-  if (!nome) { alert("Digite o nome da sessão."); return; }
+  if (!nome) { alertBonito("Digite o nome da sessão."); return; }
 
   campanha.sessoes ||= [];
   campanha.sessoes.push({
@@ -7940,7 +7971,7 @@ function salvarEventoLore() {
   const campanha = campanhasMaster[campanhaAtualMaster];
   if (!campanha) return;
   const nome = document.getElementById("eventoNome")?.value.trim();
-  if (!nome) { alert("Digite o nome do evento."); return; }
+  if (!nome) { alertBonito("Digite o nome do evento."); return; }
 
   campanha.eventos ||= [];
   campanha.eventos.push({
@@ -8485,7 +8516,7 @@ window.abrirDarItem = async function (tipo, index) {
   if (!ficha) return;
 
   if (!ficha.grupoAtivo) {
-    alert("Essa ficha não está vinculada a nenhum grupo. Vá em Amigos → Grupos e escolha essa ficha num grupo primeiro.");
+    alertBonito("Essa ficha não está vinculada a nenhum grupo. Vá em Amigos → Grupos e escolha essa ficha num grupo primeiro.");
     return;
   }
 
@@ -8564,10 +8595,10 @@ window.confirmarDarItem = async function (uidDestino, fichaIdDestino, nomeDestin
     salvarTudo();
 
     window.fecharDarItem();
-    alert("Item enviado!");
+    alertBonito("Item enviado!");
   } catch (e) {
     console.error(e);
-    alert("Erro ao dar item: " + (e.code || e.message));
+    alertBonito("Erro ao dar item: " + (e.code || e.message));
   }
 };
 
@@ -8639,7 +8670,7 @@ window.aceitarItemRecebido = async function (docId) {
 
     const ficha = (window.personagens || []).find(f => String(f.id) === String(d.fichaDestinoId));
     if (!ficha) {
-      alert("A ficha que devia receber esse item não existe mais na sua conta.");
+      alertBonito("A ficha que devia receber esse item não existe mais na sua conta.");
       await deleteDoc(ref);
       window.renderInboxItens();
       return;
@@ -8661,7 +8692,7 @@ window.aceitarItemRecebido = async function (docId) {
     window.renderInboxItens();
   } catch (e) {
     console.error(e);
-    alert("Erro ao aceitar: " + (e.code || e.message));
+    alertBonito("Erro ao aceitar: " + (e.code || e.message));
   }
 };
 
@@ -8693,7 +8724,7 @@ window.recusarItemRecebido = async function (docId) {
     window.renderInboxItens();
   } catch (e) {
     console.error(e);
-    alert("Erro ao recusar: " + (e.code || e.message));
+    alertBonito("Erro ao recusar: " + (e.code || e.message));
   }
 };
 
@@ -8782,7 +8813,7 @@ function salvarNPCMundo() {
   if (!campanha) return;
 
   const nome = document.getElementById("mundoNPCNome")?.value.trim();
-  if (!nome) { alert("Digite o nome do NPC."); return; }
+  if (!nome) { alertBonito("Digite o nome do NPC."); return; }
 
   campanha.npcsMundo ||= [];
   campanha.npcsMundo.push({
@@ -8803,10 +8834,10 @@ function salvarNPCMundo() {
 
 async function salvarNPCMestre() {
   const campanha = campanhasMaster[campanhaAtualMaster];
-  if (!campanha) { alert("Nenhuma campanha selecionada."); return; }
+  if (!campanha) { alertBonito("Nenhuma campanha selecionada."); return; }
 
   const nome = document.getElementById("npcNome")?.value.trim();
-  if (!nome) { alert("Digite o nome do NPC."); return; }
+  if (!nome) { alertBonito("Digite o nome do NPC."); return; }
 
   campanha.npcs ||= [];
 
@@ -9171,7 +9202,7 @@ function salvarMissaoMundo() {
   if (!campanha) return;
 
   const nome = document.getElementById("mundoMissaoNome")?.value.trim();
-  if (!nome) { alert("Digite o nome da missão."); return; }
+  if (!nome) { alertBonito("Digite o nome da missão."); return; }
 
   campanha.missoes ||= [];
   campanha.missoes.push({
@@ -10084,7 +10115,7 @@ window.salvarEdicaoCampanha = function () {
 
   const nome = document.getElementById("editCampanhaNome").value.trim();
   if (!nome) {
-    alert("Digite o nome da campanha.");
+    alertBonito("Digite o nome da campanha.");
     return;
   }
 
@@ -10166,11 +10197,11 @@ window.escolherFichaGrupo = async function (selectEl) {
     }
 
     if (veioDeOutroGrupo) {
-      alert("Essa ficha já estava vinculada a outro grupo — ela foi movida pra cá.");
+      alertBonito("Essa ficha já estava vinculada a outro grupo — ela foi movida pra cá.");
     }
   } catch (e) {
     console.error(e);
-    alert("Erro ao vincular ficha: " + (e.code || e.message));
+    alertBonito("Erro ao vincular ficha: " + (e.code || e.message));
   }
 };
 
@@ -10617,7 +10648,7 @@ window.salvarRenomearGrupo = async function () {
     carregarGrupos();
   } catch (e) {
     console.error(e);
-    alert("Erro ao renomear: " + (e.code || e.message));
+    alertBonito("Erro ao renomear: " + (e.code || e.message));
   }
 };
 
@@ -10636,7 +10667,7 @@ window.alternarPapelMembro = async function (uidAlvo) {
     await window.abrirDetalheGrupo(grupoId);
   } catch (e) {
     console.error(e);
-    alert("Erro: " + (e.code || e.message));
+    alertBonito("Erro: " + (e.code || e.message));
   }
 };
 
@@ -10657,7 +10688,7 @@ window.removerMembroGrupo = async function (uidAlvo) {
     carregarGrupos();
   } catch (e) {
     console.error(e);
-    alert("Erro: " + (e.code || e.message));
+    alertBonito("Erro: " + (e.code || e.message));
   }
 };
 
@@ -10679,7 +10710,7 @@ window.sairDoGrupo = async function () {
     carregarGrupos();
   } catch (e) {
     console.error(e);
-    alert("Erro: " + (e.code || e.message));
+    alertBonito("Erro: " + (e.code || e.message));
   }
 };
 
@@ -10693,7 +10724,7 @@ window.excluirGrupo = async function () {
     carregarGrupos();
   } catch (e) {
     console.error(e);
-    alert("Erro: " + (e.code || e.message));
+    alertBonito("Erro: " + (e.code || e.message));
   }
 };
 
