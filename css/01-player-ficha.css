@@ -115,10 +115,18 @@
   color: #f1e6cf;
   font-size: 18px;
   transition: 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
 }
 
-.tab-btn:hover {
-  background: #4a4036;
+.tab-btn:focus {
+  outline: none;
+}
+
+@media (hover: hover) {
+  .tab-btn:hover {
+    background: #4a4036;
+  }
 }
 
 .tab-btn.active {
@@ -1864,16 +1872,15 @@ button {
 }
 
 /* ================= ANIMAÇÃO DAS ABAS ================= */
+/* ================= ANIMAÇÃO DAS ABAS ================= */
 .aba {
   display: none;
   opacity: 0;
-  transform: translateY(14px) scale(0.98);
-  filter: blur(4px);
+  transform: translateX(calc(var(--swipe-dir, 1) * 26px));
   transition:
-    opacity 0.35s ease,
-    transform 0.35s ease,
-    filter 0.35s ease;
-  will-change: opacity, transform, filter;
+    opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
 }
 
 .aba.active {
@@ -1882,14 +1889,12 @@ button {
 
 .aba.show {
   opacity: 1;
-  transform: translateY(0) scale(1);
-  filter: blur(0);
+  transform: translateX(0);
 }
 
 .aba.hiding {
   opacity: 0;
-  transform: translateY(-10px) scale(0.98);
-  filter: blur(3px);
+  transform: translateX(calc(var(--swipe-dir, 1) * -26px));
 }
 
 button:active {
@@ -5179,4 +5184,12 @@ select {
 
 #ficha .titulo-toggle.fechado .setinha {
   transform: translateY(-50%) rotate(-90deg);
+}
+
+#ficha {
+  position: relative;
+}
+
+.aba.hiding {
+  z-index: 2;
 }
