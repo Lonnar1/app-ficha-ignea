@@ -108,9 +108,12 @@
 
   <button id="perfilCoresBtn" onclick="document.getElementById('perfilCoresBox').style.display='flex'; document.getElementById('perfilCoresBtn').style.display='none';" style="display:none;position:absolute;top:10px;left:10px;z-index:5;width:30px;height:30px;padding:0;border-radius:50%;background:rgba(0,0,0,.5);border:1px solid rgba(196,169,91,0.4);color:#E8CC80;font-size:13px;cursor:pointer;align-items:center;justify-content:center;pointer-events:auto;">✎</button>
   <div id="perfilCoresBox" style="display:none;gap:10px;justify-content:center;align-items:center;margin-top:8px;font-size:11px;color:#9A8A70;flex-wrap:wrap;">
-    Base <input type="color" id="corBaseInput" value="#0e0907" style="width:26px;height:26px;padding:0;border:none;border-radius:6px;cursor:pointer;background:none;">
-    Nome <input type="color" id="corNomeInput" value="#E8CC80" style="width:26px;height:26px;padding:0;border:none;border-radius:6px;cursor:pointer;background:none;">
-    Linha <input type="color" id="corLinhaInput" value="#c4a95b" style="width:26px;height:26px;padding:0;border:none;border-radius:6px;cursor:pointer;background:none;">
+    Base <button type="button" id="corBaseSwatch" onclick="abrirColorPicker('corBaseInput','corBaseSwatch')" style="width:26px;height:26px;padding:0;border:1px solid rgba(196,169,91,0.4);border-radius:6px;cursor:pointer;background:#0e0907;"></button>
+    <input type="hidden" id="corBaseInput" value="#0e0907">
+    Nome <button type="button" id="corNomeSwatch" onclick="abrirColorPicker('corNomeInput','corNomeSwatch')" style="width:26px;height:26px;padding:0;border:1px solid rgba(196,169,91,0.4);border-radius:6px;cursor:pointer;background:#E8CC80;"></button>
+    <input type="hidden" id="corNomeInput" value="#E8CC80">
+    Linha <button type="button" id="corLinhaSwatch" onclick="abrirColorPicker('corLinhaInput','corLinhaSwatch')" style="width:26px;height:26px;padding:0;border:1px solid rgba(196,169,91,0.4);border-radius:6px;cursor:pointer;background:#c4a95b;"></button>
+    <input type="hidden" id="corLinhaInput" value="#c4a95b">
     <button onclick="salvarCoresPerfil()" style="padding:4px 10px;border-radius:6px;border:none;background:#C4A95B;color:#1a0e05;font-weight:bold;font-size:11px;cursor:pointer;">Salvar</button>
   </div>
 
@@ -121,6 +124,36 @@
     <div style="font-size:11px;color:#9A8A70;text-transform:uppercase;letter-spacing:.06em;margin:16px 0 8px;">Personagens</div>
     <div id="perfilShowcase" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
     <button id="btnEscolherDestaque" onclick="abrirEscolherDestaque()" style="display:none;margin-top:10px;width:100%;padding:8px;border-radius:8px;border:1px solid var(--perfil-linha, rgba(196,169,91,0.3));background:transparent;color:#E8CC80;font-size:12px;cursor:pointer;">Escolher personagens em destaque</button>
+  </div>
+</div>
+
+<!-- ================= COLOR PICKER CUSTOM ================= -->
+<div id="colorPickerOverlay" style="display:none;position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.8);" onclick="fecharColorPicker()"></div>
+<div id="colorPickerModal" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:8001;width:min(90vw,300px);background:#0e0907;border:1px solid rgba(196,169,91,0.25);border-radius:16px;padding:18px;color:#F8F4E3;font-family:'EB Garamond',serif;">
+  <div style="font-family:'Cinzel',serif;color:#E8CC80;font-size:15px;margin-bottom:12px;text-align:center;">Selecionar cor</div>
+
+  <div id="cpSquareWrap" style="position:relative;width:100%;aspect-ratio:1/1;border-radius:10px;overflow:hidden;cursor:crosshair;margin-bottom:14px;touch-action:none;">
+    <canvas id="cpSquare" style="width:100%;height:100%;display:block;"></canvas>
+    <div id="cpSquareHandle" style="position:absolute;width:18px;height:18px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.5);transform:translate(-50%,-50%);pointer-events:none;"></div>
+  </div>
+
+  <div id="cpHueWrap" style="position:relative;width:100%;height:16px;border-radius:8px;overflow:hidden;cursor:pointer;margin-bottom:14px;touch-action:none;">
+    <canvas id="cpHue" style="width:100%;height:100%;display:block;"></canvas>
+    <div id="cpHueHandle" style="position:absolute;top:50%;width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.5);transform:translate(-50%,-50%);pointer-events:none;"></div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+    <div id="cpPreview" style="width:34px;height:34px;border-radius:8px;border:1px solid rgba(196,169,91,0.4);flex-shrink:0;"></div>
+    <div style="display:flex;gap:6px;flex:1;">
+      <input id="cpR" type="number" min="0" max="255" style="width:100%;min-width:0;background:rgba(255,255,255,0.05);border:1px solid rgba(196,169,91,0.25);border-radius:6px;color:#F8F4E3;text-align:center;padding:5px 2px;font-size:12px;">
+      <input id="cpG" type="number" min="0" max="255" style="width:100%;min-width:0;background:rgba(255,255,255,0.05);border:1px solid rgba(196,169,91,0.25);border-radius:6px;color:#F8F4E3;text-align:center;padding:5px 2px;font-size:12px;">
+      <input id="cpB" type="number" min="0" max="255" style="width:100%;min-width:0;background:rgba(255,255,255,0.05);border:1px solid rgba(196,169,91,0.25);border-radius:6px;color:#F8F4E3;text-align:center;padding:5px 2px;font-size:12px;">
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:flex-end;gap:10px;">
+    <button onclick="fecharColorPicker()" style="padding:7px 14px;border-radius:8px;border:1px solid rgba(196,169,91,0.3);background:transparent;color:#E8CC80;font-size:13px;cursor:pointer;">Cancelar</button>
+    <button onclick="confirmarColorPicker()" style="padding:7px 14px;border-radius:8px;border:none;background:#C4A95B;color:#1a0e05;font-weight:bold;font-size:13px;cursor:pointer;">Definir</button>
   </div>
 </div>
 
@@ -1281,7 +1314,7 @@
           <ul id="listaAliados" class="lista-sempre-visivel"></ul>
         </div>
 
-        <!-- 🔥 LORE -->
+        <!-- LORE -->
         <div class="secao-toggle">
           <h2
             class="titulo-secao titulo-toggle"
