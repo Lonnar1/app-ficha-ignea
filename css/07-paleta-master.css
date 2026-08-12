@@ -68,9 +68,16 @@
 }
 
 /* fundo dos símbolos — desativa no tema claro */
+/* fundo dos símbolos — desativa no tema claro */
 #masterIgnea .simbolos-bg::before {
   opacity: 0.04 !important;
   filter: invert(1) !important;
+}
+
+/* fundo das folhas — ajusta pro tema claro */
+#masterIgnea .folhas-bg::before,
+#masterIgnea .folhas-bg::after {
+  opacity: 0.06 !important;
 }
 
 /* ─────────────────────────────────────────────
