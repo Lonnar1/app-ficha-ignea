@@ -106,14 +106,32 @@
     <div id="perfilNomeTag" style="margin-top:8px;font-family:'Cinzel',serif;color:#E8CC80;font-size:16px;"></div>
   </div>
 
-  <div style="padding:16px;">
-<div id="perfilBioView" style="background:rgba(255,255,255,0.03);border:1px solid rgba(196,169,91,0.15);border-radius:10px;padding:10px 12px;font-size:13px;color:#cdb791;min-height:20px;word-break:break-word;overflow-wrap:anywhere;"></div>    <textarea id="perfilBioEdit" maxlength="200" placeholder="Fale um pouco sobre você..." style="display:none;width:100%;background:rgba(255,255,255,0.03);border:1px solid rgba(196,169,91,0.25);border-radius:10px;padding:10px 12px;font-size:13px;color:#F8F4E3;box-sizing:border-box;min-height:60px;font-family:inherit;"></textarea>
+  <button id="perfilCoresBtn" onclick="document.getElementById('perfilCoresBox').style.display='flex'; document.getElementById('perfilCoresBtn').style.display='none';" style="display:none;position:absolute;top:10px;left:10px;z-index:5;width:30px;height:30px;padding:0;border-radius:50%;background:rgba(0,0,0,.5);border:1px solid rgba(196,169,91,0.4);color:#E8CC80;font-size:13px;cursor:pointer;align-items:center;justify-content:center;pointer-events:auto;">✎</button>
+  <div id="perfilCoresBox" style="display:none;gap:10px;justify-content:center;align-items:center;margin-top:8px;font-size:11px;color:#9A8A70;flex-wrap:wrap;">
+    Base <input type="color" id="corBaseInput" value="#0e0907" style="width:26px;height:26px;padding:0;border:none;border-radius:6px;cursor:pointer;background:none;">
+    Nome <input type="color" id="corNomeInput" value="#E8CC80" style="width:26px;height:26px;padding:0;border:none;border-radius:6px;cursor:pointer;background:none;">
+    Linha <input type="color" id="corLinhaInput" value="#c4a95b" style="width:26px;height:26px;padding:0;border:none;border-radius:6px;cursor:pointer;background:none;">
+    <button onclick="salvarCoresPerfil()" style="padding:4px 10px;border-radius:6px;border:none;background:#C4A95B;color:#1a0e05;font-weight:bold;font-size:11px;cursor:pointer;">Salvar</button>
+  </div>
+
+  <div id="perfilBaseWrap" style="padding:16px;">
+<div id="perfilBioView" style="background:rgba(255,255,255,0.03);border:1px solid var(--perfil-linha, rgba(196,169,91,0.15));border-radius:10px;padding:10px 12px;font-size:13px;color:var(--perfil-texto, #cdb791);min-height:20px;word-break:break-word;overflow-wrap:anywhere;"></div>    <textarea id="perfilBioEdit" maxlength="200" placeholder="Fale um pouco sobre você..." style="display:none;width:100%;background:rgba(255,255,255,0.03);border:1px solid var(--perfil-linha, rgba(196,169,91,0.25));border-radius:10px;padding:10px 12px;font-size:13px;color:var(--perfil-texto, #F8F4E3);box-sizing:border-box;min-height:60px;font-family:inherit;"></textarea>
     <button id="btnSalvarBio" onclick="salvarBioPerfil()" style="display:none;margin-top:6px;width:100%;padding:8px;border-radius:8px;border:none;background:#C4A95B;color:#1a0e05;font-weight:bold;font-size:12px;cursor:pointer;">Salvar bio</button>
 
     <div style="font-size:11px;color:#9A8A70;text-transform:uppercase;letter-spacing:.06em;margin:16px 0 8px;">Personagens</div>
     <div id="perfilShowcase" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
-    <button id="btnEscolherDestaque" onclick="abrirEscolherDestaque()" style="display:none;margin-top:10px;width:100%;padding:8px;border-radius:8px;border:1px solid rgba(196,169,91,0.3);background:transparent;color:#E8CC80;font-size:12px;cursor:pointer;">Escolher personagens em destaque</button>
+    <button id="btnEscolherDestaque" onclick="abrirEscolherDestaque()" style="display:none;margin-top:10px;width:100%;padding:8px;border-radius:8px;border:1px solid var(--perfil-linha, rgba(196,169,91,0.3));background:transparent;color:#E8CC80;font-size:12px;cursor:pointer;">Escolher personagens em destaque</button>
   </div>
+</div>
+
+<!-- ================= PREVIEW FICHA (DESTAQUE) ================= -->
+<div id="modalPreviewFichaOverlay" style="display:none;position:fixed;inset:0;z-index:6850;background:rgba(0,0,0,.8);" onclick="fecharPreviewFicha()"></div>
+<div id="modalPreviewFicha" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:6851;width:min(88vw,360px);max-height:80vh;overflow-y:auto;background:#120c09;border:1px solid rgba(196,169,91,0.25);border-radius:14px;padding:20px;color:#F8F4E3;font-family:'EB Garamond',serif;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <span id="previewFichaNome" style="font-family:'Cinzel',serif;color:#E8CC80;font-size:17px;letter-spacing:.02em;"></span>
+    <button onclick="fecharPreviewFicha()" style="background:none;border:none;color:#9A8A70;font-size:18px;cursor:pointer;">✕</button>
+  </div>
+  <div id="previewFichaConteudo" style="font-size:13px;color:#cdb791;display:flex;flex-direction:column;gap:16px;"></div>
 </div>
 
 <!-- ================= ESCOLHER PERSONAGENS DESTAQUE ================= -->
@@ -1149,8 +1167,7 @@
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <button class="voltar" onclick="voltarInicio()">← Voltar</button>
           <div style="width:130px;flex-shrink:0;display:flex;justify-content:center;">
-            <button id="btnInboxItens" onclick="abrirInboxItens()" style="position:relative;background:#4a3b31;border:none;color:#f1e6cf;border-radius:10px;padding:8px 12px;cursor:pointer;font-size:13px;">
-              Itens recebidos
+<button id="btnInboxItens" onclick="abrirInboxItens()" style="position:relative;background:#4a3b31;border:none;color:#f1e6cf;border-radius:10px;padding:8px 12px;cursor:pointer;font-size:13px;white-space:nowrap;">              Itens recebidos
               <span id="badgeInboxItens" style="display:none;position:absolute;top:-6px;right:-6px;background:#b83a2f;color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;align-items:center;justify-content:center;">0</span>
             </button>
           </div>
@@ -1262,6 +1279,21 @@
           </div>
 
           <ul id="listaAliados" class="lista-sempre-visivel"></ul>
+        </div>
+
+        <!-- 🔥 LORE -->
+        <div class="secao-toggle">
+          <h2
+            class="titulo-secao titulo-toggle"
+            onclick="toggleSecao('boxLorePersonagem', this)"
+          >
+            <span>Lore</span>
+            <span class="setinha">▼</span>
+          </h2>
+
+          <div id="boxLorePersonagem" class="conteudo-toggle aberto">
+<textarea id="lorePersonagem" placeholder="História, origem, motivações do seu personagem..." oninput="salvarLorePersonagem()" style="min-height:160px;padding:16px;line-height:1.6;box-sizing:border-box;"></textarea>
+          </div>
         </div>
       </div>
 
