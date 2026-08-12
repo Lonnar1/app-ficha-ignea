@@ -148,6 +148,27 @@
   </div>
 </div>
 
+<!-- ================= ALERTA BONITO ================= -->
+<div id="modalAlertBonitoOverlay" style="display:none;position:fixed;inset:0;z-index:200000;background:rgba(0,0,0,.78);" onclick="window._alertBonitoResolve && window._alertBonitoResolve()"></div>
+<div id="modalAlertBonito" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:200001;width:min(88vw,340px);background:#120c09;border:1px solid rgba(196,169,91,0.3);border-radius:16px;padding:24px 20px 20px;color:#F8F4E3;font-family:'EB Garamond',serif;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+  <div style="font-size:24px;margin-bottom:10px;color:#C4A95B;">⚠</div>
+  <div id="alertBonitoTexto" style="font-size:15px;line-height:1.5;color:#F0E4D0;margin-bottom:22px;"></div>
+  <div style="display:flex;justify-content:center;">
+    <button onclick="window._alertBonitoResolve && window._alertBonitoResolve()" style="min-width:120px;padding:10px 24px;border-radius:10px;border:none;background:linear-gradient(135deg,#e05050,#7B1E28);color:#fff;font-family:'Cinzel',serif;font-weight:bold;font-size:13px;letter-spacing:.03em;cursor:pointer;">OK</button>
+  </div>
+</div>
+
+<!-- ================= PROMPT BONITO ================= -->
+<div id="modalPromptBonitoOverlay" style="display:none;position:fixed;inset:0;z-index:200000;background:rgba(0,0,0,.78);" onclick="window._promptBonitoResolve && window._promptBonitoResolve(null)"></div>
+<div id="modalPromptBonito" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:200001;width:min(88vw,340px);background:#120c09;border:1px solid rgba(196,169,91,0.3);border-radius:16px;padding:24px 20px 20px;color:#F8F4E3;font-family:'EB Garamond',serif;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+  <div id="promptBonitoTexto" style="font-size:15px;line-height:1.5;color:#F0E4D0;margin-bottom:14px;"></div>
+  <input id="promptBonitoInput" type="text" style="width:100%;box-sizing:border-box;padding:10px 12px;margin-bottom:18px;border-radius:10px;border:1px solid rgba(196,169,91,0.3);background:#1c130d;color:#F8F4E3;font-family:'EB Garamond',serif;font-size:14px;" />
+  <div style="display:flex;gap:10px;">
+    <button onclick="window._promptBonitoResolve && window._promptBonitoResolve(null)" style="flex:1;padding:10px;border-radius:10px;border:1px solid rgba(196,169,91,0.3);background:transparent;color:#9A8A70;font-family:'Cinzel',serif;font-size:13px;font-weight:bold;letter-spacing:.03em;cursor:pointer;">Cancelar</button>
+    <button onclick="window._promptBonitoResolve && window._promptBonitoResolve(document.getElementById('promptBonitoInput').value)" style="flex:1;padding:10px;border-radius:10px;border:none;background:linear-gradient(135deg,#e05050,#7B1E28);color:#fff;font-family:'Cinzel',serif;font-weight:bold;font-size:13px;letter-spacing:.03em;cursor:pointer;">OK</button>
+  </div>
+</div>
+
 <div id="modalAcoesMembroOverlay" style="display:none;position:fixed;inset:0;z-index:200000;background:rgba(0,0,0,.78);" onclick="fecharAcoesMembro()"></div>
 <div id="modalAcoesMembro" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:200001;width:min(85vw,300px);background:#120c09;border:1px solid rgba(196,169,91,0.3);border-radius:16px;padding:18px;color:#F8F4E3;font-family:'EB Garamond',serif;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
   <div id="acoesMembroNome" style="font-family:'Cinzel',serif;font-size:15px;color:#E8CC80;margin-bottom:14px;"></div>
@@ -549,6 +570,7 @@
 <!-- ================= GRIMÓRIO ÍGNEO ================= -->
 <div id="masterIgnea" class="container master-page" style="display:none;">
     <div class="simbolos-bg"></div>
+    <div class="folhas-bg"></div>
    <header class="master-header-mini">
   <button class="voltar btn-voltar-modos" onclick="voltarCampanhasMaster()">← Campanhas</button>
 </header>
@@ -1126,10 +1148,12 @@
       <div class="aba" id="personagem">
         <div style="display:flex;justify-content:space-between;align-items:center;">
           <button class="voltar" onclick="voltarInicio()">← Voltar</button>
-          <button id="btnInboxItens" onclick="abrirInboxItens()" style="position:relative;background:#4a3b31;border:none;color:#f1e6cf;border-radius:10px;padding:8px 12px;cursor:pointer;font-size:13px;">
-            Itens recebidos
-            <span id="badgeInboxItens" style="display:none;position:absolute;top:-6px;right:-6px;background:#b83a2f;color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;display:flex;align-items:center;justify-content:center;">0</span>
-          </button>
+          <div style="width:130px;flex-shrink:0;display:flex;justify-content:center;">
+            <button id="btnInboxItens" onclick="abrirInboxItens()" style="position:relative;background:#4a3b31;border:none;color:#f1e6cf;border-radius:10px;padding:8px 12px;cursor:pointer;font-size:13px;">
+              Itens recebidos
+              <span id="badgeInboxItens" style="display:none;position:absolute;top:-6px;right:-6px;background:#b83a2f;color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;align-items:center;justify-content:center;">0</span>
+            </button>
+          </div>
         </div>
 
         <div class="personagem-topo">
@@ -2508,7 +2532,7 @@ import {
   function mostrarErroLogin(msg) {
     const erro = document.getElementById("loginErro");
     if (erro) erro.textContent = msg;
-    else alert(msg);
+    else alertBonito(msg);
   }
 
   function limparErroLogin() {
@@ -2625,7 +2649,7 @@ import {
     );
   } catch (erro) {
     console.error("Falha ao ler fichas da nuvem:", erro);
-    alert("Não consegui carregar suas fichas da nuvem. Usando os dados deste aparelho.");
+    alertBonito("Não consegui carregar suas fichas da nuvem. Usando os dados deste aparelho.");
     if (typeof renderPersonagens === "function") renderPersonagens();
     return;
   }
@@ -2654,7 +2678,7 @@ import {
 
       await salvarFichasNaNuvem();
 
-      alert("Fichas vinculadas com sucesso!");
+      alertBonito("Fichas vinculadas com sucesso!");
     } else {
       personagens = [];
       window.personagens = personagens;
@@ -3182,7 +3206,7 @@ window.responderConviteGrupo = async function (grupoId, aceitar) {
     carregarGrupos();
   } catch (e) {
     console.error(e);
-    alert("Erro: " + (e.code || e.message));
+    alertBonito("Erro: " + (e.code || e.message));
   }
 };
 
@@ -3225,7 +3249,7 @@ window.cancelarCriarGrupo = function () {
 window.confirmarCriarGrupo = async function () {
   const nome = document.getElementById("nomeGrupoInput").value.trim();
   if (!nome) {
-    alert("Digite um nome pro grupo.");
+    alertBonito("Digite um nome pro grupo.");
     return;
   }
 
@@ -3271,7 +3295,7 @@ window.confirmarCriarGrupo = async function () {
     carregarGrupos();
   } catch (e) {
     console.error(e);
-    alert("Erro ao criar grupo: " + (e.code || e.message));
+    alertBonito("Erro ao criar grupo: " + (e.code || e.message));
   }
 };
 
@@ -3281,7 +3305,7 @@ window.enviarSolicitacaoAmizade = async function () {
 
   const partes = valor.split("#");
   if (partes.length !== 2 || !partes[0] || !partes[1]) {
-    alert("Digite no formato Nickname#0000.");
+    alertBonito("Digite no formato Nickname#0000.");
     return;
   }
   const nicknameLower = partes[0].trim().toLowerCase();
@@ -3291,19 +3315,19 @@ window.enviarSolicitacaoAmizade = async function () {
   try {
     const tagSnap = await getDoc(doc(db, "tagsUsuario", `${nicknameLower}#${tag}`));
     if (!tagSnap.exists()) {
-      alert("Nenhum usuário encontrado com esse nome.");
+      alertBonito("Nenhum usuário encontrado com esse nome.");
       return;
     }
     const alvoUid = tagSnap.data().uid;
 
     if (alvoUid === meuUid) {
-      alert("Você não pode adicionar a si mesmo.");
+      alertBonito("Você não pode adicionar a si mesmo.");
       return;
     }
 
     const jaAmigo = await getDoc(doc(db, "usuarios", meuUid, "amigos", alvoUid));
     if (jaAmigo.exists()) {
-      alert("Vocês já são amigos.");
+      alertBonito("Vocês já são amigos.");
       return;
     }
 
@@ -3318,10 +3342,10 @@ window.enviarSolicitacaoAmizade = async function () {
     });
 
     input.value = "";
-    alert("Solicitação enviada!");
+    alertBonito("Solicitação enviada!");
   } catch (e) {
     console.error(e);
-    alert("Erro ao enviar solicitação: " + (e.code || e.message));
+    alertBonito("Erro ao enviar solicitação: " + (e.code || e.message));
   }
 };
 
@@ -3354,11 +3378,11 @@ window.responderSolicitacao = async function (deUid, aceitar) {
     carregarAmigos();
   } catch (e) {
     console.error(e);
-    alert("Erro: " + (e.code || e.message));
+    alertBonito("Erro: " + (e.code || e.message));
   }
 };
 
-window.criarGrupo = () => alert("Em breve: criar grupo.");
+window.criarGrupo = () => alertBonito("Em breve: criar grupo.");
 
   window.sairConta = async () => {  
   try {
@@ -3384,7 +3408,7 @@ window.criarGrupo = () => alert("Em breve: criar grupo.");
     personagemAtual = null;
 
   } catch (e) {
-    alert(tratarErroFirebase(e.code));
+    alertBonito(tratarErroFirebase(e.code));
   }
 };
 
