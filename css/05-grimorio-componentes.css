@@ -85,11 +85,10 @@
     );
 }
 
-#masterIgnea > *:not(.simbolos-bg) {
+#masterIgnea > *:not(.simbolos-bg):not(.folhas-bg) {
   position: relative;
   z-index: 2;
 }
-
 /* =========================================================
    REMOVE QUADRADO FEIO DAS ABAS
 ========================================================= */
@@ -636,7 +635,7 @@
   to   { transform: translate3d(-430px, 320px, 0); }
 }
 
-#masterIgnea > *:not(.simbolos-bg) {
+#masterIgnea > *:not(.simbolos-bg):not(.folhas-bg) {
   position: relative;
   z-index: 2;
 }
