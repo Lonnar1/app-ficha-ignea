@@ -80,15 +80,17 @@ body {
 }
 
 .folhas-bg::before {
-  background-size: 520px auto !important;
-  opacity: 0.015 !important;
-  animation: folhasFicha1 65s linear infinite !important;
+  background-size: 520px auto;
+  opacity: 0.06 !important;
+
+  animation: folhas1 65s linear infinite;
 }
 
 .folhas-bg::after {
-  background-size: 760px auto !important;
-  opacity: 0.01 !important;
-  animation: folhasFicha2 140s linear infinite !important;
+  background-size: 760px auto;
+
+  opacity: 0.04 !important;
+  animation: folhas2 140s linear infinite;
 }
 
 @keyframes folhasFicha1 {
@@ -340,7 +342,7 @@ body {
     radial-gradient(circle at 80% 70%, rgba(170, 40, 30, 0.06), transparent 28%);
 }
 
-#masterIgnea > *:not(.simbolos-bg) {
+#masterIgnea > *:not(.simbolos-bg):not(.folhas-bg) {
   position: relative;
   z-index: 2;
 }
