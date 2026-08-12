@@ -148,10 +148,29 @@
   </div>
 </div>
 
+<div id="modalAcoesMembroOverlay" style="display:none;position:fixed;inset:0;z-index:200000;background:rgba(0,0,0,.78);" onclick="fecharAcoesMembro()"></div>
+<div id="modalAcoesMembro" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:200001;width:min(85vw,300px);background:#120c09;border:1px solid rgba(196,169,91,0.3);border-radius:16px;padding:18px;color:#F8F4E3;font-family:'EB Garamond',serif;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+  <div id="acoesMembroNome" style="font-family:'Cinzel',serif;font-size:15px;color:#E8CC80;margin-bottom:14px;"></div>
+  <button id="acoesMembroBtnPerfil" style="width:100%;margin-bottom:8px;padding:10px;border-radius:8px;border:1px solid rgba(196,169,91,0.3);background:transparent;color:#F0E4D0;font-size:13px;cursor:pointer;">👁 Exibir perfil</button>
+  <button id="acoesMembroBtnAmizade" style="width:100%;margin-bottom:8px;padding:10px;border-radius:8px;border:none;background:#C4A95B;color:#1a0e05;font-weight:bold;font-size:13px;cursor:pointer;">➕ Adicionar amigo</button>
+  <button onclick="fecharAcoesMembro()" style="width:100%;padding:9px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:transparent;color:#9A8A70;font-size:12px;cursor:pointer;">Cancelar</button>
+</div>
+
+<div id="fichaFlutuanteOverlay" style="display:none;position:fixed;inset:0;z-index:90000;background:rgba(0,0,0,.7);" onclick="fecharFichaFlutuante()"></div>
+<div id="fichaFlutuante" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:90001;width:min(90vw,420px);max-height:82vh;background:#FDFAF0;border:1px solid rgba(196,169,91,0.35);border-radius:20px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,0.55);flex-direction:column;">  <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px 6px 14px;border-bottom:1px solid rgba(196,169,91,0.2);flex-shrink:0;">
+    <button onclick="window.trocarFichaFlutuante(-1)" style="background:none;border:none;font-size:20px;color:#8a2c22;cursor:pointer;padding:6px 10px;">‹</button>
+    <span id="fichaFlutuanteContador" style="font-size:11px;color:#7A6A50;letter-spacing:.05em;"></span>
+    <div style="display:flex;align-items:center;">
+      <button onclick="window.trocarFichaFlutuante(1)" style="background:none;border:none;font-size:20px;color:#8a2c22;cursor:pointer;padding:6px 10px;">›</button>
+      <button onclick="fecharFichaFlutuante()" style="background:none;border:none;font-size:18px;color:#7A6A50;cursor:pointer;padding:6px 8px;">✕</button>
+    </div>
+  </div>
+  <div id="fichaFlutuanteConteudo" style="overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:14px;"></div>
+</div>
+
 <div id="modalDarItemMestreOverlay" style="display:none;position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.8);" onclick="fecharDarItemMestre()"></div>
 <div id="modalDarItemMestre" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:100001;width:min(90vw,360px);max-height:75vh;overflow-y:auto;background:#120c09;border:1px solid rgba(196,169,91,0.25);border-radius:14px;padding:18px;color:#F8F4E3;font-family:'EB Garamond',serif;">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-    <span style="font-family:'Cinzel',serif;color:#E8CC80;font-size:15px;">Dar pra quem?</span>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">    <span style="font-family:'Cinzel',serif;color:#E8CC80;font-size:15px;">Dar pra quem?</span>
     <button onclick="fecharDarItemMestre()" style="background:none;border:none;color:#9A8A70;font-size:18px;cursor:pointer;">✕</button>
   </div>
   <div id="listaDarItemMestre" style="display:flex;flex-direction:column;gap:8px;"></div>
