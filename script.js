@@ -303,6 +303,8 @@ let vidaTemp = 0;
 let inventario = [];
 let armas = [];
 let poderes = [];
+let pontosEstilo = 0;
+let bloqueioDevilEstilo = false;
 let profs = {};
 let saves = {};
 let imagemBase64 = "";
@@ -1620,6 +1622,16 @@ function trocarAba(id, btn = null) {
 
   if (!novaAba) return;
 
+  const hudEstilo = document.querySelector(".estilo-topo-fixo");
+  const botoesEstilo = document.querySelector(".botoes-estilo-fixos");
+  if (id === "estilo") {
+    if (hudEstilo) hudEstilo.style.display = "block";
+    if (botoesEstilo) botoesEstilo.style.display = "flex";
+  } else {
+    if (hudEstilo) hudEstilo.style.display = "none";
+    if (botoesEstilo) botoesEstilo.style.display = "none";
+  }
+
   if (abaAtual === novaAba) {
     document
       .querySelectorAll(".tab-btn")
@@ -2668,6 +2680,7 @@ function carregarPersonagem(index) {
     sucessos: [false, false, false],
     falhas: [false, false, false],
   };
+  pontosEstilo = p.pontosEstilo ?? 0;
 
   renderInv();
   renderArmas();
@@ -2685,6 +2698,7 @@ function carregarPersonagem(index) {
   renderDominio();
   restaurarSecoes();
   renderArmaduras();
+  atualizarEstilo();
 
   setTimeout(() => {
   }, 100);
@@ -2747,6 +2761,7 @@ p.nivel = document.getElementById("nivel")?.value || "";
   p.exaustao = exaustao;
   p.morte = morte;
   p.dominio = dominio;
+  p.pontosEstilo = pontosEstilo;
 
   const inspiracao = document.getElementById("inspiracao");
   const dtBase = document.getElementById("dtBase");
@@ -11207,14 +11222,23 @@ if (window.Capacitor?.Plugins?.App) {
 
   document.addEventListener("touchstart", (e) => {
     if (travado) return;
+
     const dentroDaFicha = e.target.closest("#ficha .aba.active");
     if (!dentroDaFicha) return;
-    if (e.target.closest("textarea, input, select, .mapa-viewer, .sheet-monstro")) return;
+
+    if (
+        e.target.closest(
+            "textarea, input, select, .mapa-viewer, .sheet-monstro, #hpBar, #tempBar"
+        )
+    ) {
+        touchando = false;
+        return;
+    }
 
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
     touchando = true;
-  }, { passive: true });
+}, { passive: true });
 
   document.addEventListener("touchend", (e) => {
     if (!touchando || travado) return;
@@ -11240,3 +11264,167 @@ if (window.Capacitor?.Plugins?.App) {
     }
   }, { passive: true });
 })();
+
+/* ================= ESTILO ================= */
+
+const maxEstilo = 10;
+
+const habilidadesPorRankEstilo = {
+  D: {
+    nome: "Impulso Inicial",
+    efeito: () => `Ao atingir seu primeiro golpe, soma ${Math.floor(get("bonusProf") / 2)} no acerto.`
+  },
+  C: {
+    nome: "Golpe Preciso",
+    efeito: "Você soma sua proficiência no dano."
+  },
+  B: {
+    nome: "Armas Aprimoradas",
+    efeito: "Suas armas favoritas se tornam +1, caso já não sejam mágicas, e contam como dano mágico para superar resistências."
+  },
+  A: {
+    nome: "Investida Brutal",
+    efeito: "Seu deslocamento aumenta em 3 metros, e se você se deslocar o máximo de seu deslocamento antes de realizar um ataque, pode abdicar de um ataque para derrubar o alvo com teste de força. A DT é 8 + proficiência + sua Força."
+  },
+  S: {
+    nome: "Esquiva Reativa",
+    efeito: "Você pode gastar sua reação para usar a ação Esquiva ao ser alvo de um ataque. Se evitar algum ataque por esse efeito, pode se mover até 3 metros sem causar ataques de oportunidade."
+  },
+  SS: {
+    nome: "Crítico Aprimorado",
+    efeito: "Sua margem de crítico é reduzida em -1, e caso acerte um golpe crítico com esse efeito ativo, adiciona mais 1 dado do dano da arma e quaisquer efeitos que aumentem dano."
+  },
+  SSS: {
+    nome: "Estilo Supremo",
+    efeito: "Você alcançou o estilo máximo. Sua margem de crítico é reduzida em -2, você causa o dano máximo dos dados adicionais do crítico e, se matar um inimigo com esse efeito ativo, pode realizar um ataque adicional."
+  }
+};
+
+const ordemRanksEstilo = ["D", "C", "B", "A", "S", "SS", "SSS"];
+
+function getRankEstilo(pontos) {
+  if (pontos >= 10) return "SSS";
+  if (pontos >= 7) return "SS";
+  if (pontos >= 5) return "S";
+  if (pontos >= 4) return "A";
+  if (pontos >= 3) return "B";
+  if (pontos >= 2) return "C";
+  if (pontos >= 1) return "D";
+  return null;
+}
+
+function getDanoBaseEstilo() {
+  return 5;
+}
+
+function calcularDanoEstilo() {
+  const danoEl = document.getElementById("danoTotal");
+  const tipoEl = document.getElementById("tipoDano");
+  if (!danoEl || !tipoEl) return;
+
+  let dano = getDanoBaseEstilo();
+  let tipo = "Físico";
+  const rank = getRankEstilo(pontosEstilo);
+  const prof = get("bonusProf");
+
+  if (["C", "B", "A", "S", "SS", "SSS"].includes(rank)) {
+    dano += prof;
+  }
+
+  if (["B", "A", "S", "SS", "SSS"].includes(rank)) {
+    dano += 1;
+    tipo = "Mágico";
+  }
+
+  danoEl.textContent = dano;
+  tipoEl.textContent = tipo;
+  tipoEl.className = tipo === "Mágico" ? "tipo-dano-magico" : "tipo-dano-fisico";
+}
+
+function renderHabilidadesEstilo() {
+  const container = document.getElementById("habilidadesEstilo");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  const rankAtual = getRankEstilo(pontosEstilo);
+  const indexAtual = rankAtual ? ordemRanksEstilo.indexOf(rankAtual) : -1;
+
+  ordemRanksEstilo.forEach((rank, i) => {
+    const habilidade = habilidadesPorRankEstilo[rank];
+    if (!habilidade) return;
+
+    const ativo = rankAtual !== null && i <= indexAtual;
+
+    const card = document.createElement("div");
+    card.className = `habilidade-estilo-card ${ativo ? "ativo" : "bloqueado"}`;
+    card.innerHTML = `
+      <div class="habilidade-estilo-topo">
+        <h4>${habilidade.nome}</h4>
+        <span class="rank-tag-estilo">${rank}</span>
+      </div>
+      <p>${typeof habilidade.efeito === "function" ? habilidade.efeito() : habilidade.efeito}</p>
+      ${!ativo ? `<span class="lock-estilo">🔒 Desbloqueia no rank ${rank}</span>` : ""}
+    `;
+
+    container.appendChild(card);
+  });
+}
+
+function atualizarEstilo() {
+  const pontosEl = document.getElementById("pontosEstilo");
+  const rankEl = document.getElementById("rankEstilo");
+  const barraEl = document.getElementById("progressoEstilo");
+
+  if (!pontosEl || !rankEl || !barraEl) return;
+
+  const rank = getRankEstilo(pontosEstilo);
+
+  pontosEl.textContent = pontosEstilo;
+  barraEl.style.width = `${(pontosEstilo / maxEstilo) * 100}%`;
+
+  rankEl.className = "";
+
+  if (!rank) {
+    rankEl.textContent = "-";
+    rankEl.classList.add("sem-rank");
+  } else {
+    rankEl.textContent = rank;
+    rankEl.classList.add(rank);
+  }
+
+  renderHabilidadesEstilo();
+  calcularDanoEstilo();
+}
+
+function setPontosEstilo(valor) {
+  pontosEstilo = Math.max(0, Math.min(maxEstilo, valor));
+  atualizarEstilo();
+  salvarTudo();
+}
+
+function acertoEstilo() {
+  setPontosEstilo(pontosEstilo + 1);
+}
+
+function erroEstilo() {
+  const rank = getRankEstilo(pontosEstilo);
+  if (!rank) return;
+
+  if (["D", "C", "B", "A"].includes(rank)) {
+    setPontosEstilo(pontosEstilo - 1);
+  } else if (["S", "SS"].includes(rank)) {
+    setPontosEstilo(pontosEstilo - 2);
+  } else if (rank === "SSS") {
+    setPontosEstilo(pontosEstilo - 3);
+  }
+}
+
+function devilEstilo() {
+  if (bloqueioDevilEstilo) return;
+  bloqueioDevilEstilo = true;
+  setPontosEstilo(pontosEstilo + 3);
+  setTimeout(() => {
+    bloqueioDevilEstilo = false;
+  }, 100);
+}
