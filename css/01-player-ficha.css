@@ -5193,3 +5193,13 @@ select {
 .aba.hiding {
   z-index: 2;
 }
+
+#ficha {
+  min-height: 100vh;
+  min-height: 100dvh; /* iOS mais recente calcula certo com dvh */
+}
+
+#tela-inicial {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
