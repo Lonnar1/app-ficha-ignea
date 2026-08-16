@@ -874,6 +874,16 @@
         <div class="status-attr"><label>SAB</label><input id="monstroSab" type="number" value="10" oninput="atualizarModsMaster('monstro')"><span id="monstroModSab">+0</span></div>
         <div class="status-attr"><label>CAR</label><input id="monstroCar" type="number" value="10" oninput="atualizarModsMaster('monstro')"><span id="monstroModCar">+0</span></div>
       </div>
+
+      <div class="criar-campos-duplos">
+        <input id="monstroVelocidade" placeholder="Velocidade (ex: 9m, voo 18m)">
+        <input id="monstroSaves" placeholder="Testes de Resistência (ex: DES +5, CON +7)">
+      </div>
+      <div class="criar-campos-duplos">
+        <input id="monstroSentidos" placeholder="Sentidos (ex: Visão no escuro 18m, Perc. passiva 14)">
+        <input id="monstroIdiomas" placeholder="Idiomas (ex: Comum, Abissal)">
+      </div>
+
       <textarea id="monstroLore" placeholder="Lore / história"></textarea>
 
       <!-- HABILIDADES -->
@@ -897,7 +907,9 @@
       <input type="hidden" id="monstroAtaques">
 
       <textarea id="monstroReacoes" placeholder="Reações (ex: Aparar — reduz 1d6+2 de dano)"></textarea>
-      <textarea id="monstroResistencias" placeholder="Resistências / Imunidades / Vulnerabilidades"></textarea>
+      <textarea id="monstroResistencias" placeholder="Resistências a dano (ex: fogo, contundente não mágico)"></textarea>
+      <textarea id="monstroImunidades" placeholder="Imunidades a dano / condição (ex: veneno, envenenado)"></textarea>
+      <textarea id="monstroVulnerabilidades" placeholder="Vulnerabilidades (ex: radiante)"></textarea>
       <textarea id="monstroDialogos" placeholder="Diálogos (um por linha)"></textarea>
       <label class="master-upload">📷 Imagem do monstro<input id="monstroImagemInput" type="file" accept="image/*" onchange="previewImagemMonstro()"></label>
       <img id="previewMonstro" class="preview-monstro" src="" style="display:none;">
@@ -932,6 +944,16 @@
         <div class="status-attr"><label>SAB</label><input id="bossSab" type="number" value="10" oninput="atualizarModsMaster('boss')"><span id="bossModSab">+0</span></div>
         <div class="status-attr"><label>CAR</label><input id="bossCar" type="number" value="10" oninput="atualizarModsMaster('boss')"><span id="bossModCar">+0</span></div>
       </div>
+
+      <div class="criar-campos-duplos">
+        <input id="bossVelocidade" placeholder="Velocidade (ex: 9m, voo 18m)">
+        <input id="bossSaves" placeholder="Testes de Resistência (ex: DES +5, CON +7)">
+      </div>
+      <div class="criar-campos-duplos">
+        <input id="bossSentidos" placeholder="Sentidos (ex: Visão no escuro 18m, Perc. passiva 14)">
+        <input id="bossIdiomas" placeholder="Idiomas (ex: Comum, Abissal)">
+      </div>
+
       <textarea id="bossLore" placeholder="Lore / história"></textarea>
       <textarea id="bossFases" placeholder="Fases (ex: Fase 1 — 100% HP...)"></textarea>
       <textarea id="bossMecanicas" placeholder="Mecânicas especiais"></textarea>
@@ -958,7 +980,9 @@
 
       <textarea id="bossFraquezas" placeholder="Fraquezas"></textarea>
       <textarea id="bossReacoes" placeholder="Reações lendárias"></textarea>
-      <textarea id="bossResistencias" placeholder="Resistências / Imunidades / Vulnerabilidades"></textarea>
+      <textarea id="bossResistencias" placeholder="Resistências a dano (ex: fogo, contundente não mágico)"></textarea>
+      <textarea id="bossImunidades" placeholder="Imunidades a dano / condição (ex: veneno, envenenado)"></textarea>
+      <textarea id="bossVulnerabilidades" placeholder="Vulnerabilidades (ex: radiante)"></textarea>
       <input id="bossPontoEncontro" placeholder="Ponto de encontro">
       <label class="master-upload" style="display:block; margin-bottom:8px;">📷 Imagem do boss<input id="bossImagemInput" type="file" accept="image/*" onchange="previewImagemBoss()"></label>
       <img id="previewBoss" class="preview-monstro" src="" style="display:none;">
@@ -1042,7 +1066,7 @@
     <div class="criar-form-titulo">Criar Item</div>
     <div class="form-master-limpo">
       <input id="itemMasterNome" placeholder="Nome do item">
-      <select id="itemMasterCategoria" onchange="window.atualizarCamposCategoriaItem()">
+      <select id="itemMasterCategoria">
         <option value="inventario">Item diverso (vai pro inventário)</option>
         <option value="armas">Arma</option>
         <option value="armaduras">Armadura</option>
@@ -1050,14 +1074,17 @@
       <div class="criar-campos-duplos">
         <input id="itemMasterTipo" placeholder="Tipo (arma, armadura...)">
         <select id="itemMasterRaridade">
-          <option value="normal">Normal</option>
+          <option value="comum">Comum</option>
           <option value="incomum">Incomum</option>
           <option value="raro">Raro</option>
-          <option value="reliquia">Relíquia</option>
+          <option value="muitoraro">Muito Raro</option>
+          <option value="lendario">Lendário</option>
         </select>
       </div>
-      <input id="itemMasterDano" placeholder="Dano (ex: 1d8+2)" style="display:none;">
-      <input id="itemMasterCA" placeholder="CA (ex: 16)" style="display:none;">
+      <select id="itemMasterClassificacao">
+        <option value="normal">Item Normal</option>
+        <option value="artefato">Artefato</option>
+      </select>
       <select id="itemMasterSintonia">
         <option value="nao">Sem sintonização</option>
         <option value="sim">Requer sintonização</option>
