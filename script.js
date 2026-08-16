@@ -303,8 +303,6 @@ let vidaTemp = 0;
 let inventario = [];
 let armas = [];
 let poderes = [];
-let pontosEstilo = 0;
-let bloqueioDevilEstilo = false;
 let profs = {};
 let saves = {};
 let imagemBase64 = "";
@@ -1622,16 +1620,6 @@ function trocarAba(id, btn = null) {
 
   if (!novaAba) return;
 
-  const hudEstilo = document.querySelector(".estilo-topo-fixo");
-  const botoesEstilo = document.querySelector(".botoes-estilo-fixos");
-  if (id === "estilo") {
-    if (hudEstilo) hudEstilo.style.display = "block";
-    if (botoesEstilo) botoesEstilo.style.display = "flex";
-  } else {
-    if (hudEstilo) hudEstilo.style.display = "none";
-    if (botoesEstilo) botoesEstilo.style.display = "none";
-  }
-
   if (abaAtual === novaAba) {
     document
       .querySelectorAll(".tab-btn")
@@ -2680,7 +2668,6 @@ function carregarPersonagem(index) {
     sucessos: [false, false, false],
     falhas: [false, false, false],
   };
-  pontosEstilo = p.pontosEstilo ?? 0;
 
   renderInv();
   renderArmas();
@@ -2698,7 +2685,6 @@ function carregarPersonagem(index) {
   renderDominio();
   restaurarSecoes();
   renderArmaduras();
-  atualizarEstilo();
 
   setTimeout(() => {
   }, 100);
@@ -2761,7 +2747,6 @@ p.nivel = document.getElementById("nivel")?.value || "";
   p.exaustao = exaustao;
   p.morte = morte;
   p.dominio = dominio;
-  p.pontosEstilo = pontosEstilo;
 
   const inspiracao = document.getElementById("inspiracao");
   const dtBase = document.getElementById("dtBase");
@@ -5787,8 +5772,14 @@ async function salvarMonstroMestre() {
     lore: document.getElementById("monstroLore")?.value.trim() || "",
     habilidades: document.getElementById("monstroHabilidades")?.value.trim() || "",
     ataques:     document.getElementById("monstroAtaques")?.value.trim()     || "",
+    velocidade: document.getElementById("monstroVelocidade")?.value.trim() || "",
+    saves:      document.getElementById("monstroSaves")?.value.trim() || "",
+    sentidos:   document.getElementById("monstroSentidos")?.value.trim() || "",
+    idiomas:    document.getElementById("monstroIdiomas")?.value.trim() || "",
     reacoes:     document.getElementById("monstroReacoes")?.value.trim()     || "",
     resistencias: document.getElementById("monstroResistencias")?.value.trim() || "",
+    imunidades: document.getElementById("monstroImunidades")?.value.trim() || "",
+    vulnerabilidades: document.getElementById("monstroVulnerabilidades")?.value.trim() || "",
     pontoEncontro: document.getElementById("bossPontoEncontro")?.value.trim() || "",
 
     dialogos: (document.getElementById("monstroDialogos")?.value || "")
@@ -5953,6 +5944,8 @@ function limparFormMonstro() {
     "monstroCa",
     "monstroLore",
     "monstroHabilidades","monstroAtaques","monstroReacoes","monstroResistencias",
+    "monstroVelocidade","monstroSaves","monstroSentidos","monstroIdiomas",
+    "monstroImunidades","monstroVulnerabilidades",
     "monstroDialogos",
     "monstroEncontros"
   ];
@@ -6044,9 +6037,9 @@ function renderMonstrosMestre() {
       return ra !== rb ? ra - rb : (a.nome || "").localeCompare(b.nome || "");
     }
     if (ordenacao === "itens") {
-      const ordemRar = { reliquia: 0, raro: 1, incomum: 2, normal: 3 };
-      const ra = ordemRar[a.raridade] ?? 3;
-      const rb = ordemRar[b.raridade] ?? 3;
+      const ordemRar = { lendario: 0, muitoraro: 1, raro: 2, incomum: 3, comum: 4 };
+      const ra = ordemRar[a.raridade] ?? 4;
+      const rb = ordemRar[b.raridade] ?? 4;
       return ra !== rb ? ra - rb : (a.nome || "").localeCompare(b.nome || "");
     }
     return 0;
@@ -6086,7 +6079,7 @@ function renderMonstrosMestre() {
 
     const badge = { boss:"💀 Boss", item:"⚔️ Item", npc:"🧙 NPC", mapa:"🗺️ Mapa" }[entry._tipo] || "👹 Criatura";
     const subtitulo = entry._tipo === "item"
-      ? [entry.tipo, ({normal:"Normal",incomum:"Incomum",raro:"Raro",reliquia:"Relíquia"})[entry.raridade]].filter(Boolean).join(" · ")
+      ? [entry.tipo, ({comum:"Comum",incomum:"Incomum",raro:"Raro",muitoraro:"Muito Raro",lendario:"Lendário"})[entry.raridade], entry.classificacao === "artefato" ? "Artefato" : ""].filter(Boolean).join(" · ")
       : entry._tipo === "npc"
         ? [entry.raca, entry.classe].filter(Boolean).join(" · ")
         : (entry.tipo || "Tipo não definido");
@@ -6728,7 +6721,7 @@ function _abrirPopupBossCompendio(boss) {
 
 function _abrirPopupItemCompendio(item) {
   window._entradaSessaoAtual = item;
-  const r = {normal:"Normal", incomum:"Incomum", raro:"Raro", reliquia:"Relíquia"};
+  const r = {comum:"Comum", incomum:"Incomum", raro:"Raro", muitoraro:"Muito Raro", lendario:"Lendário"};
 
   const bloco = (titulo, texto) => `
     <div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
@@ -6741,7 +6734,7 @@ function _abrirPopupItemCompendio(item) {
   const conteudo = `
     ${item.imagem ? `<img src="${item.imagem}" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin-bottom:12px;">` : ""}
     <h2 class="sheet-titulo" style="text-align:center;margin-bottom:4px;">${escapeHtml(item.nome)}</h2>
-    <div class="sheet-meta" style="text-align:center;margin-bottom:8px;">${[item.tipo, r[item.raridade]].filter(Boolean).join(" • ")}</div>
+    <div class="sheet-meta" style="text-align:center;margin-bottom:8px;">${[item.tipo, r[item.raridade], item.classificacao === "artefato" ? "✦ Artefato" : ""].filter(Boolean).join(" • ")}</div>
     ${item.sintonia === "sim" ? `<div class="sheet-meta" style="text-align:center;margin-bottom:12px;">✦ Requer sintonização</div>` : ""}
     ${item.efeito    ? bloco("Efeito", escapeHtml(item.efeito)) : ""}
     ${item.descricao ? bloco("Descrição", escapeHtml(item.descricao)) : ""}
@@ -6988,7 +6981,8 @@ function abrirSheetMonstroPadrao(monstro) {
 
     <h2 class="sheet-titulo" style="text-align:center;margin-bottom:4px;">${escapeHtml(monstro.nome)}</h2>
     <div class="sheet-meta" style="text-align:center;margin-bottom:8px;">${escapeHtml(monstro.tipo || "Tipo não definido")} · ${escapeHtml(monstro.regiao || "Região não definida")}</div>
-    <div class="sheet-hp-ca" style="text-align:center;margin-bottom:12px;">HP ${monstro.hpAtual}/${monstro.hpMax} · CA ${monstro.ca || 0}</div>
+    <div class="sheet-hp-ca" style="text-align:center;margin-bottom:12px;">HP ${monstro.hpAtual}/${monstro.hpMax} · CA ${monstro.ca || 0}${monstro.velocidade ? " · Vel " + escapeHtml(monstro.velocidade) : ""}</div>
+    ${monstro.saves ? `<div class="sheet-meta" style="text-align:center;margin-bottom:8px;">Testes: ${escapeHtml(monstro.saves)}</div>` : ""}
 
     <div class="sheet-status-grid" style="margin-bottom:12px;">
       <div>FOR<br>${monstro.status?.for||10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.for||10))}</small></div>
@@ -7015,9 +7009,27 @@ function abrirSheetMonstroPadrao(monstro) {
     </div>` : ""}
     ${monstro.resistencias ? `<div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
       <div style="background:#D4C9A8;padding:7px 12px;text-align:center;">
-        <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">Resistências / Imunidades</span>
+        <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">Resistências</span>
       </div>
       <div style="padding:10px 14px;font-size:13px;color:#2A1A10;line-height:1.6;">${formatarTexto(monstro.resistencias)}</div>
+    </div>` : ""}
+    ${monstro.imunidades ? `<div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
+      <div style="background:#D4C9A8;padding:7px 12px;text-align:center;">
+        <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">Imunidades</span>
+      </div>
+      <div style="padding:10px 14px;font-size:13px;color:#2A1A10;line-height:1.6;">${formatarTexto(monstro.imunidades)}</div>
+    </div>` : ""}
+    ${monstro.vulnerabilidades ? `<div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
+      <div style="background:#D4C9A8;padding:7px 12px;text-align:center;">
+        <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">Vulnerabilidades</span>
+      </div>
+      <div style="padding:10px 14px;font-size:13px;color:#2A1A10;line-height:1.6;">${formatarTexto(monstro.vulnerabilidades)}</div>
+    </div>` : ""}
+    ${(monstro.sentidos || monstro.idiomas) ? `<div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
+      <div style="background:#D4C9A8;padding:7px 12px;text-align:center;">
+        <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">Sentidos e Idiomas</span>
+      </div>
+      <div style="padding:10px 14px;font-size:13px;color:#2A1A10;line-height:1.6;">${monstro.sentidos ? "Sentidos: " + escapeHtml(monstro.sentidos) : ""}${monstro.sentidos && monstro.idiomas ? "<br>" : ""}${monstro.idiomas ? "Idiomas: " + escapeHtml(monstro.idiomas) : ""}</div>
     </div>` : ""}
     ${monstro.fraquezas ? `<div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);"><div style="background:#D4C9A8;padding:7px 12px;text-align:center;"><span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">Fraquezas</span></div><div style="padding:10px 14px;font-size:13px;color:#2A1A10;line-height:1.6;">${formatarTexto(monstro.fraquezas)}</div></div>` : ""}
     ${bloco("Diálogos", monstro.dialogos?.length ? monstro.dialogos.map(f => `"${escapeHtml(f)}"`).join("<br>") : "Sem falas cadastradas.")}
@@ -7191,12 +7203,18 @@ async function salvarBossMestre() {
       sab: parseInt(document.getElementById("bossSab")?.value) || 10,
       car: parseInt(document.getElementById("bossCar")?.value) || 10,
     },
+    velocidade: document.getElementById("bossVelocidade")?.value.trim() || "",
+    saves:      document.getElementById("bossSaves")?.value.trim() || "",
+    sentidos:   document.getElementById("bossSentidos")?.value.trim() || "",
+    idiomas:    document.getElementById("bossIdiomas")?.value.trim() || "",
     lore:        document.getElementById("bossLore")?.value.trim()        || "",
     habilidades: document.getElementById("bossHabilidades")?.value.trim()  || "",
     fraquezas:   document.getElementById("bossFraquezas")?.value.trim()    || "",
     ataques:     document.getElementById("bossAtaques")?.value.trim()      || "",
     reacoes:     document.getElementById("bossReacoes")?.value.trim()      || "",
     resistencias:document.getElementById("bossResistencias")?.value.trim() || "",
+    imunidades: document.getElementById("bossImunidades")?.value.trim() || "",
+    vulnerabilidades: document.getElementById("bossVulnerabilidades")?.value.trim() || "",
     ...(window._imagemBossBase64
     ? await uploadImagemFirebase(window._imagemBossBase64, `bosses/${Date.now()}.jpg`).then(r => ({ imagem: r.url, imagemDeleteUrl: r.deleteUrl }))
     : { imagem: "", imagemDeleteUrl: "" }),
@@ -7209,7 +7227,9 @@ async function salvarBossMestre() {
   _renderItemForm("bossAtaquesList",[],"removerAtaqueBoss","bossAtaques");
   _renderItemForm("bossHabilidadesList",[],"removerHabilidadeBoss","bossHabilidades");
   ["bossNome","bossTipo","bossRegiao","bossHpMax","bossHpAtual","bossCa",
-   "bossLore","bossHabilidades","bossFraquezas","bossAtaques","bossReacoes","bossResistencias", "bossPontoEncontro"].forEach(id => {
+   "bossVelocidade","bossSaves","bossSentidos","bossIdiomas",
+   "bossLore","bossHabilidades","bossFraquezas","bossAtaques","bossReacoes","bossResistencias",
+   "bossImunidades","bossVulnerabilidades", "bossPontoEncontro"].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = "";
   });
   const preview = document.getElementById("previewBoss");
@@ -7269,7 +7289,8 @@ async function salvarItemMestre() {
     dano:      document.getElementById("itemMasterDano")?.value.trim() || "",
     ca:        document.getElementById("itemMasterCA")?.value.trim() || "",
     tipo:      document.getElementById("itemMasterTipo")?.value.trim() || "",
-    raridade:  document.getElementById("itemMasterRaridade")?.value || "normal",
+    raridade:  document.getElementById("itemMasterRaridade")?.value || "comum",
+    classificacao: document.getElementById("itemMasterClassificacao")?.value || "normal",
     sintonia:  document.getElementById("itemMasterSintonia")?.value || "nao",
     efeito:    document.getElementById("itemMasterEfeito")?.value.trim() || "",
     descricao: document.getElementById("itemMasterDescricao")?.value.trim() || "",
@@ -11222,23 +11243,14 @@ if (window.Capacitor?.Plugins?.App) {
 
   document.addEventListener("touchstart", (e) => {
     if (travado) return;
-
     const dentroDaFicha = e.target.closest("#ficha .aba.active");
     if (!dentroDaFicha) return;
-
-    if (
-        e.target.closest(
-            "textarea, input, select, .mapa-viewer, .sheet-monstro, #hpBar, #tempBar"
-        )
-    ) {
-        touchando = false;
-        return;
-    }
+    if (e.target.closest("textarea, input, select, .mapa-viewer, .sheet-monstro")) return;
 
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
     touchando = true;
-}, { passive: true });
+  }, { passive: true });
 
   document.addEventListener("touchend", (e) => {
     if (!touchando || travado) return;
@@ -11264,167 +11276,3 @@ if (window.Capacitor?.Plugins?.App) {
     }
   }, { passive: true });
 })();
-
-/* ================= ESTILO ================= */
-
-const maxEstilo = 10;
-
-const habilidadesPorRankEstilo = {
-  D: {
-    nome: "Impulso Inicial",
-    efeito: () => `Ao atingir seu primeiro golpe, soma ${Math.floor(get("bonusProf") / 2)} no acerto.`
-  },
-  C: {
-    nome: "Golpe Preciso",
-    efeito: "Você soma sua proficiência no dano."
-  },
-  B: {
-    nome: "Armas Aprimoradas",
-    efeito: "Suas armas favoritas se tornam +1, caso já não sejam mágicas, e contam como dano mágico para superar resistências."
-  },
-  A: {
-    nome: "Investida Brutal",
-    efeito: "Seu deslocamento aumenta em 3 metros, e se você se deslocar o máximo de seu deslocamento antes de realizar um ataque, pode abdicar de um ataque para derrubar o alvo com teste de força. A DT é 8 + proficiência + sua Força."
-  },
-  S: {
-    nome: "Esquiva Reativa",
-    efeito: "Você pode gastar sua reação para usar a ação Esquiva ao ser alvo de um ataque. Se evitar algum ataque por esse efeito, pode se mover até 3 metros sem causar ataques de oportunidade."
-  },
-  SS: {
-    nome: "Crítico Aprimorado",
-    efeito: "Sua margem de crítico é reduzida em -1, e caso acerte um golpe crítico com esse efeito ativo, adiciona mais 1 dado do dano da arma e quaisquer efeitos que aumentem dano."
-  },
-  SSS: {
-    nome: "Estilo Supremo",
-    efeito: "Você alcançou o estilo máximo. Sua margem de crítico é reduzida em -2, você causa o dano máximo dos dados adicionais do crítico e, se matar um inimigo com esse efeito ativo, pode realizar um ataque adicional."
-  }
-};
-
-const ordemRanksEstilo = ["D", "C", "B", "A", "S", "SS", "SSS"];
-
-function getRankEstilo(pontos) {
-  if (pontos >= 10) return "SSS";
-  if (pontos >= 7) return "SS";
-  if (pontos >= 5) return "S";
-  if (pontos >= 4) return "A";
-  if (pontos >= 3) return "B";
-  if (pontos >= 2) return "C";
-  if (pontos >= 1) return "D";
-  return null;
-}
-
-function getDanoBaseEstilo() {
-  return 5;
-}
-
-function calcularDanoEstilo() {
-  const danoEl = document.getElementById("danoTotal");
-  const tipoEl = document.getElementById("tipoDano");
-  if (!danoEl || !tipoEl) return;
-
-  let dano = getDanoBaseEstilo();
-  let tipo = "Físico";
-  const rank = getRankEstilo(pontosEstilo);
-  const prof = get("bonusProf");
-
-  if (["C", "B", "A", "S", "SS", "SSS"].includes(rank)) {
-    dano += prof;
-  }
-
-  if (["B", "A", "S", "SS", "SSS"].includes(rank)) {
-    dano += 1;
-    tipo = "Mágico";
-  }
-
-  danoEl.textContent = dano;
-  tipoEl.textContent = tipo;
-  tipoEl.className = tipo === "Mágico" ? "tipo-dano-magico" : "tipo-dano-fisico";
-}
-
-function renderHabilidadesEstilo() {
-  const container = document.getElementById("habilidadesEstilo");
-  if (!container) return;
-
-  container.innerHTML = "";
-
-  const rankAtual = getRankEstilo(pontosEstilo);
-  const indexAtual = rankAtual ? ordemRanksEstilo.indexOf(rankAtual) : -1;
-
-  ordemRanksEstilo.forEach((rank, i) => {
-    const habilidade = habilidadesPorRankEstilo[rank];
-    if (!habilidade) return;
-
-    const ativo = rankAtual !== null && i <= indexAtual;
-
-    const card = document.createElement("div");
-    card.className = `habilidade-estilo-card ${ativo ? "ativo" : "bloqueado"}`;
-    card.innerHTML = `
-      <div class="habilidade-estilo-topo">
-        <h4>${habilidade.nome}</h4>
-        <span class="rank-tag-estilo">${rank}</span>
-      </div>
-      <p>${typeof habilidade.efeito === "function" ? habilidade.efeito() : habilidade.efeito}</p>
-      ${!ativo ? `<span class="lock-estilo">🔒 Desbloqueia no rank ${rank}</span>` : ""}
-    `;
-
-    container.appendChild(card);
-  });
-}
-
-function atualizarEstilo() {
-  const pontosEl = document.getElementById("pontosEstilo");
-  const rankEl = document.getElementById("rankEstilo");
-  const barraEl = document.getElementById("progressoEstilo");
-
-  if (!pontosEl || !rankEl || !barraEl) return;
-
-  const rank = getRankEstilo(pontosEstilo);
-
-  pontosEl.textContent = pontosEstilo;
-  barraEl.style.width = `${(pontosEstilo / maxEstilo) * 100}%`;
-
-  rankEl.className = "";
-
-  if (!rank) {
-    rankEl.textContent = "-";
-    rankEl.classList.add("sem-rank");
-  } else {
-    rankEl.textContent = rank;
-    rankEl.classList.add(rank);
-  }
-
-  renderHabilidadesEstilo();
-  calcularDanoEstilo();
-}
-
-function setPontosEstilo(valor) {
-  pontosEstilo = Math.max(0, Math.min(maxEstilo, valor));
-  atualizarEstilo();
-  salvarTudo();
-}
-
-function acertoEstilo() {
-  setPontosEstilo(pontosEstilo + 1);
-}
-
-function erroEstilo() {
-  const rank = getRankEstilo(pontosEstilo);
-  if (!rank) return;
-
-  if (["D", "C", "B", "A"].includes(rank)) {
-    setPontosEstilo(pontosEstilo - 1);
-  } else if (["S", "SS"].includes(rank)) {
-    setPontosEstilo(pontosEstilo - 2);
-  } else if (rank === "SSS") {
-    setPontosEstilo(pontosEstilo - 3);
-  }
-}
-
-function devilEstilo() {
-  if (bloqueioDevilEstilo) return;
-  bloqueioDevilEstilo = true;
-  setPontosEstilo(pontosEstilo + 3);
-  setTimeout(() => {
-    bloqueioDevilEstilo = false;
-  }, 100);
-}
