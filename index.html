@@ -2,8 +2,8 @@
 <html lang="pt-br">
   <head>
     <link rel="manifest" href="manifest.json" />
-    <link rel="icon" href="icon-512.png" />
-    <link rel="apple-touch-icon" href="icon-512.png" />
+    <link rel="icon" href="img/icon-192.png" />
+    <link rel="apple-touch-icon" href="img/icon-192.png" />
     <meta name="theme-color" content="#1a1410" />
     <meta charset="UTF-8" />
     <meta
@@ -1244,16 +1244,6 @@
               <select id="racaSelect" onchange="aoMudarRaca()">
                 <option value="" selected>Selecionar raça</option>
                 <option value="custom">Raças personalizadas</option>
-                <option value="humano">Humano</option>
-                <option value="elfo">Elfo</option>
-                <option value="anao">Anão</option>
-                <option value="halfling">Halfling</option>
-                <option value="meio_elfo">Meio-Elfo</option>
-                <option value="meio_orc">Meio-Orc</option>
-                <option value="draconato">Draconato</option>
-                <option value="tiefling">Tiefling</option>
-                <option value="gnomo">Gnomo</option>
-                <option value="tritao">Tritão</option>
               </select>
             </div>
 
@@ -1389,7 +1379,7 @@
                 id="forca"
                 type="number"
                 min="1"
-                max="20"
+                max="30"
                 value="10"
                 oninput="
                   limitarAtributo(this);
@@ -1775,7 +1765,7 @@
             class="titulo-secao titulo-toggle"
             onclick="toggleSecao('boxMorte', this)"
           >
-            <span>Pontos de Morte</span>
+            <span>Teste de morte</span>
             <span class="setinha">▼</span>
           </h2>
 
@@ -3518,6 +3508,7 @@ window.criarGrupo = () => alertBonito("Em breve: criar grupo.");
     await carregarFichasDaNuvem();
     await carregarMonstrosDaNuvem();
     await carregarCampanhasMasterFirebase();
+    await migrarCompendioParaGlobal();
 
     setTimeout(() => {
       if (typeof window.carregarGruposParaCampanha === "function") window.carregarGruposParaCampanha();
