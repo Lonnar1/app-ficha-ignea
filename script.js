@@ -138,10 +138,7 @@ const EMAILS_VIP = [
   "dinizpqp123@gmail.com", 
   "sparda.nb@gmail.com",
   "araibruna@gmail.com",
-  "pedropian001@gmail.com",
-  "vitorlunardi92@gmail.com",
-  "xiuuososubliminals@gmail.com",
-  "nicolastresca@gmail.com"
+  "pedropian001@gmail.com"
 ];
 
 function getPlanoUsuario() {
@@ -368,34 +365,14 @@ const pericias = [
   { nome: "Sobrevivência", attr: "sabedoria" },
 ];
 
-const racas = {
-  custom: {},
-  humano: {
-    forca: 1,
-    destreza: 1,
-    constituicao: 1,
-    inteligencia: 1,
-    sabedoria: 1,
-    carisma: 1,
-  },
-  elfo: { destreza: 2 },
-  anao: { constituicao: 2 },
-  halfling: { destreza: 2 },
-  meio_elfo: { carisma: 2, destreza: 1 },
-  meio_orc: { forca: 2, constituicao: 1 },
-  draconato: { forca: 2, carisma: 1 },
-  tiefling: { carisma: 2, inteligencia: 1 },
-  gnomo: { inteligencia: 2 },
-  tritao: { forca: 1, constituicao: 1, carisma: 1 },
-};
 
 const efeitosExaustao = [
   "Sem exaustão",
-  "Desvantagem em testes de habilidade",
-  "Metade da velocidade",
-  "Desvantagem em ataques e testes de resistência",
-  "Metade do HP máximo",
-  "Velocidade = 0",
+  "Desvantagem em testes de atributo",
+  "Deslocamento reduzido pela metade ",
+  "Desvantagem em jogadas de ataque e salvaguardas",
+  "Pontos de vida maximos reduzidos pela metade",
+  "Deslocamento reduzido a 0",
   "Morte",
 ];
 
@@ -624,6 +601,9 @@ function carregarDadosCampanhaAtual() {
   }, 80);
 }
 
+
+const racas = {};
+
 function getAtributoFinal(attr) {
   const base = get(attr);
   const racaSelect = document.getElementById("racaSelect")?.value || "";
@@ -637,7 +617,7 @@ function getAtributoFinal(attr) {
     bonusRaca = racas[racaSelect]?.[attr] || 0;
   }
 
-  return Math.min(base + bonusRaca, 20);
+  return base + bonusRaca;
 }
 
 function atualizarAtributosFinaisVisuais() {
@@ -821,7 +801,22 @@ function atualizarModsMaster(tipo) {
 
     const valor = parseInt(input.value) || 10;
 
-    const mod = Math.floor((valor - 10) / 2);
+    const mod =
+  valor <= 1 ? -5 :
+  valor <= 3 ? -4 :
+  valor <= 5 ? -3 :
+  valor <= 7 ? -2 :
+  valor <= 9 ? -1 :
+  valor <= 11 ? 0 :
+  valor <= 13 ? 1 :
+  valor <= 15 ? 2 :
+  valor <= 17 ? 3 :
+  valor <= 19 ? 4 :
+  valor <= 21 ? 5 :
+  valor <= 23 ? 6 :
+  valor <= 25 ? 7 :
+  valor <= 27 ? 8 :
+  valor <= 29 ? 9 : 10;
 
     const span = document.getElementById(tipo + "Mod" + attr);
 
@@ -4905,7 +4900,7 @@ function limitarAtributo(input) {
   let valor = parseInt(input.value);
 
   if (isNaN(valor)) return;
-  if (valor > 20) input.value = 20;
+  if (valor > 30) input.value = 30;
   if (valor < 1) input.value = 1;
 }
 
@@ -5416,6 +5411,7 @@ window.combatesMestre = JSON.parse(localStorage.getItem("combatesMestre")) || []
 let combatesMestre = window.combatesMestre;
 
 let editandoMonstroMestre = -1;
+let editandoItemMestre = -1;
 let imagemMonstroBase64 = "";
 let sheetMonstroIndexAtual = null;
 let listaSheetCompendio = [];
@@ -5993,11 +5989,11 @@ function renderMonstrosMestre() {
 
   const campanha = campanhasMaster?.[campanhaAtualMaster] || {};
 
-  const monstrosBase = [...(compendioPadrao || []), ...(monstrosMestre || [])];
-  const bossesBase   = [...(bossesPadrao || []), ...(campanha.bosses || []).map(b => ({ ...b, _tipo: "boss" }))];
-  const itensBase    = [...(itensPadrao || []), ...(campanha.itensMaster || []).map(i => ({ ...i, _tipo: "item" }))];
-  const npcsBase = [...(npcsPadrao || []), ...(campanha.npcs || []).map(n => ({ ...n, _tipo: "npc" }))];
-  const mapasBase = (campanha.mapasMaster || []).map(m => ({ ...m, _tipo: "mapa" }));
+    const monstrosBase = [...(compendioPadrao || []), ...(monstrosMestre || []).filter(m => !m._tipo)];
+  const bossesBase   = [...(bossesPadrao || []), ...(monstrosMestre || []).filter(m => m._tipo === "boss")];
+  const itensBase    = [...(itensPadrao || []), ...(monstrosMestre || []).filter(m => m._tipo === "item")];
+  const npcsBase = [...(npcsPadrao || []), ...(monstrosMestre || []).filter(m => m._tipo === "npc")];
+  const mapasBase = (monstrosMestre || []).filter(m => m._tipo === "mapa");
 
   let listaCompleta;
   switch (_filtroCompendio) {
@@ -6066,7 +6062,7 @@ function renderMonstrosMestre() {
   listaFiltrada.forEach((entry, index) => {
     const card = document.createElement("div");
     card.className = "compendio-card";
-    card.style.backgroundImage = `url("${entry.imagem || "icon-512.png"}")`;
+    card.style.backgroundImage = `url("${entry.imagem || "icon-192.png"}")`;
 
     card.onclick = () => {
       const tipo = entry._tipo;
@@ -6637,11 +6633,13 @@ async function excluirEntradaCompendio(tipo, id) {
       campanha.bosses = (campanha.bosses || []).filter(b => b.id !== id);
       salvarCampanhasMaster();
     }
-  } else if (tipo === "item") {
-    const item = (campanha.itensMaster || []).find(i => i.id === id);
-    await deletarImagem(item?.imagemDeleteUrl);
-    campanha.itensMaster = (campanha.itensMaster || []).filter(i => i.id !== id);
-    salvarCampanhasMaster();
+    } else if (tipo === "item") {
+    const idx = monstrosMestre.findIndex(m => m.id === id && m._tipo === "item");
+    if (idx !== -1) {
+      await deletarImagem(monstrosMestre[idx].imagemDeleteUrl);
+      monstrosMestre.splice(idx, 1);
+      salvarMonstrosMestreStorage();
+    }
   } else if (tipo === "npc") {
     const npc = (campanha.npcs || []).find(n => n.id === id);
     await deletarImagem(npc?.imagemDeleteUrl);
@@ -6743,8 +6741,9 @@ function _abrirPopupItemCompendio(item) {
     ${item.descricao ? bloco("Descrição", escapeHtml(item.descricao)) : ""}
     ${item.historia  ? bloco("História", escapeHtml(item.historia)) : ""}
     ${item.origem    ? bloco("Origem", escapeHtml(item.origem)) : ""}
-<button style="width:100%;margin-top:4px;margin-bottom:8px;background:#C4A95B!important;border:none!important;border-radius:8px;color:#1a0e05!important;font-weight:bold;padding:10px;font-size:13px;cursor:pointer;" onclick="window.abrirDarItemMestre('${item.id}')">🎁 Dar pra jogador</button>    <button style="width:100%;margin-top:4px;background:rgba(143,34,34,0.8)!important;border:none!important;border-radius:8px;color:#fff!important;padding:10px;font-size:13px;cursor:pointer;" onclick="excluirEntradaCompendio('item',${item.id})">🗑 Excluir Item</button>
-  `;
+    ${item._origem === "usuario" ? `<button style="width:100%;margin-top:4px;background:rgba(196,169,91,0.2)!important;border:1px solid rgba(196,169,91,0.4)!important;border-radius:8px;color:#C4A95B!important;padding:10px;font-size:13px;cursor:pointer;" onclick="editarItemMestre(${item.id})">✏️ Editar</button>` : ""}
+    <button style="width:100%;margin-top:4px;margin-bottom:8px;background:#C4A95B!important;border:none!important;border-radius:8px;color:#1a0e05!important;font-weight:bold;padding:10px;font-size:13px;cursor:pointer;" onclick="window.abrirDarItemMestre('${item.id}')">🎁 Dar pra jogador</button>
+    <button style="width:100%;margin-top:4px;background:rgba(143,34,34,0.8)!important;border:none!important;border-radius:8px;color:#fff!important;padding:10px;font-size:13px;cursor:pointer;" onclick="excluirEntradaCompendio('item',${item.id})">🗑 Excluir Item</button>  `;
   _abrirSheetCustom(conteudo);
 }
 
@@ -6945,17 +6944,111 @@ function _abrirSheetCustom(conteudo) {
 function criarCopiaEditavelMonstroPadrao(monstro) {
   const copia = JSON.parse(JSON.stringify(monstro));
 
-  copia.id = Date.now();
-  copia.origem = "usuario";
-  copia.nome = `${monstro.nome} personalizado`;
-  delete copia._tipo; // remove _tipo para não confundir com boss/npc/item
+  fecharSheetMonstro();
 
-  monstrosMestre.push(copia);
-  salvarMonstrosMestreStorage();
-  renderMonstrosMestre();
+  document.getElementById("bossNome").value =
+    `${monstro.nome} personalizado`;
 
-  const indexNovo = monstrosMestre.length - 1;
-  editarMonstroMestre(indexNovo);
+  document.getElementById("bossTipo").value =
+    monstro.tipo || "";
+
+  document.getElementById("bossRegiao").value =
+    monstro.regiao || "";
+
+  document.getElementById("bossHpMax").value =
+    monstro.hpMax || 0;
+
+  document.getElementById("bossHpAtual").value =
+    monstro.hpAtual || monstro.hpMax || 0;
+
+  document.getElementById("bossCa").value =
+    monstro.ca || 0;
+
+  document.getElementById("bossFor").value =
+    monstro.status?.for || 10;
+
+  document.getElementById("bossDes").value =
+    monstro.status?.des || 10;
+
+  document.getElementById("bossCon").value =
+    monstro.status?.con || 10;
+
+  document.getElementById("bossInt").value =
+    monstro.status?.int || 10;
+
+  document.getElementById("bossSab").value =
+    monstro.status?.sab || 10;
+
+  document.getElementById("bossCar").value =
+    monstro.status?.car || 10;
+
+  document.getElementById("bossVelocidade").value =
+    monstro.velocidade || "";
+
+  document.getElementById("bossSaves").value =
+    monstro.saves || "";
+
+  document.getElementById("bossSentidos").value =
+    monstro.sentidos || "";
+
+  document.getElementById("bossIdiomas").value =
+    monstro.idiomas || "";
+
+  document.getElementById("bossLore").value =
+    monstro.lore || "";
+
+  document.getElementById("bossHabilidades").value =
+    monstro.habilidades || "";
+
+  document.getElementById("bossFraquezas").value =
+    monstro.fraquezas || "";
+
+  document.getElementById("bossAtaques").value =
+    monstro.ataques || "";
+
+  document.getElementById("bossReacoes").value =
+    monstro.reacoes || "";
+
+  document.getElementById("bossResistencias").value =
+    monstro.resistencias || "";
+
+  document.getElementById("bossImunidades").value =
+    monstro.imunidades || "";
+
+  document.getElementById("bossVulnerabilidades").value =
+    monstro.vulnerabilidades || "";
+
+  window._imagemBossBase64 = "";
+  window._imagemBossCopiaOriginal = monstro.imagem || "";
+
+  const preview = document.getElementById("previewBoss");
+
+  if (preview && monstro.imagem) {
+    preview.src = monstro.imagem;
+    preview.style.display = "block";
+  }
+
+  _bossAtaquesForm = [];
+  _bossHabilidadesForm = [];
+
+  const btnBoss = document.querySelectorAll(".criar-tipo-btn")[1];
+
+  trocarTipoCriar("boss", btnBoss);
+
+  const btnCriar = document.querySelector(
+    '.master-tab-btn[title="Criar"]'
+  );
+
+  trocarAbaMaster("criar", btnCriar);
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+
+  mostrarToastMundo(
+    "Cópia aberta para edição. Salve o Boss quando terminar."
+  );
 }
 
 function abrirSheetMonstroPadrao(monstro) {
@@ -7179,6 +7272,55 @@ function iniciarDragSheet(e) {
   sheet.style.transition = "none";
 }
 
+
+function editarBossMestre(index) {
+  const boss = monstrosMestre[index];
+  if (!boss) return;
+
+  fecharSheetMonstro();
+
+  document.getElementById("bossNome").value = boss.nome || "";
+  document.getElementById("bossTipo").value = boss.tipo || "";
+  document.getElementById("bossRegiao").value = boss.regiao || "";
+  document.getElementById("bossHpMax").value = boss.hpMax || 0;
+  document.getElementById("bossHpAtual").value = boss.hpAtual || 0;
+  document.getElementById("bossCa").value = boss.ca || 0;
+
+  document.getElementById("bossFor").value = boss.status?.for || 10;
+  document.getElementById("bossDes").value = boss.status?.des || 10;
+  document.getElementById("bossCon").value = boss.status?.con || 10;
+  document.getElementById("bossInt").value = boss.status?.int || 10;
+  document.getElementById("bossSab").value = boss.status?.sab || 10;
+  document.getElementById("bossCar").value = boss.status?.car || 10;
+
+  document.getElementById("bossVelocidade").value = boss.velocidade || "";
+  document.getElementById("bossSaves").value = boss.saves || "";
+  document.getElementById("bossSentidos").value = boss.sentidos || "";
+  document.getElementById("bossIdiomas").value = boss.idiomas || "";
+  document.getElementById("bossLore").value = boss.lore || "";
+  document.getElementById("bossHabilidades").value = boss.habilidades || "";
+  document.getElementById("bossFraquezas").value = boss.fraquezas || "";
+  document.getElementById("bossAtaques").value = boss.ataques || "";
+  document.getElementById("bossReacoes").value = boss.reacoes || "";
+  document.getElementById("bossResistencias").value = boss.resistencias || "";
+  document.getElementById("bossImunidades").value = boss.imunidades || "";
+  document.getElementById("bossVulnerabilidades").value = boss.vulnerabilidades || "";
+
+  const preview = document.getElementById("previewBoss");
+  if (preview && boss.imagem) {
+    preview.src = boss.imagem;
+    preview.style.display = "block";
+  }
+
+  const btnBoss = document.querySelectorAll(".criar-tipo-btn")[1];
+  trocarTipoCriar("boss", btnBoss);
+
+  const btnCriar = document.querySelectorAll(".master-tab-btn")[3];
+  trocarAbaMaster("criar", btnCriar);
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
 async function salvarBossMestre() {
   const nome = document.getElementById("bossNome")?.value.trim();
   if (!nome) { alertBonito("Coloque o nome do boss."); return; }
@@ -7190,9 +7332,8 @@ async function salvarBossMestre() {
   const campanha = campanhasMaster[campanhaAtualMaster];
   if (!campanha) { alertBonito("Campanha não encontrada."); return; }
 
-  campanha.bosses ||= [];
-  campanha.bosses.push({
-    id: Date.now(), _tipo: "boss", nome,
+    monstrosMestre.push({
+    id: Date.now(), _tipo: "boss", origem: "usuario", nome,
     tipo:       document.getElementById("bossTipo")?.value.trim() || "",
     regiao:     document.getElementById("bossRegiao")?.value.trim() || "",
     hpMax:      parseInt(document.getElementById("bossHpMax")?.value) || 0,
@@ -7223,7 +7364,7 @@ async function salvarBossMestre() {
     : { imagem: "", imagemDeleteUrl: "" }),
   });
 
-  salvarCampanhasMaster();
+  salvarMonstrosMestreStorage();
   renderMonstrosMestre();
 
   _bossAtaquesForm = []; _bossHabilidadesForm = [];
@@ -7241,6 +7382,39 @@ async function salvarBossMestre() {
   mostrarToastMundo("Boss salvo!");
 }
 
+async function migrarCompendioParaGlobal() {
+  if (localStorage.getItem("compendioMigrado") === "sim") return;
+
+  let migrouAlgo = false;
+
+  for (const campanha of campanhasMaster) {
+    const tipos = [
+      { chave: "bosses", tipo: "boss" },
+      { chave: "itensMaster", tipo: "item" },
+      { chave: "npcs", tipo: "npc" },
+      { chave: "mapasMaster", tipo: "mapa" },
+    ];
+
+    for (const { chave, tipo } of tipos) {
+      const lista = campanha[chave] || [];
+      lista.forEach((entrada) => {
+        entrada._tipo = tipo;
+        entrada.origem = entrada.origem || "usuario";
+        monstrosMestre.push(entrada);
+        migrouAlgo = true;
+      });
+      campanha[chave] = [];
+    }
+  }
+
+  if (migrouAlgo) {
+    salvarMonstrosMestreStorage();
+    salvarCampanhasMaster();
+  }
+
+  localStorage.setItem("compendioMigrado", "sim");
+}
+
 async function salvarMapaMestre() {
   const nome = document.getElementById("mapaMasterNome")?.value.trim();
   if (!nome) { alertBonito("Coloque o nome do mapa."); return; }
@@ -7252,16 +7426,15 @@ async function salvarMapaMestre() {
   const campanha = campanhasMaster[campanhaAtualMaster];
   if (!campanha) { alertBonito("Campanha não encontrada."); return; }
 
-  campanha.mapasMaster ||= [];
-  campanha.mapasMaster.push({
-    id: Date.now(), _tipo: "mapa", nome,
+    monstrosMestre.push({
+    id: Date.now(), _tipo: "mapa", _origem: "usuario", nome,
     desc: document.getElementById("mapaMasterDesc")?.value.trim() || "",
     ...(window._imagemMapaMestreBase64
     ? await uploadImagemFirebase(window._imagemMapaMestreBase64, `mapas/${Date.now()}.jpg`).then(r => ({ imagem: r.url, imagemDeleteUrl: r.deleteUrl }))
     : { imagem: "", imagemDeleteUrl: "" }),
   });
 
-  salvarCampanhasMaster();
+    salvarMonstrosMestreStorage();
   renderMonstrosMestre();
 
   document.getElementById("mapaMasterNome").value = "";
@@ -7285,26 +7458,36 @@ async function salvarItemMestre() {
   const campanha = campanhasMaster[campanhaAtualMaster];
   if (!campanha) { alertBonito("Campanha não encontrada."); return; }
 
-  campanha.itensMaster ||= [];
-  campanha.itensMaster.push({
-    id: Date.now(), _tipo: "item", nome,
-    categoria: document.getElementById("itemMasterCategoria")?.value || "inventario",
-    dano:      document.getElementById("itemMasterDano")?.value.trim() || "",
-    ca:        document.getElementById("itemMasterCA")?.value.trim() || "",
+   const itemAnterior = editandoItemMestre >= 0 ? monstrosMestre[editandoItemMestre] : null;
+
+  const novoItem = {
+    id: itemAnterior ? itemAnterior.id : Date.now(),
+    _tipo: "item", _origem: "usuario", nome,
     tipo:      document.getElementById("itemMasterTipo")?.value.trim() || "",
-    raridade:  document.getElementById("itemMasterRaridade")?.value || "comum",
-    classificacao: document.getElementById("itemMasterClassificacao")?.value || "normal",
+    raridade:  document.getElementById("itemMasterRaridade")?.value || "normal",
     sintonia:  document.getElementById("itemMasterSintonia")?.value || "nao",
     efeito:    document.getElementById("itemMasterEfeito")?.value.trim() || "",
     descricao: document.getElementById("itemMasterDescricao")?.value.trim() || "",
     historia:  document.getElementById("itemMasterHistoria")?.value.trim() || "",
     origem:    document.getElementById("itemMasterOrigem")?.value.trim() || "",
-    ...(window._imagemItemBase64
-    ? await uploadImagemFirebase(window._imagemItemBase64, `itens/${Date.now()}.jpg`).then(r => ({ imagem: r.url, imagemDeleteUrl: r.deleteUrl }))
-    : { imagem: "", imagemDeleteUrl: "" }),
-  });
+    imagem: itemAnterior?.imagem || "",
+    imagemDeleteUrl: itemAnterior?.imagemDeleteUrl || "",
+  };
 
-  salvarCampanhasMaster();
+  if (window._imagemItemBase64) {
+    const resultado = await uploadImagemFirebase(window._imagemItemBase64, `itens/${Date.now()}.jpg`);
+    novoItem.imagem = resultado.url;
+    novoItem.imagemDeleteUrl = resultado.deleteUrl;
+  }
+
+  if (editandoItemMestre >= 0) {
+    monstrosMestre[editandoItemMestre] = novoItem;
+    editandoItemMestre = -1;
+  } else {
+    monstrosMestre.push(novoItem);
+  }
+
+  salvarMonstrosMestreStorage();
   renderMonstrosMestre();
 
   ["itemMasterNome","itemMasterTipo","itemMasterEfeito","itemMasterDescricao",
@@ -7313,8 +7496,39 @@ async function salvarItemMestre() {
   });
   const preview = document.getElementById("previewItemMaster");
   if (preview) { preview.src = ""; preview.style.display = "none"; }
+  window._imagemItemBase64 = "";
 
-  mostrarToastMundo("Item salvo!");
+  mostrarToastMundo(editandoItemMestre >= 0 ? "Item atualizado!" : "Item salvo!");
+}
+
+function editarItemMestre(id) {
+  const index = monstrosMestre.findIndex(m => m.id === id && m._tipo === "item");
+  const item = monstrosMestre[index];
+  if (!item) return;
+
+  fecharSheetMonstro();
+
+  editandoItemMestre = index;
+  window._imagemItemBase64 = "";
+
+  document.getElementById("itemMasterNome").value = item.nome || "";
+  document.getElementById("itemMasterTipo").value = item.tipo || "";
+  document.getElementById("itemMasterRaridade").value = item.raridade || "normal";
+  document.getElementById("itemMasterSintonia").value = item.sintonia || "nao";
+  document.getElementById("itemMasterEfeito").value = item.efeito || "";
+  document.getElementById("itemMasterDescricao").value = item.descricao || "";
+  document.getElementById("itemMasterHistoria").value = item.historia || "";
+  document.getElementById("itemMasterOrigem").value = item.origem || "";
+
+  const preview = document.getElementById("previewItemMaster");
+  if (preview && item.imagem) {
+    preview.src = item.imagem;
+    preview.style.display = "block";
+  }
+
+  const btnTipoItem = document.querySelectorAll(".criar-tipo-btn")[3];
+  trocarTipoCriar("item", btnTipoItem);
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function moverDragSheet(e) {
@@ -7910,7 +8124,7 @@ function renderCombatesMestre() {
     const minimizado = monstro.minimizado ? "minimizado" : "";
     card.className = `combate-card ${minimizado}`;
 
-    const imagem = monstro.imagem || "icon-512.png";
+    const imagem = monstro.imagem || "icon-192.png";
 
     card.innerHTML = `
 
@@ -8224,7 +8438,22 @@ function sortearFalaMonstro(index) {
 }
 
 function calcularModMonstro(valor) {
-  return Math.floor((valor - 10) / 2);
+  if (valor <= 1) return -5;
+  if (valor <= 3) return -4;
+  if (valor <= 5) return -3;
+  if (valor <= 7) return -2;
+  if (valor <= 9) return -1;
+  if (valor <= 11) return 0;
+  if (valor <= 13) return 1;
+  if (valor <= 15) return 2;
+  if (valor <= 17) return 3;
+  if (valor <= 19) return 4;
+  if (valor <= 21) return 5;
+  if (valor <= 23) return 6;
+  if (valor <= 25) return 7;
+  if (valor <= 27) return 8;
+  if (valor <= 29) return 9;
+  return 10;
 }
 
 function formatarModMonstro(mod) {
@@ -9190,10 +9419,8 @@ async function salvarNPCMestre() {
   const nome = document.getElementById("npcNome")?.value.trim();
   if (!nome) { alertBonito("Digite o nome do NPC."); return; }
 
-  campanha.npcs ||= [];
-
-  campanha.npcs.push({
-    id:            Date.now(),
+   monstrosMestre.push({
+    id: Date.now(), _tipo: "npc", _origem: "usuario",
     nome,
     raca:          document.getElementById("npcRaca")?.value.trim()        || "",
     idade:         document.getElementById("npcIdade")?.value.trim()       || "",
@@ -9226,7 +9453,7 @@ async function salvarNPCMestre() {
     : { imagem: "", imagemDeleteUrl: "" }),
   });
 
-  salvarCampanhasMaster();
+    salvarMonstrosMestreStorage();
 
   /* limpa o form */
   _npcAcoesForm = []; _npcHabilidadesForm = [];
@@ -10726,11 +10953,28 @@ window._renderFichaFlutuanteConteudo = function (m, f) {
       ${dominioArr.map(marcado => `<span style="width:16px;height:16px;border-radius:50%;display:inline-block;background:${marcado ? "#8a2c22" : "transparent"};border:2px solid #8a2c22;"></span>`).join("")}
     </div>`;
 
-  const efeitosExaustaoDash = ["Sem exaustão","Desvantagem em testes de habilidade","Metade da velocidade","Desvantagem em ataques e testes de resistência","Metade do HP máximo","Velocidade = 0","Morte"];
+    const efeitosExaustaoDash = ["Sem exaustão","Desvantagem em testes de atributo","Deslocamento reduzido pela metade ","Desvantagem em jogadas de ataque e salvaguardas","Pontos de vida maximos reduzidos pela metade","Deslocamento reduzido a 0","Morte"];
   const nivelExaustao = f.exaustao ?? 0;
   const exaustaoHtml = `
     <div style="font-size:12px;color:#2A1A10;padding:10px 0 4px;">
       Nível ${nivelExaustao} ${nivelExaustao > 0 ? `<span style="color:#6b5a42;">— ${escapeHtml(efeitosExaustaoDash[nivelExaustao] || "")}</span>` : ""}
+    </div>`;
+
+  const morteObj = f.morte || { sucessos: [false,false,false], falhas: [false,false,false] };
+  const morteHtml = `
+    <div style="display:flex;justify-content:center;gap:24px;padding:10px 0 4px;">
+      <div style="text-align:center;">
+        <div style="font-size:10px;color:#6b5a42;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Sucessos</div>
+        <div style="display:flex;gap:6px;">
+          ${morteObj.sucessos.map(marcado => `<span style="width:16px;height:16px;border-radius:50%;display:inline-block;background:${marcado ? "#4a6b32" : "transparent"};border:2px solid #4a6b32;"></span>`).join("")}
+        </div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:10px;color:#6b5a42;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;">Falhas</div>
+        <div style="display:flex;gap:6px;">
+          ${morteObj.falhas.map(marcado => `<span style="width:16px;height:16px;border-radius:50%;display:inline-block;background:${marcado ? "#8a2c22" : "transparent"};border:2px solid #8a2c22;"></span>`).join("")}
+        </div>
+      </div>
     </div>`;
 
   const alvos = window._grupoMasterAlvos || [];
@@ -10752,8 +10996,9 @@ window._renderFichaFlutuanteConteudo = function (m, f) {
     ${_fichaDashSecao("Armas", armas)}
     ${_fichaDashSecao("Armaduras", armaduras)}
     ${_fichaDashSecao("Inventário", inventario)}
-    ${dominioArr.length ? _fichaDashSecao("Pontos de Domínio", dominioHtml) : ""}
+     ${dominioArr.length ? _fichaDashSecao("Pontos de Domínio", dominioHtml) : ""}
     ${_fichaDashSecao("Exaustão", exaustaoHtml)}
+    ${_fichaDashSecao("Testes de Morte", morteHtml)}
     <div style="height:14px;"></div>
   `;
 };
