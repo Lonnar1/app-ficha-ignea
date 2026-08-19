@@ -5211,3 +5211,244 @@ select {
   color: #c4a95b;
   font-weight: 600;
 }
+
+/* =========================================================
+   POPUP DOS ALIADOS — AJUSTE VISUAL
+   ========================================================= */
+
+#popup {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  display: none;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 20px !important;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.76) !important;
+  z-index: 999999 !important;
+}
+
+/* Caixa do popup */
+#popup .popup-content {
+  position: relative;
+  width: min(430px, calc(100vw - 40px)) !important;
+  max-width: 430px !important;
+  max-height: calc(100vh - 40px) !important;
+  margin: auto !important;
+  box-sizing: border-box;
+  padding: 26px 20px 22px !important;
+  overflow-y: auto;
+  background: #2c221d !important;
+  border: 1px solid rgba(200, 169, 107, 0.22) !important;
+  border-radius: 18px !important;
+  color: #f8f1df;
+  text-align: left;
+  box-shadow:
+    0 18px 45px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+
+/* Título do popup */
+#popup #popup-titulo {
+  margin: 0 32px 18px 0 !important;
+  font-family: "Cinzel", serif;
+  font-size: 26px;
+  line-height: 1.15;
+  color: #f3d9a2;
+  text-align: left;
+}
+
+/* X */
+#popup .fechar {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  font-size: 21px;
+  color: #f8f1df;
+  cursor: pointer;
+}
+
+/* =========================================================
+   ÁREAS INTERNAS DE INFORMAÇÃO
+   ========================================================= */
+
+/* Tipo */
+.aliado-detalhes-tipo {
+  display: block;
+  margin-bottom: 7px;
+  font-family: "Cinzel", serif;
+  font-size: 12px;
+  color: #cdb791;
+  opacity: 0.85;
+}
+
+/* Local */
+.aliado-detalhes-local {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 6px 9px;
+  border-radius: 7px;
+  background: #211814;
+  border: 1px solid rgba(200, 169, 107, 0.08);
+  color: #cdb791;
+  font-size: 12px;
+}
+
+/* Separador */
+.aliado-detalhes-cabecalho {
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(200, 169, 107, 0.13);
+}
+
+/* Título da descrição */
+.aliado-detalhes-corpo h3 {
+  margin: 0 0 8px;
+  font-family: "Cinzel", serif;
+  font-size: 15px;
+  color: #d8b56a;
+  text-transform: uppercase;
+}
+
+/* Caixa escura onde fica o texto */
+.aliado-detalhes-corpo p {
+  margin: 0 !important;
+  padding: 10px 14px !important;
+  border-radius: 10px;
+  background: #211814;
+  border: 1px solid rgba(200, 169, 107, 0.08);
+  color: #f1e8d8;
+  font-size: 15px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  text-align: left !important;
+}
+
+ /* =====================================================
+   SISTEMA DE ALIADOS — FILTROS
+   ===================================================== */
+
+.aliados-filtros {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 10px 0 12px;
+  width: 100%;
+}
+
+.aliado-filtro {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.18);
+  color: inherit;
+  padding: 7px 11px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  transition: 0.2s ease;
+}
+
+.aliado-filtro:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.aliado-filtro.ativo {
+  background: rgba(139, 109, 45, 0.25);
+  border-color: rgba(180, 145, 65, 0.65);
+}
+
+/* Tipo do aliado dentro do card */
+
+.aliado-tipo {
+  font-size: 11px;
+  margin-top: 4px;
+  opacity: 0.75;
+  letter-spacing: 0.3px;
+}
+
+.aliado-detalhes-imagem {
+  width: 100%;
+  margin-bottom: 16px;
+
+  display: flex;
+  justify-content: center;
+}
+
+.aliado-detalhes-imagem img {
+  display: block;
+
+  width: 100%;
+  max-height: 280px;
+
+  object-fit: contain;
+
+  border-radius: 10px;
+
+  background: #211814;
+
+  border: 1px solid rgba(200, 169, 107, 0.15);
+}
+
+/* =========================================================
+   UPLOAD DE IMAGEM DOS ALIADOS
+   ========================================================= */
+
+.aliado-upload-edicao {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+
+.aliado-upload-edicao input[type="file"] {
+  display: none;
+}
+
+.aliado-upload-edicao .botao-upload {
+  display: inline-block;
+
+  width: auto;
+
+  padding: 8px 12px;
+
+  border-radius: 10px;
+
+  cursor: pointer;
+
+  text-align: center;
+}
+
+.aliado-imagem-edicao-preview {
+  display: block;
+
+  width: 100%;
+  max-height: 220px;
+
+  object-fit: contain;
+
+  border-radius: 10px;
+
+  background: #211814;
+
+  border: 1px solid rgba(200, 169, 107, 0.18);
+}
+
+.aliado-upload-edicao .link-remover-imagem {
+  cursor: pointer;
+
+  font-size: 12px;
+
+  color: #c98978;
+
+  text-decoration: underline;
+}
+
+.aliado-upload-edicao .link-remover-imagem:hover {
+  color: #e0a08e;
+}
