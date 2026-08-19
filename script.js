@@ -12327,7 +12327,7 @@ if (window.Capacitor?.Plugins?.App) {
     if (travado) return;
     const dentroDaFicha = e.target.closest("#ficha .aba.active");
     if (!dentroDaFicha) return;
-    if (e.target.closest("textarea, input, select, .mapa-viewer, .sheet-monstro")) return;
+    if (e.target.closest("textarea, input, select, #hpBar, #tempBar, .hp-overlay, .mapa-viewer, .sheet-monstro")) return;
 
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
