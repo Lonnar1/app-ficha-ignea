@@ -5203,3 +5203,11 @@ select {
   min-height: 100vh;
   min-height: 100dvh;
 }
+
+.arma-sintonia-preview,
+.armadura-sintonia-preview {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: #c4a95b;
+  font-weight: 600;
+}
