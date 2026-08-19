@@ -1624,6 +1624,33 @@
                 </label>
               </div>
 
+              <div class="toggle-cargas">
+  <span class="toggle-cargas-texto">Requer sintonização</span>
+
+  <label class="switch-cargas">
+    <input
+      type="checkbox"
+      id="armaRequerSintonia"
+      onchange="toggleSintoniaArma()"
+    />
+    <span class="slider-cargas"></span>
+  </label>
+</div>
+
+<div id="boxArmaSintonizado" style="display: none;">
+  <div class="toggle-cargas">
+    <span class="toggle-cargas-texto">Está sintonizado</span>
+
+    <label class="switch-cargas">
+      <input
+        type="checkbox"
+        id="armaSintonizado"
+      />
+      <span class="slider-cargas"></span>
+    </label>
+  </div>
+</div>
+
               <input
                 id="armaMaxCargas"
                 type="number"
@@ -1688,6 +1715,33 @@
                   <span class="slider-cargas"></span>
                 </label>
               </div>
+
+              <div class="toggle-cargas">
+  <span class="toggle-cargas-texto">Requer sintonização</span>
+
+  <label class="switch-cargas">
+    <input
+      type="checkbox"
+      id="armaduraRequerSintonia"
+      onchange="toggleSintoniaArmadura()"
+    />
+    <span class="slider-cargas"></span>
+  </label>
+</div>
+
+<div id="boxArmaduraSintonizado" style="display: none;">
+  <div class="toggle-cargas">
+    <span class="toggle-cargas-texto">Está sintonizado</span>
+
+    <label class="switch-cargas">
+      <input
+        type="checkbox"
+        id="armaduraSintonizado"
+      />
+      <span class="slider-cargas"></span>
+    </label>
+  </div>
+</div>
 
               <input
                 id="armaduraMaxCargas"
