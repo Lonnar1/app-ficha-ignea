@@ -2487,26 +2487,38 @@ function renderArmaduras() {
       `
         : "";
 
-        const sintoniaHTML = armadura.requerSintonia
-  ? `
-    <p class="armadura-sintonia-preview">
-      🔗 Requer sintonização
-      ${armadura.sintonizado ? " • ✓ Sintonizado" : " • ✗ Não sintonizado"}
-    </p>
-  `
-  : "";
-
+    
     li.innerHTML = `
       <button type="button" class="drag-handle" aria-label="Arrastar para reordenar">⠿</button>
 
       <div class="armadura-info" onclick="verArmadura(${index})">
-        <strong class="armadura-nome">${esc(armadura.nome) || "Sem nome"}</strong>
+        <strong class="armadura-nome">
+  ${esc(armadura.nome) || "Sem nome"}
+  ${
+    armadura.requerSintonia
+      ? `<span class="item-tag-sintonia">${armadura.sintonizado ? "Sint." : "Req. Sint."}</span>`
+      : ""
+  }
+</strong>
         <p class="armadura-ca-preview">CA: ${esc(armadura.ca) || "Sem CA"}</p>
-        <p class="armadura-desc-preview">
+
+<div class="item-subtags">
+  ${
+    armadura.requerSintonia
+      ? `<span class="item-subtag">🔗 Requer sintonia</span>`
+      : ""
+  }
+
+  ${
+    armadura.sintonizado
+      ? `<span class="item-subtag ativo">✅ Sintonizado</span>`
+      : ""
+  }
+</div>
+
+<p class="armadura-desc-preview">
   ${armadura.desc ? esc(armadura.desc).substring(0, 60) + (armadura.desc.length > 60 ? "..." : "") : "Sem descrição"}
 </p>
-
-${sintoniaHTML}
 
 ${cargasHTML}
       </div>
@@ -4157,27 +4169,39 @@ function renderArmas() {
       `
         : "";
 
-        const sintoniaHTML = arma.requerSintonia
-  ? `
-    <p class="arma-sintonia-preview">
-      🔗 Requer sintonização
-      ${arma.sintonizado ? " • ✓ Sintonizado" : " • ✗ Não sintonizado"}
-    </p>
-  `
-  : "";
 
     li.innerHTML = `
       <button type="button" class="drag-handle" aria-label="Arrastar para reordenar">⠿</button>
 
       <div class="arma-info" onclick="verArma(${index})">
-        <strong class="arma-nome">${esc(arma.nome) || "Sem nome"}</strong>
+        <strong class="arma-nome">
+  ${esc(arma.nome) || "Sem nome"}
+  ${
+    arma.requerSintonia
+      ? `<span class="item-tag-sintonia">${arma.sintonizado ? "Sint." : "Req. Sint."}</span>`
+      : ""
+  }
+</strong>
         <p class="arma-dano-preview">${esc(arma.dano) || "Sem dano"}</p>
-        <p class="arma-desc-preview">
-          <p class="arma-desc-preview">
+
+
+<div class="item-subtags">
+  ${
+    arma.requerSintonia
+      ? `<span class="item-subtag">🔗 Requer sintonia</span>`
+      : ""
+  }
+
+  ${
+    arma.sintonizado
+      ? `<span class="item-subtag ativo">✅ Sintonizado</span>`
+      : ""
+  }
+</div>
+
+<p class="arma-desc-preview">
   ${arma.desc ? esc(arma.desc).substring(0, 60) + (arma.desc.length > 60 ? "..." : "") : "Sem descrição"}
 </p>
-
-${sintoniaHTML}
 
 ${cargasHTML}
       </div>
