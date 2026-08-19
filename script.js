@@ -977,6 +977,7 @@ function getIconeTipo(tipo) {
   if (t.includes("gelo")) return "❄️";
   if (t.includes("agua")) return "💧";
   if (t.includes("raio")) return "⚡";
+  if (t.includes("cura")) return "🩹";
   if (t.includes("trovej")) return "🌩️";
   if (t.includes("necrot")) return "💀";
   if (t.includes("radiante")) return "✨";
@@ -1449,6 +1450,7 @@ function editarPoder(index) {
   <option value="fogo" ${normalizarTipo(poder.tipo) === "fogo" ? "selected" : ""}>🔥 Fogo</option>
   <option value="gelo" ${normalizarTipo(poder.tipo) === "gelo" ? "selected" : ""}>❄️ Gelo</option>
   <option value="raio" ${normalizarTipo(poder.tipo) === "raio" ? "selected" : ""}>⚡ Raio</option>
+  <option value="cura" ${normalizarTipo(poder.tipo) === "cura" ? "selected" : ""}>🩹 Cura</option>
   <option value="trovejante" ${normalizarTipo(poder.tipo) === "trovejante" ? "selected" : ""}>🌩️ Trovejante</option>
   <option value="necrotico" ${normalizarTipo(poder.tipo) === "necrotico" ? "selected" : ""}>💀 Necrótico</option>
   <option value="radiante" ${normalizarTipo(poder.tipo) === "radiante" ? "selected" : ""}>✨ Radiante</option>
