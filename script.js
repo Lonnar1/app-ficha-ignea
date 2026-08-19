@@ -650,8 +650,93 @@ function aoMudarRaca() {
   salvarTudo();
 }
 
+async function carregarRacasCustomFirebase() {
+  if (!window.usuarioAtual || !window.db || !window.getDoc || !window.doc) {
+    return;
+  }
+
+  try {
+    const uid = window.usuarioAtual.uid;
+
+    const snap = await window.getDoc(
+      window.doc(window.db, "mestres", uid)
+    );
+
+    if (snap.exists()) {
+      const data = snap.data();
+
+      if (Array.isArray(data.racasCustom)) {
+        racasCustomSalvas = data.racasCustom;
+
+        localStorage.setItem(
+          "racasCustomSalvas",
+          JSON.stringify(racasCustomSalvas)
+        );
+
+        atualizarDropdownRacas();
+        atualizarTudo();
+      }
+    }
+  } catch (e) {
+    console.error("Erro ao carregar raças da nuvem:", e);
+  }
+}
+
 function salvarRacasCustomStorage() {
-  localStorage.setItem("racasCustomSalvas", JSON.stringify(racasCustomSalvas));
+  try {
+    localStorage.setItem(
+      "racasCustomSalvas",
+      JSON.stringify(racasCustomSalvas)
+    );
+  } catch (e) {
+    console.warn("Não foi possível salvar raças no localStorage:", e);
+  }
+
+  if (window.usuarioAtual && window.db && window.setDoc && window.doc) {
+    const uid = window.usuarioAtual.uid;
+
+    window.setDoc(
+      window.doc(window.db, "mestres", uid),
+      {
+        racasCustom: racasCustomSalvas
+      },
+      { merge: true }
+    ).catch((e) => {
+      console.error("Erro ao salvar raças na nuvem:", e);
+    });
+  }
+}
+
+async function carregarRacasCustomFirebase() {
+  if (!window.usuarioAtual || !window.db || !window.getDoc || !window.doc) {
+    return;
+  }
+
+  try {
+    const uid = window.usuarioAtual.uid;
+
+    const snap = await window.getDoc(
+      window.doc(window.db, "mestres", uid)
+    );
+
+    if (snap.exists()) {
+      const data = snap.data();
+
+      if (Array.isArray(data.racasCustom)) {
+        racasCustomSalvas = data.racasCustom;
+
+        localStorage.setItem(
+          "racasCustomSalvas",
+          JSON.stringify(racasCustomSalvas)
+        );
+
+        atualizarDropdownRacas();
+        atualizarTudo();
+      }
+    }
+  } catch (e) {
+    console.error("Erro ao carregar raças da nuvem:", e);
+  }
 }
 
 function abrirPopupGerenciarRacasCustom() {
