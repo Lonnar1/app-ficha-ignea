@@ -2539,13 +2539,15 @@ async function salvarEdicaoAliado(index) {
     aliado.imagem = "";
   }
 
-  // Se escolheu uma imagem nova
+   // Se escolheu uma imagem nova
   if (imagemInput?.files?.[0]) {
-    aliado.imagem = await comprimirImagem(
-      imagemInput.files[0],
-      900,
-      0.72
-    );
+    const base64 = await comprimirImagem(imagemInput.files[0], 900, 0.72);
+    const resultado = await uploadImagemFirebase(base64, "aliado");
+    if (resultado.erro || !resultado.url) {
+      alertBonito("Não consegui enviar a imagem (internet?). A imagem anterior foi mantida.");
+    } else {
+      aliado.imagem = resultado.url;
+    }
   }
 
   salvarTudo();
@@ -2563,15 +2565,24 @@ async function adicionarAliado() {
   const tipo =
     document.getElementById("aliadoTipo")?.value || "companheiro";
 
-  // Pega a imagem escolhida
-  const imagem = aliadoImagemBase64Temp || "";
-
   if (!nome) return;
 
   const p = personagens[personagemAtual];
 
   if (!Array.isArray(p.aliados)) {
     p.aliados = [];
+  }
+
+  // Envia a imagem pro ImgBB (se tiver) e guarda só o link,
+  // nunca o base64 direto (isso estoura o limite do Firestore)
+  let imagem = "";
+  if (aliadoImagemBase64Temp && aliadoImagemBase64Temp !== "REMOVIDA") {
+    const resultado = await uploadImagemFirebase(aliadoImagemBase64Temp, "aliado");
+    if (resultado.erro || !resultado.url) {
+      alertBonito("Não consegui enviar a imagem (internet?). O aliado foi salvo sem foto.");
+    } else {
+      imagem = resultado.url;
+    }
   }
 
   // Salva o aliado
@@ -2589,6 +2600,7 @@ async function adicionarAliado() {
   document.getElementById("aliadoDesc").value = "";
 
   // Limpa a imagem
+  const imagemInput = document.getElementById("aliadoImagem");
   if (imagemInput) {
     imagemInput.value = "";
   }
@@ -2609,7 +2621,7 @@ async function adicionarAliado() {
     tipoInput.value = "companheiro";
   }
 
-    salvarTudo();
+  salvarTudo();
   aliadoImagemBase64Temp = "";
   renderAliados();
 }
