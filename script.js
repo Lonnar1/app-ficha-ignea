@@ -139,6 +139,9 @@ const EMAILS_VIP = [
   "sparda.nb@gmail.com",
   "araibruna@gmail.com",
   "pedropian001@gmail.com",
+  "vitorlunardi92@gmail.com",
+  "xiuuososubliminals@gmail.com",
+  "nicolastresca@gmail.com",
   "aelmoviee3@gmail.com"
 ];
 
