@@ -6557,11 +6557,12 @@ async function uploadImagemFirebase(base64, caminho) {
 
     const data = await response.json();
     if (data.success) return { url: data.data.url, deleteUrl: data.data.delete_url };
-    throw new Error("ImgBB upload falhou");
+    // Mostra o motivo real que o ImgBB devolveu (chave inválida, limite excedido, etc.)
+    throw new Error(data?.error?.message || `ImgBB upload falhou (status ${response.status})`);
   } catch (e) {
-    console.error("Erro upload imagem ImgBB:", e);
+    console.error("Erro upload imagem ImgBB:", e.message || e);
     // NUNCA devolver o base64 aqui — era isso que estourava o documento no Firestore
-    return { url: "", deleteUrl: "", erro: true };
+    return { url: "", deleteUrl: "", erro: true, motivo: e.message || "" };
   }
 }
 
