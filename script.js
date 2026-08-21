@@ -1301,7 +1301,7 @@ async function salvarEdicaoItem(index) {
   } else if (editItemImagemBase64Temp) {
     const resultado = await uploadImagemFirebase(editItemImagemBase64Temp, "item");
     if (resultado.erro || !resultado.url) {
-      alertBonito("Não consegui enviar a imagem (internet?). A imagem anterior foi mantida.");
+      alertBonito_mensagemErroUpload("A imagem anterior foi mantida.")
     } else {
       imagemUrl = resultado.url;
       imagemDeleteUrl = resultado.deleteUrl;
@@ -1687,7 +1687,7 @@ async function salvarEdicaoArma(index) {
   } else if (editArmaImagemBase64Temp) {
     const resultado = await uploadImagemFirebase(editArmaImagemBase64Temp, "arma");
     if (resultado.erro || !resultado.url) {
-      alertBonito("Não consegui enviar a imagem (internet?). A imagem anterior foi mantida.");
+      alertBonito_mensagemErroUpload("A imagem anterior foi mantida.")
     } else {
       imagemUrl = resultado.url;
       imagemDeleteUrl = resultado.deleteUrl;
@@ -2544,7 +2544,7 @@ async function salvarEdicaoAliado(index) {
     const base64 = await comprimirImagem(imagemInput.files[0], 900, 0.72);
     const resultado = await uploadImagemFirebase(base64, "aliado");
     if (resultado.erro || !resultado.url) {
-      alertBonito("Não consegui enviar a imagem (internet?). A imagem anterior foi mantida.");
+      alertBonito_mensagemErroUpload("A imagem anterior foi mantida.")
     } else {
       aliado.imagem = resultado.url;
     }
@@ -2866,7 +2866,7 @@ async function addArmadura() {
   } else if (armaduraImagemBase64Temp) {
     const resultado = await uploadImagemFirebase(armaduraImagemBase64Temp, "armadura");
     if (resultado.erro || !resultado.url) {
-      alertBonito("Não consegui enviar a imagem (internet?). A armadura foi salva sem imagem.");
+      alertBonito_mensagemErroUpload("A armadura foi salva sem imagem.")
     } else {
       imagemUrl = resultado.url;
       imagemDeleteUrl = resultado.deleteUrl;
@@ -3291,7 +3291,7 @@ const sintonizado =
   } else if (editArmaduraImagemBase64Temp) {
     const resultado = await uploadImagemFirebase(editArmaduraImagemBase64Temp, "armadura");
     if (resultado.erro || !resultado.url) {
-      alertBonito("Não consegui enviar a imagem (internet?). A imagem anterior foi mantida.");
+      alertBonito_mensagemErroUpload("A imagem anterior foi mantida.")
     } else {
       imagemUrl = resultado.url;
       imagemDeleteUrl = resultado.deleteUrl;
@@ -3661,7 +3661,7 @@ window.uploadImagemPerfil = async function (input, tipo) {
     const base64 = await comprimirImagem(input.files[0]);
     const resultado = await uploadImagemFirebase(base64, tipo);
     if (resultado.erro || !resultado.url) {
-      alertBonito("Não consegui enviar a imagem. Tente outra.");
+      alertBonito_mensagemErroUpload()
       return;
     }
     const campo = tipo === "fundo" ? "fotoFundo" : "fotoPerfil";
@@ -4110,7 +4110,7 @@ function previewImagem() {
     const resultado = await uploadImagemFirebase(base64Local, `personagens/${Date.now()}.jpg`);
     if (resultado.erro || !resultado.url) {
       if (nomeArquivo) nomeArquivo.innerText = "Falha ao enviar imagem";
-      alertBonito("Não consegui enviar a foto agora. Tente de novo com internet melhor.");
+      alertBonito_mensagemErroUpload("O aliado foi salvo sem foto.")
       return;
     }
     imagemBase64 = resultado.url;
@@ -4281,7 +4281,7 @@ async function salvarEditorImagem() {
 
   const resultado = await uploadImagemFirebase(base64Local, `personagens/${Date.now()}.jpg`);
   if (resultado.erro || !resultado.url) {
-    alertBonito("Não consegui enviar a foto agora. Tente de novo com internet melhor.");
+    alertBonito_mensagemErroUpload("O aliado foi salvo sem foto.")
     return;
   }
   imagemBase64 = resultado.url;
@@ -4315,7 +4315,7 @@ async function addItem() {
   } else if (itemImagemBase64Temp) {
     const resultado = await uploadImagemFirebase(itemImagemBase64Temp, "item");
     if (resultado.erro || !resultado.url) {
-      alertBonito("Não consegui enviar a imagem (internet?). O item foi salvo sem imagem.");
+      alertBonito_mensagemErroUpload("O item foi salvo sem imagem.")
     } else {
       imagemUrl = resultado.url;
       imagemDeleteUrl = resultado.deleteUrl;
@@ -4613,7 +4613,7 @@ async function addArma() {
   } else if (armaImagemBase64Temp) {
     const resultado = await uploadImagemFirebase(armaImagemBase64Temp, "arma");
     if (resultado.erro || !resultado.url) {
-      alertBonito("Não consegui enviar a imagem (internet?). A arma foi salva sem imagem.");
+      alertBonito_mensagemErroUpload("A arma foi salva sem imagem.")
     } else {
       imagemUrl = resultado.url;
       imagemDeleteUrl = resultado.deleteUrl;
@@ -6991,7 +6991,7 @@ async function addMapa() {
 
   const resultado = await uploadImagemFirebase(mapaBase64Temp, "mapa");
   if (resultado.erro || !resultado.url) {
-    alertBonito("Não consegui enviar a imagem do mapa. Tente de novo com internet melhor.");
+    alertBonito_mensagemErroUpload("O mapa foi salvo sem imagem.")
     if (btn) { btn.disabled = false; btn.textContent = "+"; }
     return;
   }
