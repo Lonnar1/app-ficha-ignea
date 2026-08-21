@@ -2433,7 +2433,6 @@ function editarAliado(index) {
   const imagemInput =
     document.getElementById("editAliadoImagem");
 
-  const imagemInput = document.getElementById("aliadoImagem");
   if (imagemInput) {
     imagemInput.onchange = () => {
 
