@@ -1304,7 +1304,7 @@ async function salvarEdicaoItem(index) {
   } else if (editItemImagemBase64Temp) {
     const resultado = await uploadImagemFirebase(editItemImagemBase64Temp, "item");
     if (resultado.erro || !resultado.url) {
-      alertBonito_mensagemErroUpload("A imagem anterior foi mantida.")
+      alertBonito(_mensagemErroUpload("A imagem anterior foi mantida."))
     } else {
       imagemUrl = resultado.url;
       imagemDeleteUrl = resultado.deleteUrl;
@@ -1690,7 +1690,7 @@ async function salvarEdicaoArma(index) {
   } else if (editArmaImagemBase64Temp) {
     const resultado = await uploadImagemFirebase(editArmaImagemBase64Temp, "arma");
     if (resultado.erro || !resultado.url) {
-      alertBonito_mensagemErroUpload("A imagem anterior foi mantida.")
+      alertBonito(_mensagemErroUpload("A imagem anterior foi mantida."))
     } else {
       imagemUrl = resultado.url;
       imagemDeleteUrl = resultado.deleteUrl;
@@ -2547,7 +2547,7 @@ async function salvarEdicaoAliado(index) {
     const base64 = await comprimirImagem(imagemInput.files[0], 900, 0.72);
     const resultado = await uploadImagemFirebase(base64, "aliado");
     if (resultado.erro || !resultado.url) {
-      alertBonito_mensagemErroUpload("A imagem anterior foi mantida.")
+      alertBonito(_mensagemErroUpload("A imagem anterior foi mantida."))
     } else {
       aliado.imagem = resultado.url;
     }
@@ -2869,7 +2869,7 @@ async function addArmadura() {
   } else if (armaduraImagemBase64Temp) {
     const resultado = await uploadImagemFirebase(armaduraImagemBase64Temp, "armadura");
     if (resultado.erro || !resultado.url) {
-      alertBonito_mensagemErroUpload("A armadura foi salva sem imagem.")
+      alertBonito(_mensagemErroUpload("A armadura foi salva sem imagem."))
     } else {
       imagemUrl = resultado.url;
       imagemDeleteUrl = resultado.deleteUrl;
@@ -3294,7 +3294,7 @@ const sintonizado =
   } else if (editArmaduraImagemBase64Temp) {
     const resultado = await uploadImagemFirebase(editArmaduraImagemBase64Temp, "armadura");
     if (resultado.erro || !resultado.url) {
-      alertBonito_mensagemErroUpload("A imagem anterior foi mantida.")
+      alertBonito(_mensagemErroUpload("A imagem anterior foi mantida."))
     } else {
       imagemUrl = resultado.url;
       imagemDeleteUrl = resultado.deleteUrl;
@@ -3664,7 +3664,7 @@ window.uploadImagemPerfil = async function (input, tipo) {
     const base64 = await comprimirImagem(input.files[0]);
     const resultado = await uploadImagemFirebase(base64, tipo);
     if (resultado.erro || !resultado.url) {
-      alertBonito_mensagemErroUpload()
+      	alertBonito(_mensagemErroUpload())
       return;
     }
     const campo = tipo === "fundo" ? "fotoFundo" : "fotoPerfil";
@@ -4113,7 +4113,7 @@ function previewImagem() {
     const resultado = await uploadImagemFirebase(base64Local, `personagens/${Date.now()}.jpg`);
     if (resultado.erro || !resultado.url) {
       if (nomeArquivo) nomeArquivo.innerText = "Falha ao enviar imagem";
-      alertBonito_mensagemErroUpload("O aliado foi salvo sem foto.")
+      alertBonito(_mensagemErroUpload("A imagem anterior foi mantida."))
       return;
     }
     imagemBase64 = resultado.url;
@@ -4284,7 +4284,7 @@ async function salvarEditorImagem() {
 
   const resultado = await uploadImagemFirebase(base64Local, `personagens/${Date.now()}.jpg`);
   if (resultado.erro || !resultado.url) {
-    alertBonito_mensagemErroUpload("O aliado foi salvo sem foto.")
+    alertBonito(_mensagemErroUpload("A imagem anterior foi mantida."))
     return;
   }
   imagemBase64 = resultado.url;
@@ -4318,7 +4318,7 @@ async function addItem() {
   } else if (itemImagemBase64Temp) {
     const resultado = await uploadImagemFirebase(itemImagemBase64Temp, "item");
     if (resultado.erro || !resultado.url) {
-      alertBonito_mensagemErroUpload("O item foi salvo sem imagem.")
+      alertBonito(_mensagemErroUpload("O item foi salvo sem imagem."))
     } else {
       imagemUrl = resultado.url;
       imagemDeleteUrl = resultado.deleteUrl;
@@ -4616,7 +4616,7 @@ async function addArma() {
   } else if (armaImagemBase64Temp) {
     const resultado = await uploadImagemFirebase(armaImagemBase64Temp, "arma");
     if (resultado.erro || !resultado.url) {
-      alertBonito_mensagemErroUpload("A arma foi salva sem imagem.")
+      alertBonito(_mensagemErroUpload("A arma foi salva sem imagem."))
     } else {
       imagemUrl = resultado.url;
       imagemDeleteUrl = resultado.deleteUrl;
@@ -6581,6 +6581,13 @@ async function uploadImagemFirebase(base64, caminho) {
   }
 }
 
+function _mensagemErroUpload(complemento) {
+  if (!navigator.onLine) {
+    return `Você está sem internet no momento. Conecte-se e tente enviar a imagem de novo. ${complemento || ""}`.trim();
+  }
+  return `O serviço de imagens está fora do ar no momento. Tente enviar a foto de novo daqui a pouco. ${complemento || ""}`.trim();
+}
+
 async function salvarMonstroMestre() {
   const nome = document.getElementById("monstroNome")?.value.trim();
   const tipo = document.getElementById("monstroTipo")?.value.trim();
@@ -6994,7 +7001,7 @@ async function addMapa() {
 
   const resultado = await uploadImagemFirebase(mapaBase64Temp, "mapa");
   if (resultado.erro || !resultado.url) {
-    alertBonito_mensagemErroUpload("O mapa foi salvo sem imagem.")
+    alertBonito(_mensagemErroUpload("O mapa foi salvo sem imagem."))
     if (btn) { btn.disabled = false; btn.textContent = "+"; }
     return;
   }
