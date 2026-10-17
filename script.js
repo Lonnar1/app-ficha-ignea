@@ -640,7 +640,9 @@ function atualizarAtributosFinaisVisuais() {
     const el = document.getElementById(`final_${attr}`);
     if (!el) return;
 
-    el.textContent = getAtributoFinal(attr);
+    const final = getAtributoFinal(attr);
+    el.textContent = "= " + final;
+    el.style.display = final !== get(attr) ? "" : "none";
   });
 }
 
@@ -1055,51 +1057,6 @@ function atualizarDropdownRacas() {
   });
 }
 
-function trocarSubAbaPoderes(tipo, btn) {
-  const subabas = document.querySelectorAll(".subaba-poderes");
-  subabas.forEach((el) => {
-    el.style.display = "none";
-    el.classList.remove("active");
-  });
-
-  document
-    .querySelectorAll(".subtab-poder")
-    .forEach((b) => b.classList.remove("active"));
-
-  if (tipo === "poderes-comuns") {
-    const alvo = document.getElementById("subaba-poderes-comuns");
-    if (alvo) {
-      alvo.style.display = "block";
-      alvo.classList.add("active");
-    }
-  }
-
-  if (tipo === "magias") {
-    const alvo = document.getElementById("subaba-magias");
-    if (alvo) {
-      alvo.style.display = "block";
-      alvo.classList.add("active");
-    }
-  }
-
-  if (tipo === "talentos") {
-    const alvo = document.getElementById("subaba-talentos");
-    if (alvo) {
-      alvo.style.display = "block";
-      alvo.classList.add("active");
-    }
-  }
-
-  if (tipo === "passivas") {
-    const alvo = document.getElementById("subaba-passivas");
-    if (alvo) {
-      alvo.style.display = "block";
-      alvo.classList.add("active");
-    }
-  }
-
-  if (btn) btn.classList.add("active");
-}
 
 function atualizarGastoCirculo(circulo, valor) {
   let total = parseInt(valor) || 0;
@@ -1119,25 +1076,6 @@ function atualizarGastoCirculo(circulo, valor) {
   salvarTudo();
 }
 
-function trocarSubAbaCirculo(circulo, btn) {
-  const caixas = document.querySelectorAll(".circulo-box");
-  caixas.forEach((el) => {
-    el.style.display = "none";
-    el.classList.remove("active");
-  });
-
-  document
-    .querySelectorAll(".subtab-circulo")
-    .forEach((b) => b.classList.remove("active"));
-
-  const alvo = document.getElementById(`circulo-${circulo}`);
-  if (alvo) {
-    alvo.style.display = "block";
-    alvo.classList.add("active");
-  }
-
-  if (btn) btn.classList.add("active");
-}
 
 function salvarGastosCirculos() {
   for (let i = 0; i <= 9; i++) {
@@ -1180,49 +1118,7 @@ function abrirPopup(titulo, conteudo, usarHTML = false, onEditar = null) {
   popup.style.display = "flex";
 }
 
-async function editarQuantidadeSlotsCirculo(circulo) {
-  if (!gastosCirculos[circulo]) gastosCirculos[circulo] = [];
 
-  const atual = gastosCirculos[circulo].length;
-  const resposta = await promptBonito(`Quantas bolinhas no círculo ${circulo}?`, atual);
-
-  if (resposta === null) return;
-
-  let novoTotal = parseInt(resposta);
-  if (isNaN(novoTotal) || novoTotal < 0) novoTotal = 0;
-
-  const novoArray = [];
-  for (let i = 0; i < novoTotal; i++) {
-    novoArray.push(gastosCirculos[circulo][i] || false);
-  }
-
-  gastosCirculos[circulo] = novoArray;
-
-  renderSlotsCirculo(circulo);
-  salvarTudo();
-}
-
-function renderSlotsCirculo(circulo) {
-  const container = document.getElementById(`slotsCirculo${circulo}`);
-  if (!container) return;
-
-  container.innerHTML = "";
-
-  const slots = gastosCirculos[circulo] || [];
-
-  slots.forEach((usado, i) => {
-    const bolinha = document.createElement("div");
-    bolinha.className = "slot-bolinha" + (usado ? " usado" : "");
-
-    bolinha.onclick = () => {
-      gastosCirculos[circulo][i] = !gastosCirculos[circulo][i];
-      renderSlotsCirculo(circulo);
-      salvarTudo();
-    };
-
-    container.appendChild(bolinha);
-  });
-}
 
 function editarItem(index) {
   const item = inventario[index];
@@ -1237,6 +1133,9 @@ function editarItem(index) {
 
       <label class="popup-label">Descrição</label>
       <textarea id="editItemDesc">${item.desc || ""}</textarea>
+
+      <label class="popup-label">Modificações</label>
+      <div id="editItemMods"></div>
 
       <label class="popup-label">Quantidade</label>
       <input id="editItemQtd" type="number" min="1" value="${item.qtd || 1}">
@@ -1278,6 +1177,24 @@ function editarItem(index) {
         </div>
       </div>
 
+      <div class="toggle-cargas" style="margin-top:10px;">
+        <span class="toggle-cargas-texto">É um recipiente (mochila, bolsa...)</span>
+        <label class="switch-cargas">
+          <input
+            type="checkbox"
+            id="editItemRecipiente"
+            ${item.recipiente ? "checked" : ""}
+            onchange="document.getElementById('boxEditItemGuardarEm').style.display = this.checked ? 'none' : 'block'"
+          >
+          <span class="slider-cargas"></span>
+        </label>
+      </div>
+
+      <div id="boxEditItemGuardarEm" style="display:${item.recipiente || !recipientesInventario(item.id).length ? "none" : "block"};">
+        <label class="popup-label">Onde está</label>
+        <select id="editItemDentroDe">${opcoesGuardarEmHTML(item.dentroDe, item.id)}</select>
+      </div>
+
       <button class="popup-salvar-btn" onclick="salvarEdicaoItem(${index})">
         Salvar
       </button>
@@ -1285,6 +1202,7 @@ function editarItem(index) {
   `;
 
   abrirPopup("Editar item", html, true, null);
+  montarEditorMods("editItemMods", "editItem", item.modificacoes);
 }
 
 async function salvarEdicaoItem(index) {
@@ -1314,7 +1232,18 @@ async function salvarEdicaoItem(index) {
     }
   }
 
+  const anterior = inventario[index] || {};
+  const recipiente = !!document.getElementById("editItemRecipiente")?.checked;
+  const dentroDe = recipiente ? "" : (document.getElementById("editItemDentroDe")?.value || "");
+
+  // deixou de ser mochila: o que estava dentro fica solto
+  if (anterior.recipiente && !recipiente) {
+    filhosDoRecipiente(anterior.id).forEach((f) => (f.dentroDe = ""));
+  }
+
   inventario[index] = {
+    ...anterior,
+    id: anterior.id || gerarIdItem(),
     nome,
     desc,
     qtd,
@@ -1322,6 +1251,9 @@ async function salvarEdicaoItem(index) {
     sintonizado,
     imagemUrl,
     imagemDeleteUrl,
+    recipiente,
+    dentroDe,
+    modificacoes: [...(window._modsTemp.editItem || [])],
   };
 
   editItemImagemBase64Temp = "";
@@ -1371,6 +1303,9 @@ function editarArma(index) {
 
       <label class="popup-label">Descrição</label>
       <textarea id="editArmaDesc">${arma.desc || ""}</textarea>
+
+      <label class="popup-label">Modificações</label>
+      <div id="editArmaMods"></div>
 
       <label class="popup-label">Imagem (opcional)</label>
       <input type="file" id="editArmaImagem" accept="image/*" onchange="previewEditArmaImagem()" />
@@ -1445,6 +1380,7 @@ function editarArma(index) {
   `;
 
   abrirPopup("Editar arma", html, true, null);
+  montarEditorMods("editArmaMods", "editArma", arma.modificacoes);
 }
 
 function toggleEditCampoCargas() {
@@ -1475,159 +1411,7 @@ function toggleEditCampoCargasPoder() {
   }
 }
 
-function editarPoder(index) {
-  const poder = poderes[index];
-  if (!poder) return;
 
-  const html = `
-    <div class="popup-form">
-      <label class="popup-label">Nome</label>
-      <input id="editPoderNome" value="${poder.nome || ""}">
-
-      <label class="popup-label">Tipo</label>
-      <select id="editPoderTipo" class="input-personagem">
-  <option value="">Tipo de dano</option>
-  <option value="fogo" ${normalizarTipo(poder.tipo) === "fogo" ? "selected" : ""}>🔥 Fogo</option>
-  <option value="gelo" ${normalizarTipo(poder.tipo) === "gelo" ? "selected" : ""}>❄️ Gelo</option>
-  <option value="raio" ${normalizarTipo(poder.tipo) === "raio" ? "selected" : ""}>⚡ Raio</option>
-  <option value="cura" ${normalizarTipo(poder.tipo) === "cura" ? "selected" : ""}>🩹 Cura</option>
-  <option value="trovejante" ${normalizarTipo(poder.tipo) === "trovejante" ? "selected" : ""}>🌩️ Trovejante</option>
-  <option value="necrotico" ${normalizarTipo(poder.tipo) === "necrotico" ? "selected" : ""}>💀 Necrótico</option>
-  <option value="radiante" ${normalizarTipo(poder.tipo) === "radiante" ? "selected" : ""}>✨ Radiante</option>
-  <option value="veneno" ${normalizarTipo(poder.tipo) === "veneno" ? "selected" : ""}>☠️ Veneno</option>
-  <option value="agua" ${normalizarTipo(poder.tipo) === "agua" ? "selected" : ""}>💧 Água</option>
-  <option value="magico" ${normalizarTipo(poder.tipo) === "magico" ? "selected" : ""}>☄️ Mágico</option>
-  <option value="psiquico" ${normalizarTipo(poder.tipo) === "psiquico" ? "selected" : ""}>🧠 Psíquico</option>
-  <option value="corte" ${normalizarTipo(poder.tipo) === "corte" ? "selected" : ""}>🔪 Corte</option>
-  <option value="perfurante" ${normalizarTipo(poder.tipo) === "perfurante" ? "selected" : ""}>📌 Perfurante</option>
-  <option value="concussao" ${normalizarTipo(poder.tipo) === "concussao" ? "selected" : ""}>💥 Concussão</option>
-  <option value="metal" ${normalizarTipo(poder.tipo) === "metal" ? "selected" : ""}>⚙️ Metal</option>
-  <option value="fisico" ${normalizarTipo(poder.tipo) === "fisico" ? "selected" : ""}>🗡️ Físico</option>
-  <option value="vento" ${normalizarTipo(poder.tipo) === "vento" ? "selected" : ""}>🍃 Vento</option>
-  <option value="madeira" ${normalizarTipo(poder.tipo) === "madeira" ? "selected" : ""}>🌳 Madeira</option>
-  <option value="terra" ${normalizarTipo(poder.tipo) === "terra" ? "selected" : ""}>🌍 Terra</option>
-  <option value="trevas" ${normalizarTipo(poder.tipo) === "trevas" ? "selected" : ""}>🌑 Trevas</option>
-  <option value="luz" ${normalizarTipo(poder.tipo) === "luz" ? "selected" : ""}>🌕 Luz</option>
-  <option value="espirito" ${normalizarTipo(poder.tipo) === "espirito" ? "selected" : ""}>🌓 Espírito</option>
-</select>
-
-      <label class="popup-label">Dano</label>
-      <input id="editPoderDano" value="${poder.dano || ""}">
-
-      <label class="popup-label">Círculo</label>
-<select id="editPoderCirculo" class="input-personagem">
-  <option value="" ${(poder.circulo ?? "") === "" ? "selected" : ""}>Sem círculo (Poder)</option>
-  <option value="talento" ${(poder.circulo ?? "") === "talento" ? "selected" : ""}>Talento</option>
-  <option value="passiva" ${(poder.circulo ?? "") === "passiva" ? "selected" : ""}>Passiva</option>
-  <option value="0" ${String(poder.circulo ?? "") === "0" ? "selected" : ""}>Círculo 0 (Truque)</option>
-  <option value="1" ${String(poder.circulo ?? "") === "1" ? "selected" : ""}>Círculo 1</option>
-  <option value="2" ${String(poder.circulo ?? "") === "2" ? "selected" : ""}>Círculo 2</option>
-  <option value="3" ${String(poder.circulo ?? "") === "3" ? "selected" : ""}>Círculo 3</option>
-  <option value="4" ${String(poder.circulo ?? "") === "4" ? "selected" : ""}>Círculo 4</option>
-  <option value="5" ${String(poder.circulo ?? "") === "5" ? "selected" : ""}>Círculo 5</option>
-  <option value="6" ${String(poder.circulo ?? "") === "6" ? "selected" : ""}>Círculo 6</option>
-  <option value="7" ${String(poder.circulo ?? "") === "7" ? "selected" : ""}>Círculo 7</option>
-  <option value="8" ${String(poder.circulo ?? "") === "8" ? "selected" : ""}>Círculo 8</option>
-  <option value="9" ${String(poder.circulo ?? "") === "9" ? "selected" : ""}>Círculo 9</option>
-</select>
-
-      <label class="popup-label">Conjuração</label>
-      <input id="editPoderTempo" value="${poder.tempo || ""}">
-
-      <label class="popup-label">Alcance</label>
-      <input id="editPoderAlcance" value="${poder.alcance || ""}">
-
-      <label class="popup-label">Duração</label>
-      <input id="editPoderDuracao" value="${poder.duracao || ""}">
-
-      <label class="popup-label">Descrição</label>
-<textarea id="editPoderDesc">${poder.desc || ""}</textarea>
-
-<div class="toggle-cargas" style="margin-top:10px;">
-  <span class="toggle-cargas-texto">Possui uso</span>
-
-  <label class="switch-cargas">
-    <input
-      type="checkbox"
-      id="editPoderTemCargas"
-      ${poder.temCargas ? "checked" : ""}
-      onchange="toggleEditCampoCargasPoder()"
-    >
-    <span class="slider-cargas"></span>
-  </label>
-</div>
-
-<input
-  id="editPoderMaxCargas"
-  type="number"
-  min="1"
-  max="30"
-  placeholder="Qtd. de usos"
-  value="${poder.maxCargas || ""}"
-  style="display:${poder.temCargas ? "block" : "none"};"
->
-
-<button class="popup-salvar-btn" onclick="salvarEdicaoPoder(${index})">
-        Salvar
-      </button>
-    </div>
-  `;
-
-  abrirPopup("Editar poder", html, true, null);
-}
-
-function salvarEdicaoPoder(index) {
-  const nome = document.getElementById("editPoderNome").value.trim();
-  const tipo = document.getElementById("editPoderTipo").value.trim();
-  const dano = document.getElementById("editPoderDano").value.trim();
-  const circulo = document.getElementById("editPoderCirculo").value.trim();
-  const tempo = document.getElementById("editPoderTempo").value.trim();
-  const alcance = document.getElementById("editPoderAlcance").value.trim();
-  const duracao = document.getElementById("editPoderDuracao").value.trim();
-  const desc = document.getElementById("editPoderDesc").value.trim();
-
-  const temCargas = !!document.getElementById("editPoderTemCargas")?.checked;
-  const maxCargas = temCargas
-    ? parseInt(document.getElementById("editPoderMaxCargas")?.value) || 0
-    : 0;
-
-  if (!nome) return;
-  if (temCargas && maxCargas <= 0) return;
-
-  const poderAnterior = poderes[index];
-
-  let cargasGastas = [];
-
-  if (temCargas) {
-    if (
-      poderAnterior?.temCargas &&
-      poderAnterior.maxCargas === maxCargas &&
-      Array.isArray(poderAnterior.cargasGastas)
-    ) {
-      cargasGastas = poderAnterior.cargasGastas;
-    } else {
-      cargasGastas = Array(maxCargas).fill(false);
-    }
-  }
-
-  poderes[index] = {
-    nome,
-    tipo,
-    dano,
-    circulo,
-    tempo,
-    alcance,
-    duracao,
-    desc,
-    temCargas,
-    maxCargas,
-    cargasGastas,
-  };
-
-  renderPoderes();
-  salvarTudo();
-  fecharPopup();
-}
 
 function atualizarTextoBotaoEdicao() {
   const btnItem = document.querySelector("#inventario .inv-add-btn");
@@ -1701,6 +1485,8 @@ async function salvarEdicaoArma(index) {
   }
 
   armas[index] = {
+  ...armaAnterior,
+  modificacoes: [...(window._modsTemp.editArma || [])],
   nome,
   dano,
   desc,
@@ -2884,6 +2670,7 @@ async function addArmadura() {
   const sintonizado = requerSintonia && !!document.getElementById("armaduraSintonizado")?.checked;
 
   const novaArmadura = {
+    modificacoes: consumirModsTemp("armadura"),
     nome,
     ca,
     desc,
@@ -3020,6 +2807,7 @@ function renderArmaduras() {
   }
 </strong>
         <p class="armadura-ca-preview">CA: ${esc(armadura.ca) || "Sem CA"}</p>
+        ${modsChipsHTML(armadura.modificacoes)}
 
 <div class="item-subtags">
   ${
@@ -3086,6 +2874,8 @@ function verArmadura(index) {
         <div class="popup-descricao-pequena">${esc(armadura.ca) || "Sem CA"}</div>
       </div>
 
+      ${modsVerHTML(armadura.modificacoes)}
+
       <div style="margin-top: 12px;">
         <span class="popup-label">Descrição</span>
         <div class="popup-descricao">${esc(armadura.desc) || "Sem descrição"}</div>
@@ -3128,6 +2918,9 @@ function editarArmadura(index) {
 
       <label class="popup-label">Descrição</label>
       <textarea id="editArmaduraDesc">${armadura.desc || ""}</textarea>
+
+      <label class="popup-label">Modificações</label>
+      <div id="editArmaduraMods"></div>
 
       <label class="popup-label">Imagem (opcional)</label>
       <input type="file" id="editArmaduraImagem" accept="image/*" onchange="previewEditArmaduraImagem()" />
@@ -3202,6 +2995,7 @@ function editarArmadura(index) {
   `;
 
   abrirPopup("Editar armadura", html, true, null);
+  montarEditorMods("editArmaduraMods", "editArmadura", armadura.modificacoes);
 }
 
 function toggleEditCampoCargasArmadura() {
@@ -3306,6 +3100,8 @@ const sintonizado =
   }
 
   armaduras[index] = {
+  ...armaduraAnterior,
+  modificacoes: [...(window._modsTemp.editArmadura || [])],
   nome,
   ca,
   desc,
@@ -3373,7 +3169,10 @@ function carregarPersonagem(index) {
   const diarioEl = document.getElementById("diario");
 
   if (resistenciasEl) resistenciasEl.value = p.resistencias || "";
-  if (diarioEl) diarioEl.value = p.diario || "";
+  diarioGeral = p.diario || "";
+  diarioSessoes = Array.isArray(p.diarioSessoes) ? p.diarioSessoes : [];
+  window._diarioAba = "geral";
+  renderDiario();
 
   document.getElementById("forca").value = p.forca ?? 10;
   document.getElementById("destreza").value = p.destreza ?? 10;
@@ -3445,6 +3244,7 @@ function carregarPersonagem(index) {
   }
   saves = p.saves || {};
   exaustao = p.exaustao ?? 0;
+  concentracaoAtiva = p.concentracao || "";
   morte = p.morte || {
     sucessos: [false, false, false],
     falhas: [false, false, false],
@@ -3504,7 +3304,8 @@ p.nivel = document.getElementById("nivel")?.value || "";
   const diarioEl = document.getElementById("diario");
 
   p.resistencias = resistenciasEl ? resistenciasEl.value : "";
-  p.diario = diarioEl ? diarioEl.value : "";
+  p.diario = diarioGeral;
+  p.diarioSessoes = diarioSessoes;
 
   p.vidaMax = get("vidaMax");
   p.vidaAtual = vidaAtual;
@@ -3528,6 +3329,7 @@ p.nivel = document.getElementById("nivel")?.value || "";
   p.saves = saves;
   p.exaustao = exaustao;
   p.morte = morte;
+  p.concentracao = concentracaoAtiva || "";
   p.dominio = dominio;
 
   const inspiracao = document.getElementById("inspiracao");
@@ -4458,6 +4260,99 @@ async function removerFotoCarrosselPopup() {
   _atualizarConteudoPopupFoto();
 }
 
+
+/* ================= DIÁRIO (Geral + Sessões) ================= */
+
+let diarioGeral = "";
+let diarioSessoes = [];
+window._diarioAba = "geral";
+
+function renderDiario() {
+  const abas = document.getElementById("diarioAbas");
+  const dica = document.getElementById("diarioDica");
+  const area = document.getElementById("diario");
+  if (!abas || !area) return;
+
+  let atual = diarioSessoes.find((s) => s.id === window._diarioAba);
+  if (!atual) window._diarioAba = "geral";
+
+  abas.innerHTML =
+    `<button type="button" class="diario-aba ${window._diarioAba === "geral" ? "ativa" : ""}" onclick="trocarAbaDiario('geral')">Geral</button>` +
+    diarioSessoes
+      .map(
+        (s, i) =>
+          `<button type="button" class="diario-aba ${s.id === window._diarioAba ? "ativa" : ""}" onclick="trocarAbaDiario('${s.id}')">${esc(s.titulo || "Sessão " + (i + 1))}</button>`,
+      )
+      .join("") +
+    `<button type="button" class="diario-aba diario-aba-nova" onclick="novaSessaoDiario()">+ Sessão</button>`;
+
+  if (window._diarioAba === "geral") {
+    dica.innerHTML = `<span>Anotações gerais: coisas rápidas que valem para a campanha toda.</span>`;
+    area.value = diarioGeral;
+    area.placeholder = "Escreva aqui seu diário, anotações, pistas, missões, nomes, eventos...";
+  } else {
+    const i = diarioSessoes.indexOf(atual);
+    dica.innerHTML = `
+      <span>${esc(atual.titulo || "Sessão " + (i + 1))}${atual.data ? " · " + esc(atual.data) : ""}</span>
+      <span class="diario-dica-acoes">
+        <button type="button" onclick="renomearSessaoDiario()" title="Renomear"><i class="ti ti-pencil"></i></button>
+        <button type="button" onclick="apagarSessaoDiario()" title="Apagar sessão"><i class="ti ti-trash"></i></button>
+      </span>`;
+    area.value = atual.texto || "";
+    area.placeholder = "O que aconteceu nessa sessão?";
+  }
+}
+
+function trocarAbaDiario(id) {
+  window._diarioAba = id;
+  renderDiario();
+}
+
+function aoDigitarDiario() {
+  const texto = document.getElementById("diario")?.value || "";
+  if (window._diarioAba === "geral") {
+    diarioGeral = texto;
+  } else {
+    const s = diarioSessoes.find((x) => x.id === window._diarioAba);
+    if (s) s.texto = texto;
+  }
+  salvarTudo();
+}
+
+function novaSessaoDiario() {
+  const nova = {
+    id: "ses_" + Date.now().toString(36),
+    titulo: "Sessão " + (diarioSessoes.length + 1),
+    data: new Date().toLocaleDateString("pt-BR"),
+    texto: "",
+  };
+  diarioSessoes.push(nova);
+  window._diarioAba = nova.id;
+  renderDiario();
+  salvarTudo();
+  document.getElementById("diario")?.focus();
+}
+
+async function renomearSessaoDiario() {
+  const s = diarioSessoes.find((x) => x.id === window._diarioAba);
+  if (!s) return;
+  const nome = await promptBonito("Nome da sessão:", s.titulo || "");
+  if (nome === null) return;
+  s.titulo = nome.trim() || s.titulo;
+  renderDiario();
+  salvarTudo();
+}
+
+async function apagarSessaoDiario() {
+  const s = diarioSessoes.find((x) => x.id === window._diarioAba);
+  if (!s) return;
+  if (!(await confirmBonito(`Apagar "${s.titulo || "essa sessão"}" e tudo que foi escrito nela?`))) return;
+  diarioSessoes = diarioSessoes.filter((x) => x !== s);
+  window._diarioAba = "geral";
+  renderDiario();
+  salvarTudo();
+}
+
 /* ================= INVENTÁRIO ================= */
 
 async function addItem() {
@@ -4487,7 +4382,12 @@ async function addItem() {
     }
   }
 
+  const recipiente = !!document.getElementById("itemRecipiente")?.checked;
+  const dentroDe = recipiente ? "" : (document.getElementById("itemDentroDe")?.value || "");
+
   const novoItem = {
+    modificacoes: consumirModsTemp("item"),
+    id: editandoItem >= 0 ? (inventario[editandoItem]?.id || gerarIdItem()) : gerarIdItem(),
     nome,
     desc,
     qtd,
@@ -4495,6 +4395,8 @@ async function addItem() {
     sintonizado,
     imagemUrl,
     imagemDeleteUrl,
+    recipiente,
+    dentroDe,
   };
 
   if (editandoItem >= 0) {
@@ -4504,8 +4406,7 @@ async function addItem() {
     inventario.push(novoItem);
   }
 
-  renderInv();
-  salvarTudo();
+  if (dentroDe) window._mochilasFechadas.delete(dentroDe);
 
   document.getElementById("itemNome").value = "";
   document.getElementById("itemDesc").value = "";
@@ -4513,6 +4414,12 @@ async function addItem() {
   document.getElementById("itemRequerSintonia").checked = false;
   document.getElementById("itemSintonizado").checked = false;
   document.getElementById("boxItemSintonizado").style.display = "none";
+  const recipienteEl = document.getElementById("itemRecipiente");
+  if (recipienteEl) recipienteEl.checked = false;
+
+  renderInv();
+  salvarTudo();
+
   document.getElementById("itemImagem").value = "";
   document.getElementById("itemImagemPreview").style.display = "none";
   itemImagemBase64Temp = "";
@@ -4634,28 +4541,91 @@ function toggleSintoniaItem() {
   }
 }
 
-function renderInv() {
-  const ul = document.getElementById("lista");
-  if (!ul) return;
+/* ================= MOCHILAS / RECIPIENTES ================= */
 
-  ul.innerHTML = "";
+// mochilas fechadas na tela (só visual, não salva)
+window._mochilasFechadas = window._mochilasFechadas || new Set();
 
-  inventario.forEach((item, index) => {
-    const li = document.createElement("li");
-    li.className = "item-card";
-    li.dataset.index = index;
+function gerarIdItem() {
+  return "it_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
 
-    li.innerHTML = `
+// itens antigos não têm id; dá um pra cada (é salvo junto na próxima vez que a ficha salvar)
+function garantirIdsInventario() {
+  inventario.forEach((item) => {
+    if (item && !item.id) item.id = gerarIdItem();
+  });
+}
+
+function recipientesInventario(excluirId) {
+  return inventario.filter((i) => i && i.recipiente && i.id !== excluirId);
+}
+
+function filhosDoRecipiente(id) {
+  return inventario.filter((i) => i && i.dentroDe === id);
+}
+
+// item está guardado numa mochila que ainda existe?
+function estaGuardado(item) {
+  return !!item.dentroDe && inventario.some((i) => i.id === item.dentroDe && i.recipiente);
+}
+
+function opcoesGuardarEmHTML(selecionado, excluirId) {
+  const mochilas = recipientesInventario(excluirId);
+  return (
+    `<option value="">Solto no inventário</option>` +
+    mochilas
+      .map(
+        (m) =>
+          `<option value="${esc(m.id)}" ${m.id === selecionado ? "selected" : ""}>Guardar em: ${esc(m.nome || "Sem nome")}</option>`,
+      )
+      .join("")
+  );
+}
+
+// formulário de adicionar: só mostra "guardar em" se existir alguma mochila e o item não for uma
+function atualizarCampoGuardarEm() {
+  const box = document.getElementById("boxItemGuardarEm");
+  const select = document.getElementById("itemDentroDe");
+  const ehRecipiente = !!document.getElementById("itemRecipiente")?.checked;
+  if (!box || !select) return;
+
+  const valorAtual = select.value;
+  select.innerHTML = opcoesGuardarEmHTML(valorAtual);
+  const temMochila = recipientesInventario().length > 0;
+  box.style.display = temMochila && !ehRecipiente ? "block" : "none";
+  if (ehRecipiente) select.value = "";
+}
+
+function cardItemInvHTML(item, index, guardado) {
+  const filhos = item.recipiente ? filhosDoRecipiente(item.id) : [];
+  const fechada = window._mochilasFechadas.has(item.id);
+  const temMochila = recipientesInventario().length > 0;
+
+  const badge = item.recipiente
+    ? `<span class="item-qtd-badge mochila-contador">${filhos.length} ${filhos.length === 1 ? "item" : "itens"}</span>`
+    : `<span class="item-qtd-badge">x${item.qtd || 1}</span>`;
+
+  const botaoMover = item.recipiente
+    ? ""
+    : guardado
+      ? `<button type="button" class="btn-mochila-acao" title="Tirar da mochila" onclick="event.stopPropagation(); moverItemParaRecipiente(${index}, '')"><i class="ti ti-arrow-bar-up"></i></button>`
+      : temMochila
+        ? `<button type="button" class="btn-mochila-acao" title="Guardar em uma mochila" onclick="event.stopPropagation(); abrirGuardarItem(${index})"><i class="ti ti-backpack"></i></button>`
+        : "";
+
+  return `
       <button type="button" class="drag-handle" aria-label="Arrastar para reordenar">⠿</button>
 
       <div class="item-info" onclick="verItem(${index})">
         <div class="item-topo-linha">
           <strong class="item-nome">
+            ${item.recipiente ? `<i class="ti ti-backpack mochila-icone"></i>` : ""}
             ${item.nome ? esc(item.nome) : "Sem nome"}
             ${item.requerSintonia ? `<span class="item-tag-sintonia">${item.sintonizado ? "Sint." : "Req. Sint."}</span>` : ""}
           </strong>
 
-          <span class="item-qtd-badge">x${item.qtd || 1}</span>
+          ${badge}
         </div>
 
         <div class="item-subtags">
@@ -4663,13 +4633,20 @@ function renderInv() {
           ${item.sintonizado ? `<span class="item-subtag ativo">✅ Sintonizado</span>` : ""}
         </div>
 
-        <p class="item-preview">
+        ${modsChipsHTML(item.modificacoes)}
+
+        ${
+          item.recipiente && !item.desc
+            ? ""
+            : `<p class="item-preview">
           ${item.desc ? esc(item.desc).substring(0, 60) + (item.desc.length > 60 ? "..." : "") : "Sem descrição"}
-        </p>
+        </p>`
+        }
       </div>
 
       <div class="item-acoes">
         <div class="acoes-topo">
+          ${botaoMover}
           <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarItem(${index})">✏️</button>
         </div>
 
@@ -4677,12 +4654,279 @@ function renderInv() {
 
         <button type="button" class="item-remover" onclick="event.stopPropagation(); removerItem(${index})">X</button>
       </div>
-    `;
 
+      ${
+        item.recipiente
+          ? `<button type="button" class="mochila-toggle" onclick="event.stopPropagation(); toggleMochila('${esc(item.id)}')">
+              <span>${fechada ? "Ver o que tem dentro" : "Esconder conteúdo"}</span>
+              <i class="ti ${fechada ? "ti-chevron-down" : "ti-chevron-up"}"></i>
+            </button>`
+          : ""
+      }
+    `;
+}
+
+function cardRecipienteHTML(item, index) {
+  const filhos = [];
+  inventario.forEach((f, i) => { if (f && f.dentroDe === item.id) filhos.push({ f, i }); });
+  const unidades = filhos.reduce((soma, { f }) => soma + (parseInt(f.qtd) || 1), 0);
+
+  const chips = filhos.length
+    ? filhos
+        .map(
+          ({ f, i }) =>
+            `<button type="button" class="recipiente-chip" onclick="event.stopPropagation(); verItem(${i})">${esc(f.nome || "Sem nome")}${(parseInt(f.qtd) || 1) > 1 ? ` <small>x${f.qtd}</small>` : ""}</button>`,
+        )
+        .join("")
+    : `<span class="recipiente-vazio">Vazia</span>`;
+
+  return `
+    <div class="recipiente-topo">
+      <i class="ti ti-backpack recipiente-icone"></i>
+      <strong class="recipiente-nome">${esc(item.nome || "Sem nome")}</strong>
+      <button type="button" class="recipiente-remover" title="Remover" onclick="event.stopPropagation(); removerItem(${index})"><i class="ti ti-x"></i></button>
+    </div>
+
+    <div class="recipiente-stats">
+      <span><i class="ti ti-stack-2"></i> ${filhos.length} ${filhos.length === 1 ? "item" : "itens"}</span>
+      <span><i class="ti ti-packages"></i> ${unidades} ${unidades === 1 ? "unidade" : "unidades"}</span>
+    </div>
+
+    <div class="recipiente-chips">${chips}</div>
+  `;
+}
+
+function renderInv() {
+  const ul = document.getElementById("lista");
+  if (!ul) return;
+
+  garantirIdsInventario();
+  ul.innerHTML = "";
+
+  // itens soltos (o que está numa mochila aparece só como etiqueta dentro dela)
+  inventario.forEach((item, index) => {
+    if (!item || item.recipiente || estaGuardado(item)) return;
+
+    const li = document.createElement("li");
+    li.className = "item-card";
+    li.dataset.index = index;
+    li.innerHTML = cardItemInvHTML(item, index, false);
     ul.appendChild(li);
   });
 
   habilitarArrastarReordenar(ul, inventario, renderInv);
+
+  // recipientes
+  const ulRec = document.getElementById("listaRecipientes");
+  const secaoRec = document.getElementById("secaoRecipientes");
+  if (ulRec) {
+    ulRec.innerHTML = "";
+    inventario.forEach((item, index) => {
+      if (!item || !item.recipiente) return;
+      const li = document.createElement("li");
+      li.className = "recipiente-card";
+      li.onclick = () => abrirMochila(index);
+      li.innerHTML = cardRecipienteHTML(item, index);
+      ulRec.appendChild(li);
+    });
+    if (secaoRec) secaoRec.style.display = ulRec.children.length ? "block" : "none";
+  }
+
+  atualizarCampoGuardarEm();
+}
+
+/* ---------- painel da mochila (igual ao da ficha de Ordem) ---------- */
+
+window._mochilaSelecao = null; // null = modo normal; Set de índices = modo "tirar vários"
+
+function abrirMochila(index, manterSelecao) {
+  const mochila = inventario[index];
+  if (!mochila || !mochila.recipiente) return;
+  if (!manterSelecao) window._mochilaSelecao = null;
+  const selecao = window._mochilaSelecao;
+
+  const filhos = [];
+  inventario.forEach((f, i) => { if (f && f.dentroDe === mochila.id) filhos.push({ f, i }); });
+  const unidades = filhos.reduce((soma, { f }) => soma + (parseInt(f.qtd) || 1), 0);
+
+  const linhas = filhos.length
+    ? filhos
+        .map(({ f, i }) => {
+          const marcado = selecao && selecao.has(i);
+          const meta = [`<i class="ti ti-packages"></i> ${parseInt(f.qtd) || 1}`]
+            .concat(f.requerSintonia ? [f.sintonizado ? "Sintonizado" : "Requer sintonia"] : [])
+            .join(" · ");
+          return `
+          <div class="mochila-linha ${marcado ? "selecionada" : ""}" onclick="${selecao ? `alternarSelecaoMochila(${index}, ${i})` : `verItem(${i})`}">
+            ${selecao ? `<span class="sel-check ${marcado ? "ativo" : ""}"><i class="ti ti-check"></i></span>` : ""}
+            <div class="mochila-linha-info">
+              <strong>${esc(f.nome || "Sem nome")}</strong>
+              <small>${meta}</small>
+            </div>
+            ${selecao ? "" : `<button type="button" class="mochila-btn-tirar" onclick="event.stopPropagation(); tirarDaMochila(${index}, [${i}])">Tirar</button>`}
+          </div>`;
+        })
+        .join("")
+    : `<p class="mochila-vazia">Nada aqui dentro ainda. Use "Colocar item".</p>`;
+
+  const barra = selecao
+    ? `<div class="mochila-acoes">
+         <button type="button" onclick="cancelarSelecaoMochila(${index})">Cancelar</button>
+         <button type="button" class="destaque" onclick="tirarSelecionadosMochila(${index})" ${selecao.size ? "" : "disabled"}>Tirar ${selecao.size || ""}</button>
+       </div>`
+    : `<div class="mochila-acoes">
+         <button type="button" onclick="abrirColocarItens(${index})"><i class="ti ti-plus"></i> Colocar item</button>
+         <button type="button" onclick="iniciarSelecaoMochila(${index})" ${filhos.length ? "" : "disabled"}>Tirar vários</button>
+         <button type="button" onclick="editarItem(${index})"><i class="ti ti-pencil"></i> Editar</button>
+       </div>`;
+
+  const html = `
+    <div class="mochila-painel">
+      <div class="mochila-resumo">
+        <i class="ti ti-backpack"></i>
+        ${filhos.length} ${filhos.length === 1 ? "item" : "itens"} dentro · ${unidades} ${unidades === 1 ? "unidade" : "unidades"}
+      </div>
+      ${mochila.desc ? `<p class="mochila-desc">${esc(mochila.desc)}</p>` : ""}
+      ${barra}
+      <div class="mochila-lista">${linhas}</div>
+    </div>`;
+
+  abrirPopup(mochila.nome || "Mochila", html, true, null);
+}
+
+function iniciarSelecaoMochila(index) {
+  window._mochilaSelecao = new Set();
+  abrirMochila(index, true);
+}
+
+function cancelarSelecaoMochila(index) {
+  window._mochilaSelecao = null;
+  abrirMochila(index);
+}
+
+function alternarSelecaoMochila(index, iItem) {
+  const sel = window._mochilaSelecao;
+  if (!sel) return;
+  if (sel.has(iItem)) sel.delete(iItem); else sel.add(iItem);
+  abrirMochila(index, true);
+}
+
+function tirarSelecionadosMochila(index) {
+  const sel = window._mochilaSelecao;
+  if (!sel || !sel.size) return;
+  tirarDaMochila(index, [...sel]);
+}
+
+function tirarDaMochila(index, indices) {
+  indices.forEach((i) => { if (inventario[i]) inventario[i].dentroDe = ""; });
+  window._mochilaSelecao = null;
+  renderInv();
+  salvarTudo();
+  abrirMochila(index);
+}
+
+// escolher vários itens soltos pra colocar na mochila
+window._colocarSelecao = new Set();
+
+function abrirColocarItens(index) {
+  const mochila = inventario[index];
+  if (!mochila) return;
+  const sel = window._colocarSelecao;
+
+  const soltos = [];
+  inventario.forEach((f, i) => { if (f && !f.recipiente && !estaGuardado(f)) soltos.push({ f, i }); });
+
+  const linhas = soltos.length
+    ? soltos
+        .map(({ f, i }) => `
+          <div class="mochila-linha ${sel.has(i) ? "selecionada" : ""}" onclick="alternarColocarItem(${index}, ${i})">
+            <span class="sel-check ${sel.has(i) ? "ativo" : ""}"><i class="ti ti-check"></i></span>
+            <div class="mochila-linha-info">
+              <strong>${esc(f.nome || "Sem nome")}</strong>
+              <small><i class="ti ti-packages"></i> ${parseInt(f.qtd) || 1}</small>
+            </div>
+          </div>`)
+        .join("")
+    : `<p class="mochila-vazia">Não há itens soltos no inventário.</p>`;
+
+  const todosMarcados = soltos.length && soltos.every(({ i }) => sel.has(i));
+
+  const html = `
+    <div class="mochila-painel">
+      <div class="mochila-acoes">
+        <button type="button" onclick="voltarDoColocar(${index})"><i class="ti ti-arrow-left"></i> Voltar</button>
+        ${soltos.length ? `<button type="button" onclick="marcarTodosColocar(${index}, ${todosMarcados ? "false" : "true"})">${todosMarcados ? "Desmarcar todos" : "Marcar todos"}</button>` : ""}
+        <button type="button" class="destaque" onclick="confirmarColocarItens(${index})" ${sel.size ? "" : "disabled"}>Colocar ${sel.size || ""}</button>
+      </div>
+      <div class="mochila-lista">${linhas}</div>
+    </div>`;
+
+  abrirPopup(`Colocar em ${mochila.nome || "mochila"}`, html, true, null);
+}
+
+function alternarColocarItem(index, iItem) {
+  const sel = window._colocarSelecao;
+  if (sel.has(iItem)) sel.delete(iItem); else sel.add(iItem);
+  abrirColocarItens(index);
+}
+
+function marcarTodosColocar(index, marcar) {
+  const sel = window._colocarSelecao;
+  sel.clear();
+  if (marcar) {
+    inventario.forEach((f, i) => { if (f && !f.recipiente && !estaGuardado(f)) sel.add(i); });
+  }
+  abrirColocarItens(index);
+}
+
+function voltarDoColocar(index) {
+  window._colocarSelecao.clear();
+  abrirMochila(index);
+}
+
+function confirmarColocarItens(index) {
+  const mochila = inventario[index];
+  if (!mochila) return;
+  window._colocarSelecao.forEach((i) => {
+    if (inventario[i] && !inventario[i].recipiente) inventario[i].dentroDe = mochila.id;
+  });
+  window._colocarSelecao.clear();
+  renderInv();
+  salvarTudo();
+  abrirMochila(index);
+}
+
+function moverItemParaRecipiente(index, idRecipiente) {
+  const item = inventario[index];
+  if (!item || item.recipiente) return;
+  item.dentroDe = idRecipiente || "";
+  if (idRecipiente) window._mochilasFechadas.delete(idRecipiente);
+  fecharPopup();
+  renderInv();
+  salvarTudo();
+}
+
+function abrirGuardarItem(index) {
+  const item = inventario[index];
+  if (!item) return;
+  const mochilas = recipientesInventario();
+
+  const html = `
+    <div class="popup-form">
+      ${mochilas
+        .map((m) => {
+          const qtd = filhosDoRecipiente(m.id).length;
+          return `<button type="button" class="guardar-opcao" onclick="moverItemParaRecipiente(${index}, '${esc(m.id)}')">
+            <i class="ti ti-backpack"></i>
+            <span>${esc(m.nome || "Sem nome")}</span>
+            <small>${qtd} ${qtd === 1 ? "item" : "itens"}</small>
+          </button>`;
+        })
+        .join("")}
+    </div>
+  `;
+
+  abrirPopup(`Guardar "${item.nome || "item"}" em...`, html, true, null);
 }
 
 function toggleEditSintoniaItem() {
@@ -4700,9 +4944,33 @@ function toggleEditSintoniaItem() {
   }
 }
 
+// botões do popup do item (o que antes ficava no card dos itens guardados)
+function acoesVerItemHTML(item, index) {
+  const guardado = estaGuardado(item);
+  const mochila = guardado ? inventario.find((i) => i.id === item.dentroDe) : null;
+  const botoes = [];
+
+  if (guardado) {
+    const iMochila = inventario.indexOf(mochila);
+    botoes.push(`<button type="button" onclick="abrirMochila(${iMochila})"><i class="ti ti-arrow-left"></i> Voltar</button>`);
+    botoes.push(`<button type="button" onclick="moverItemParaRecipiente(${index}, '')"><i class="ti ti-arrow-bar-up"></i> Tirar de ${esc(mochila?.nome || "mochila")}</button>`);
+  } else if (!item.recipiente && recipientesInventario().length) {
+    botoes.push(`<button type="button" onclick="abrirGuardarItem(${index})"><i class="ti ti-backpack"></i> Guardar</button>`);
+  }
+
+  botoes.push(`<button type="button" onclick="fecharPopup(); window.abrirDarItem('inventario', ${index})"><i class="ti ti-gift"></i> Dar</button>`);
+
+  if (guardado || item.recipiente) {
+    botoes.push(`<button type="button" class="perigo" onclick="fecharPopup(); removerItem(${index})"><i class="ti ti-trash"></i> Remover</button>`);
+  }
+
+  return botoes.join("");
+}
+
 function verItem(index) {
   const item = inventario[index];
   if (!item) return;
+  if (item.recipiente) { abrirMochila(index); return; }
 
   const html = `
   <div class="popup-bloco">
@@ -4730,10 +4998,31 @@ function verItem(index) {
       </div>
     </div>
 
+    ${
+      item.recipiente
+        ? `<div style="margin-top: 12px;">
+      <span class="popup-label">Conteúdo</span>
+      <div class="recipiente-chips">${
+        filhosDoRecipiente(item.id).length
+          ? inventario
+              .map((f, i) => (f && f.dentroDe === item.id
+                ? `<button type="button" class="recipiente-chip" onclick="verItem(${i})">${esc(f.nome || "Sem nome")}${(parseInt(f.qtd) || 1) > 1 ? ` <small>x${f.qtd}</small>` : ""}</button>`
+                : ""))
+              .join("")
+          : `<span class="recipiente-vazio">Vazia</span>`
+      }</div>
+    </div>`
+        : ""
+    }
+
+    ${modsVerHTML(item.modificacoes)}
+
     <div style="margin-top: 12px;">
       <span class="popup-label">Descrição</span>
       <div class="popup-descricao popup-descricao-grande">${item.desc || "Sem descrição"}</div>
     </div>
+
+    <div class="popup-acoes-item">${acoesVerItemHTML(item, index)}</div>
   </div>
 `;
 
@@ -4744,9 +5033,15 @@ async function removerItem(index) {
   const item = inventario[index];
   if (!item) return;
 
-  const confirmar = await confirmBonito(`Remover "${item.nome}"?`);
+  const filhos = item.recipiente ? filhosDoRecipiente(item.id) : [];
+  const aviso = filhos.length
+    ? ` Os ${filhos.length} ${filhos.length === 1 ? "item que está dentro vai" : "itens que estão dentro vão"} ficar soltos no inventário.`
+    : "";
+
+  const confirmar = await confirmBonito(`Remover "${item.nome}"?${aviso}`);
   if (!confirmar) return;
 
+  filhos.forEach((f) => (f.dentroDe = ""));
   inventario.splice(index, 1);
   renderInv();
   salvarTudo();
@@ -4789,6 +5084,7 @@ async function addArma() {
   const sintonizado = requerSintonia && !!document.getElementById("armaSintonizado")?.checked;
 
   const novaArma = {
+    modificacoes: consumirModsTemp("arma"),
     nome,
     dano,
     desc,
@@ -4889,6 +5185,7 @@ function renderArmas() {
   }
 </strong>
         <p class="arma-dano-preview">${esc(arma.dano) || "Sem dano"}</p>
+        ${modsChipsHTML(arma.modificacoes)}
 
 
 <div class="item-subtags">
@@ -4954,6 +5251,8 @@ function verArma(index) {
         </div>
       </div>
 
+      ${modsVerHTML(arma.modificacoes)}
+
       <div style="margin-top: 12px;">
         <span class="popup-label">Descrição</span>
         <div class="popup-descricao">
@@ -4980,58 +5279,6 @@ async function removerArma(index) {
 
 /* ================= PODERES ================= */
 
-function addPoder() {
-  const nome = document.getElementById("poderNome").value.trim();
-  const tipo = document.getElementById("poderTipo").value.trim();
-  const dano = document.getElementById("poderDano").value.trim();
-  const circulo = document.getElementById("poderCirculo").value.trim();
-  const tempo = document.getElementById("poderTempo").value.trim();
-  const alcance = document.getElementById("poderAlcance").value.trim();
-  const duracao = document.getElementById("poderDuracao").value.trim();
-  const desc = document.getElementById("poderDesc").value.trim();
-  const temCargas = !!document.getElementById("poderTemCargas")?.checked;
-  const maxCargas = temCargas
-    ? parseInt(document.getElementById("poderMaxCargas")?.value) || 0
-    : 0;
-
-  if (!nome) return;
-
-  const novoPoder = {
-    nome,
-    tipo,
-    dano,
-    circulo,
-    tempo,
-    alcance,
-    duracao,
-    desc,
-    temCargas,
-    maxCargas,
-    cargasGastas: temCargas ? Array(maxCargas).fill(false) : [],
-  };
-
-  if (editandoPoder >= 0) {
-    poderes[editandoPoder] = novoPoder;
-    editandoPoder = -1;
-  } else {
-    poderes.push(novoPoder);
-  }
-
-  renderPoderes();
-  salvarTudo();
-
-  document.getElementById("poderNome").value = "";
-  document.getElementById("poderTipo").value = "";
-  document.getElementById("poderDano").value = "";
-  document.getElementById("poderCirculo").value = "";
-  document.getElementById("poderTempo").value = "";
-  document.getElementById("poderAlcance").value = "";
-  document.getElementById("poderDuracao").value = "";
-  document.getElementById("poderDesc").value = "";
-  document.getElementById("poderTemCargas").checked = false;
-  document.getElementById("poderMaxCargas").value = "";
-  document.getElementById("poderMaxCargas").style.display = "none";
-}
 
 function atualizarEstadoLowHP() {
   const vidaTotal = vidaAtual + vidaTemp;
@@ -5046,156 +5293,6 @@ function atualizarEstadoLowHP() {
   }
 }
 
-function renderPoderes() {
-  const listaPoderesComuns = document.getElementById("listaPoderesComuns");
-  const listaTalentos = document.getElementById("listaTalentos");
-  const listaPassivas = document.getElementById("listaPassivas");
-
-  const listasCirculos = {
-    0: document.getElementById("listaMagiasCirculo0"),
-    1: document.getElementById("listaMagiasCirculo1"),
-    2: document.getElementById("listaMagiasCirculo2"),
-    3: document.getElementById("listaMagiasCirculo3"),
-    4: document.getElementById("listaMagiasCirculo4"),
-    5: document.getElementById("listaMagiasCirculo5"),
-    6: document.getElementById("listaMagiasCirculo6"),
-    7: document.getElementById("listaMagiasCirculo7"),
-    8: document.getElementById("listaMagiasCirculo8"),
-    9: document.getElementById("listaMagiasCirculo9"),
-  };
-
-  if (listaPoderesComuns) listaPoderesComuns.innerHTML = "";
-  if (listaTalentos) listaTalentos.innerHTML = "";
-  if (listaPassivas) listaPassivas.innerHTML = "";
-
-  Object.values(listasCirculos).forEach((lista) => {
-    if (lista) lista.innerHTML = "";
-  });
-
-  poderes.forEach((poder, index) => {
-    const icone = getIconeTipo(poder.tipo);
-    const circulo = (poder.circulo ?? "").toString().trim();
-
-    // 🔥 ===== CARGAS =====
-    let cargasHTML = "";
-
-    if (poder.temCargas && poder.maxCargas > 0) {
-      if (!Array.isArray(poder.cargasGastas)) {
-        poder.cargasGastas = Array(poder.maxCargas).fill(false);
-      }
-
-      cargasHTML = `<div style="margin-top:6px;">`;
-
-      for (let i = 0; i < poder.maxCargas; i++) {
-        const usada = poder.cargasGastas[i];
-
-        cargasHTML += `
-          <span
-            style="
-              display:inline-block;
-              width:14px;
-              height:14px;
-              border-radius:50%;
-              border:2px solid #b89654;
-              margin-right:4px;
-              background:${usada ? "#b89654" : "transparent"};
-              cursor:pointer;
-            "
-            onclick="event.stopPropagation(); toggleCargaPoder(${index}, ${i})"
-          ></span>
-        `;
-      }
-
-      cargasHTML += `</div>`;
-    }
-    // 🔥 ===== FIM CARGAS =====
-
-    const li = document.createElement("li");
-    li.className = "poder-card";
-    li.dataset.index = index;
-
-    li.innerHTML = `
-      <button type="button" class="drag-handle" aria-label="Arrastar para reordenar">⠿</button>
-
-      <div class="poder-info" onclick="verPoder(${index})">
-        <strong class="poder-nome">${icone} ${esc(poder.nome) || "Sem nome"}</strong>
-
-        ${
-          poder.dano
-            ? `
-          <div class="poder-tags">
-            <span class="tag-dano">${esc(poder.dano)}</span>
-          </div>
-        `
-            : ""
-        }
-
-        <p class="poder-preview">
-          ${poder.desc ? esc(poder.desc).substring(0, 70) + (poder.desc.length > 70 ? "..." : "") : "Sem descrição"}
-        </p>
-
-        ${cargasHTML}
-      </div>
-
-      <div class="item-acoes">
-        <div class="acoes-topo">
-          <button class="btn-editar" onclick="editarPoder(${index})">✏️</button>
-        </div>
-
-        <button class="btn-deletar" onclick="removerPoder(${index})">X</button>
-      </div>
-    `;
-
-    if (circulo === "") {
-      if (listaPoderesComuns) listaPoderesComuns.appendChild(li);
-    } else if (circulo === "talento") {
-      if (listaTalentos) listaTalentos.appendChild(li);
-    } else if (circulo === "passiva") {
-      if (listaPassivas) listaPassivas.appendChild(li);
-    } else if (listasCirculos[circulo]) {
-      listasCirculos[circulo].appendChild(li);
-    } else {
-      if (listaPoderesComuns) listaPoderesComuns.appendChild(li);
-    }
-  });
-
-  habilitarArrastarReordenar(listaPoderesComuns, poderes, renderPoderes);
-  habilitarArrastarReordenar(listaTalentos, poderes, renderPoderes);
-  habilitarArrastarReordenar(listaPassivas, poderes, renderPoderes);
-  Object.values(listasCirculos).forEach((lista) => {
-    habilitarArrastarReordenar(lista, poderes, renderPoderes);
-  });
-
-  let totalPoderes = 0;
-  let totalMagias = 0;
-  let totalTalentos = 0;
-  let totalPassivas = 0;
-
-  poderes.forEach((poder) => {
-    const c = (poder.circulo ?? "").toString().trim();
-    if (c === "") totalPoderes++;
-    else if (c === "talento") totalTalentos++;
-    else if (c === "passiva") totalPassivas++;
-    else totalMagias++;
-  });
-
-  const contadorPoderes = document.getElementById("contadorPoderes");
-  const contadorMagias = document.getElementById("contadorMagias");
-  const contadorTalentos = document.getElementById("contadorTalentos");
-  const contadorPassivas = document.getElementById("contadorPassivas");
-
-  if (contadorPoderes) contadorPoderes.textContent = `(${totalPoderes})`;
-  if (contadorMagias) contadorMagias.textContent = `(${totalMagias})`;
-  if (contadorTalentos) contadorTalentos.textContent = `(${totalTalentos})`;
-  if (contadorPassivas) contadorPassivas.textContent = `(${totalPassivas})`;
-
-  for (let i = 0; i <= 9; i++) {
-    const inputGasto = document.getElementById(`gastoCirculo${i}`);
-    if (inputGasto) {
-      inputGasto.value = gastosCirculos[i] || 0;
-    }
-  }
-}
 
 function abrirImportacao() {
   const input = document.getElementById("importarFicha");
@@ -5374,44 +5471,6 @@ function moverPoderPorDrag(origem, destino) {
   salvarTudo();
 }
 
-function verPoder(index) {
-  const poder = poderes[index];
-  if (!poder) return;
-
-  const tipoTexto = poder.tipo || "Sem tipo";
-  const icone = getIconeTipo(tipoTexto);
-
-  const tags = [
-    poder.dano ? `<span class="tag-dano">${poder.dano}</span>` : "",
-    poder.circulo
-      ? `<span class="popup-tag">Círculo: ${poder.circulo}</span>`
-      : "",
-    poder.tempo
-      ? `<span class="popup-tag">Conjuração: ${poder.tempo}</span>`
-      : "",
-    poder.alcance
-      ? `<span class="popup-tag">Alcance: ${poder.alcance}</span>`
-      : "",
-    poder.duracao
-      ? `<span class="popup-tag">Duração: ${poder.duracao}</span>`
-      : "",
-  ].join("");
-
-  const html = `
-    <div class="popup-bloco">
-      ${tags ? `<div class="popup-tags">${tags}</div>` : ""}
-
-      <div style="margin-top: 12px;">
-        <span class="popup-label">Descrição</span>
-        <div class="popup-descricao">
-          ${poder.desc || "Sem descrição"}
-        </div>
-      </div>
-    </div>
-  `;
-
-  abrirPopup(`${icone} ${poder.nome}`, html, true, null);
-}
 
 async function removerPoder(index) {
   const poder = poderes[index];
@@ -5506,6 +5565,7 @@ function atualizarDT() {
   const dtTotal = document.getElementById("dtTotal");
 
   if (dtTotal) dtTotal.textContent = total;
+  if (typeof atualizarCabecalhoConjurador === "function") atualizarCabecalhoConjurador();
 }
 
 /* ================= VIDA ================= */
@@ -5525,7 +5585,8 @@ function atualizarHP() {
 }
 
 function animarAttr(id) {
-  const el = document.getElementById(id).closest(".attr");
+  const el = document.getElementById(id)?.closest(".attr-card");
+  if (!el) return;
   el.classList.add("up");
 
   setTimeout(() => {
@@ -5665,13 +5726,8 @@ function atualizarBadgesSaves() {
 
     const valor = mod(getAtributoFinal(attr)) + (saves[attr] ? bonus : 0);
 
-    if (saves[attr]) {
-      badge.style.display = "flex";
-      badge.textContent = valor >= 0 ? `+${valor}` : `${valor}`;
-    } else {
-      badge.style.display = "none";
-      badge.textContent = "";
-    }
+    badge.style.display = "flex";
+    badge.textContent = valor >= 0 ? `+${valor}` : `${valor}`;
   });
 }
 
@@ -5735,7 +5791,34 @@ function atualizarTudo() {
   if (lista) {
     lista.innerHTML = "";
 
-    pericias.forEach((pericia) => {
+    // marcadas (treinada/especialista) primeiro, depois o resto; cada grupo em ordem alfabética
+    const filtro = window._filtroPericias || "todas";
+    const siglas = { forca: "FOR", destreza: "DES", constituicao: "CON", inteligencia: "INT", sabedoria: "SAB", carisma: "CAR" };
+    const ordenadas = [...pericias]
+      .filter((p) => {
+        const nivel = profs[p.nome] || 0;
+        if (filtro === "treinadas") return nivel >= 1;
+        if (filtro === "especialista") return nivel === 2;
+        return true;
+      })
+      .sort((a, b) => {
+        const ma = profs[a.nome] ? 0 : 1;
+        const mb = profs[b.nome] ? 0 : 1;
+        return ma - mb || a.nome.localeCompare(b.nome, "pt-BR");
+      });
+
+    if (!ordenadas.length) {
+      lista.innerHTML = `<p class="pericias-vazio">${filtro === "especialista" ? "Nenhuma perícia com especialização." : "Nenhuma perícia treinada ainda."}</p>`;
+    }
+
+    ordenadas.forEach((pericia, i) => {
+      // linha separando as marcadas das outras
+      if (filtro === "todas" && i > 0 && profs[ordenadas[i - 1].nome] && !profs[pericia.nome]) {
+        const sep = document.createElement("div");
+        sep.className = "pericias-separador";
+        lista.appendChild(sep);
+      }
+
       let bonusFinal = 0;
 
       if (profs[pericia.nome] === 1) {
@@ -5754,6 +5837,7 @@ function atualizarTudo() {
   ${profs[pericia.nome] === 1 ? "ativo" : ""} 
   ${profs[pericia.nome] === 2 ? "expertise" : ""}" onclick="toggleProf('${pericia.nome}', event)"></div>
           ${pericia.nome}
+          <small class="pericia-attr">${siglas[pericia.attr] || ""}</small>
         </label>
         <span>${valor >= 0 ? `+${valor}` : valor}</span>
       `;
@@ -7838,6 +7922,36 @@ window.fecharDarItemMestre = function () {
   window._darItemMestreContexto = null;
 };
 
+// descobre pra qual lista da ficha o item vai (itens padrão não têm "categoria", então usa o "tipo")
+function categoriaItemMestre(item) {
+  if (item._tipo === "mapa") return "mapas";
+  if (item.categoria) return item.categoria;
+  const t = normalizarTipo(item.tipo);
+  if (t.includes("armadura") || t.includes("escudo")) return "armaduras";
+  if (t.includes("arma")) return "armas";
+  return "inventario";
+}
+
+// junta tudo que o mestre preencheu num texto só, pra caber na descrição da ficha do jogador
+function montarDescItemMestre(item) {
+  const raridades = { comum: "Comum", normal: "Comum", incomum: "Incomum", raro: "Raro", muitoraro: "Muito Raro", lendario: "Lendário", reliquia: "Relíquia" };
+  const cabecalho = [
+    item.tipo,
+    raridades[item.raridade] || item.raridade,
+    item.classificacao === "artefato" ? "Artefato" : ""
+  ].filter(Boolean).join(" · ");
+
+  const secoes = [
+    ["Efeito", item.efeito],
+    ["Descrição", item.descricao],
+    ["História", item.historia],
+    ["Origem", item.origem]
+  ].filter(([, v]) => v && String(v).trim())
+   .map(([titulo, v]) => `${titulo}:\n${String(v).trim()}`);
+
+  return [cabecalho, ...secoes].filter(Boolean).join("\n\n");
+}
+
 window.confirmarDarItemMestre = async function (uidDestino, fichaIdDestino, nomeDestino) {
   const itemOriginal = window._darItemMestreContexto;
   if (!itemOriginal) return;
@@ -7849,7 +7963,19 @@ window.confirmarDarItemMestre = async function (uidDestino, fichaIdDestino, nome
     const meuSnap = await getDoc(doc(db, "usuarios", meuUid));
     const meuDados = meuSnap.exists() ? meuSnap.data() : {};
 
-    const categoria = itemOriginal._tipo === "mapa" ? "mapas" : (itemOriginal.categoria || "inventario");
+    const categoria = categoriaItemMestre(itemOriginal);
+
+    // campos que existem em todo item da ficha do jogador
+    const requerSintonia = itemOriginal.sintonia === "sim" ||
+      String(itemOriginal.sintonizacao || "").toLowerCase() === "sim";
+    const base = {
+      nome: itemOriginal.nome,
+      desc: montarDescItemMestre(itemOriginal),
+      imagemUrl: itemOriginal.imagem || "",
+      imagemDeleteUrl: "",
+      requerSintonia,
+      sintonizado: false
+    };
 
     // monta o item no formato que a ficha do jogador espera, dependendo da categoria
     let itemParaJogador;
@@ -7862,25 +7988,11 @@ window.confirmarDarItemMestre = async function (uidDestino, fichaIdDestino, nome
         anotacoes: []
       };
     } else if (categoria === "armas") {
-      itemParaJogador = {
-        nome: itemOriginal.nome,
-        dano: itemOriginal.dano || "",
-        desc: itemOriginal.descricao || itemOriginal.efeito || "",
-        temCargas: false
-      };
+      itemParaJogador = { ...base, dano: itemOriginal.dano || "", temCargas: false, maxCargas: 0, cargasGastas: [] };
     } else if (categoria === "armaduras") {
-      itemParaJogador = {
-        nome: itemOriginal.nome,
-        ca: itemOriginal.ca || "",
-        desc: itemOriginal.descricao || itemOriginal.efeito || "",
-        temCargas: false
-      };
+      itemParaJogador = { ...base, ca: itemOriginal.ca || "", temCargas: false, maxCargas: 0, cargasGastas: [] };
     } else {
-      itemParaJogador = {
-        nome: itemOriginal.nome,
-        qtd: 1,
-        desc: itemOriginal.descricao || itemOriginal.efeito || ""
-      };
+      itemParaJogador = { ...base, qtd: 1 };
     }
 
     await setDoc(doc(collection(db, "usuarios", uidDestino, "itensRecebidos")), {
@@ -8479,6 +8591,10 @@ async function salvarItemMestre() {
   const novoItem = {
     id: itemAnterior ? itemAnterior.id : Date.now(),
     _tipo: "item", _origem: "usuario", nome,
+    categoria: document.getElementById("itemMasterCategoria")?.value || "inventario",
+    classificacao: document.getElementById("itemMasterClassificacao")?.value || "normal",
+    dano:      document.getElementById("itemMasterDano")?.value.trim() || "",
+    ca:        document.getElementById("itemMasterCA")?.value.trim() || "",
     tipo:      document.getElementById("itemMasterTipo")?.value.trim() || "",
     raridade:  document.getElementById("itemMasterRaridade")?.value || "normal",
     sintonia:  document.getElementById("itemMasterSintonia")?.value || "nao",
@@ -8496,7 +8612,8 @@ async function salvarItemMestre() {
     novoItem.imagemDeleteUrl = resultado.deleteUrl;
   }
 
-  if (editandoItemMestre >= 0) {
+  const estavaEditando = editandoItemMestre >= 0;
+  if (estavaEditando) {
     monstrosMestre[editandoItemMestre] = novoItem;
     editandoItemMestre = -1;
   } else {
@@ -8507,14 +8624,19 @@ async function salvarItemMestre() {
   renderMonstrosMestre();
 
   ["itemMasterNome","itemMasterTipo","itemMasterEfeito","itemMasterDescricao",
-   "itemMasterHistoria","itemMasterOrigem"].forEach(id => {
+   "itemMasterHistoria","itemMasterOrigem","itemMasterDano","itemMasterCA"].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = "";
   });
+  const catEl = document.getElementById("itemMasterCategoria");
+  if (catEl) catEl.value = "inventario";
+  const classEl = document.getElementById("itemMasterClassificacao");
+  if (classEl) classEl.value = "normal";
+  window.atualizarCamposCategoriaItem();
   const preview = document.getElementById("previewItemMaster");
   if (preview) { preview.src = ""; preview.style.display = "none"; }
   window._imagemItemBase64 = "";
 
-  mostrarToastMundo(editandoItemMestre >= 0 ? "Item atualizado!" : "Item salvo!");
+  mostrarToastMundo(estavaEditando ? "Item atualizado!" : "Item salvo!");
 }
 
 function editarItemMestre(id) {
@@ -8535,6 +8657,11 @@ function editarItemMestre(id) {
   document.getElementById("itemMasterDescricao").value = item.descricao || "";
   document.getElementById("itemMasterHistoria").value = item.historia || "";
   document.getElementById("itemMasterOrigem").value = item.origem || "";
+  document.getElementById("itemMasterCategoria").value = item.categoria || "inventario";
+  document.getElementById("itemMasterClassificacao").value = item.classificacao || "normal";
+  document.getElementById("itemMasterDano").value = item.dano || "";
+  document.getElementById("itemMasterCA").value = item.ca || "";
+  window.atualizarCamposCategoriaItem();
 
   const preview = document.getElementById("previewItemMaster");
   if (preview && item.imagem) {
@@ -10166,16 +10293,23 @@ window.confirmarDarItem = async function (uidDestino, fichaIdDestino, nomeDestin
   const item = arr?.[ctx.index];
   if (!item) return;
 
-  if (!(await confirmBonito(`Dar "${item.nome || "esse item"}" pra ${nomeDestino}?`))) return;
+  // mochila vai junto com o que tem dentro
+  const filhos = ctx.tipo === "inventario" && item.recipiente ? filhosDoRecipiente(item.id) : [];
+  const textoConteudo = filhos.length ? ` (com ${filhos.length} ${filhos.length === 1 ? "item" : "itens"} dentro)` : "";
+
+  if (!(await confirmBonito(`Dar "${item.nome || "esse item"}"${textoConteudo} pra ${nomeDestino}?`))) return;
 
   try {
     const meuUid = window.usuarioAtual.uid;
     const meuSnap = await getDoc(doc(db, "usuarios", meuUid));
     const meuDados = meuSnap.exists() ? meuSnap.data() : {};
 
+    const itemEnviado = { ...item, dentroDe: "" };
+    if (filhos.length) itemEnviado.conteudo = filhos.map((f) => ({ ...f }));
+
     await setDoc(doc(collection(db, "usuarios", uidDestino, "itensRecebidos")), {
       tipo: ctx.tipo,
-      item,
+      item: itemEnviado,
       deUid: meuUid,
       deNickname: meuDados.nickname || "",
       deTag: meuDados.tag || "",
@@ -10184,7 +10318,14 @@ window.confirmarDarItem = async function (uidDestino, fichaIdDestino, nomeDestin
       criadoEm: new Date().toISOString()
     });
 
-    arr.splice(ctx.index, 1);
+    if (filhos.length) {
+      const idsFilhos = new Set(filhos.map((f) => f.id));
+      const restante = inventario.filter((i) => i !== item && !idsFilhos.has(i.id));
+      inventario.length = 0;
+      inventario.push(...restante);
+    } else {
+      arr.splice(ctx.index, 1);
+    }
     if (ctx.tipo === "inventario") { window.inventario = inventario; renderInv(); }
     if (ctx.tipo === "armas") { window.armas = armas; renderArmas(); }
     if (ctx.tipo === "armaduras") { window.armaduras = armaduras; renderArmaduras(); }
@@ -10256,6 +10397,24 @@ function atualizarBadgeInboxItens(n) {
   }
 }
 
+// coloca um item recebido na ficha; se for uma mochila com conteúdo, desempacota tudo
+function colocarItemRecebidoNaFicha(ficha, tipo, itemRecebido) {
+  ficha[tipo] = ficha[tipo] || [];
+  const { conteudo, ...item } = itemRecebido || {};
+
+  if (tipo !== "inventario") {
+    ficha[tipo].push(item);
+    return;
+  }
+
+  const novaMochila = { ...item, id: gerarIdItem(), dentroDe: "" };
+  ficha[tipo].push(novaMochila);
+
+  (Array.isArray(conteudo) ? conteudo : []).forEach((filho) => {
+    ficha[tipo].push({ ...filho, id: gerarIdItem(), dentroDe: novaMochila.id, recipiente: false });
+  });
+}
+
 window.aceitarItemRecebido = async function (docId) {
   const meuUid = window.usuarioAtual.uid;
   try {
@@ -10272,8 +10431,7 @@ window.aceitarItemRecebido = async function (docId) {
       return;
     }
 
-    ficha[d.tipo] = ficha[d.tipo] || [];
-    ficha[d.tipo].push(d.item);
+    colocarItemRecebidoNaFicha(ficha, d.tipo, d.item);
 
     if (typeof salvarPersonagens === "function") salvarPersonagens();
 
@@ -10338,8 +10496,7 @@ window.processarDevolucoesAutomaticas = async function () {
       // devolução: acha a ficha de onde o item saiu originalmente (a que estava vinculada ao grupo na hora)
       const fichaAlvo = (window.personagens || []).find(f => f.grupoAtivo) || window.personagens?.[0];
       if (fichaAlvo) {
-        fichaAlvo[d.tipo] = fichaAlvo[d.tipo] || [];
-        fichaAlvo[d.tipo].push(d.item);
+        colocarItemRecebidoNaFicha(fichaAlvo, d.tipo, d.item);
       }
 
       await deleteDoc(doc(db, "usuarios", meuUid, "itensRecebidos", docSnap.id));
@@ -11939,9 +12096,11 @@ const pctTemp = Math.max(0, Math.min(100, (vidaTemp / vidaMax) * 100));
 const corVida = pctVida <= 25 ? "#8a2c22" : pctVida <= 60 ? "#a9822f" : "#4a6b32";
 
   const todosPoderes = f.poderes || [];
-  const poderesGerais = todosPoderes.filter(p => (p.circulo ?? "") === "").map(p => _fichaDashLinha(m.uid, p.nome || "Sem nome", "", _fichaDashPillCargas(p), p.desc)).join("");
-  const talentos = todosPoderes.filter(p => p.circulo === "talento").map(p => _fichaDashLinha(m.uid, p.nome || "Sem nome", "", _fichaDashPillCargas(p), p.desc)).join("");
-  const passivas = todosPoderes.filter(p => p.circulo === "passiva").map(p => _fichaDashLinha(m.uid, p.nome || "Sem nome", "", _fichaDashPillCargas(p), p.desc)).join("");
+  const _ehTal = p => p.circulo === "talento" || ((p.circulo ?? "") === "" && p.origem === "talento");
+  const _ehPas = p => !_ehTal(p) && (p.circulo === "passiva" || ((p.circulo ?? "") === "" && p.acao === "passiva"));
+  const poderesGerais = todosPoderes.filter(p => (p.circulo ?? "") === "" && !_ehTal(p) && !_ehPas(p)).map(p => _fichaDashLinha(m.uid, p.nome || "Sem nome", "", _fichaDashPillCargas(p), p.desc)).join("");
+  const talentos = todosPoderes.filter(_ehTal).map(p => _fichaDashLinha(m.uid, p.nome || "Sem nome", "", _fichaDashPillCargas(p), p.desc)).join("");
+  const passivas = todosPoderes.filter(_ehPas).map(p => _fichaDashLinha(m.uid, p.nome || "Sem nome", "", _fichaDashPillCargas(p), p.desc)).join("");
 
   const gastos = f.gastosCirculos || {};
   const bolinhasCirculo = (circulo) => {
@@ -12497,3 +12656,950 @@ if (window.Capacitor?.Plugins?.App) {
     if (!isActive) flushSalvamentoPendente();
   });
 }
+
+/* filtro das perícias */
+window._filtroPericias = "todas";
+function filtrarPericias(filtro, btn) {
+  window._filtroPericias = filtro;
+  document.querySelectorAll(".pericias-filtro").forEach((b) => b.classList.toggle("ativo", b === btn));
+  atualizarTudo();
+}
+
+/* rolar o mouse em cima de um campo numérico não muda mais o valor */
+document.addEventListener(
+  "wheel",
+  (e) => {
+    const alvo = e.target;
+    if (alvo && alvo.tagName === "INPUT" && alvo.type === "number" && document.activeElement === alvo) {
+      alvo.blur();
+    }
+  },
+  { passive: true },
+);
+
+/* ================= MODIFICAÇÕES (armas, armaduras e itens) ================= */
+// cada modificação: { nome: "Crítico ampliado", efeito: "19-20" }
+
+window._modsTemp = window._modsTemp || {};
+
+function montarEditorMods(containerId, chave, modsIniciais) {
+  const box = document.getElementById(containerId);
+  if (!box) return;
+  window._modsTemp[chave] = Array.isArray(modsIniciais) ? modsIniciais.map((m) => ({ ...m })) : (window._modsTemp[chave] || []);
+  box.className = "mods-editor";
+  box.dataset.chave = chave;
+  box.innerHTML = `
+    <div class="mods-lista" id="modsLista_${chave}"></div>
+    <div class="mods-add">
+      <input id="modNome_${chave}" placeholder="Nome (ex: Crítico ampliado)" />
+      <input id="modEfeito_${chave}" placeholder="Efeito (ex: 19-20)" />
+      <button type="button" onclick="adicionarModTemp('${chave}')" title="Adicionar modificação"><i class="ti ti-plus"></i></button>
+    </div>`;
+  ["modNome_", "modEfeito_"].forEach((pre) => {
+    const el = document.getElementById(pre + chave);
+    if (el) el.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); adicionarModTemp(chave); } });
+  });
+  renderModsTemp(chave);
+}
+
+function renderModsTemp(chave) {
+  const lista = document.getElementById("modsLista_" + chave);
+  if (!lista) return;
+  const mods = window._modsTemp[chave] || [];
+  lista.innerHTML = mods.length
+    ? mods
+        .map(
+          (m, i) => `
+        <div class="mods-linha">
+          <div class="mods-linha-texto">
+            <strong>${esc(m.nome)}</strong>${m.efeito ? `<span>${esc(m.efeito)}</span>` : ""}
+          </div>
+          <button type="button" onclick="removerModTemp('${chave}', ${i})" title="Remover"><i class="ti ti-x"></i></button>
+        </div>`,
+        )
+        .join("")
+    : `<p class="mods-vazio">Nenhuma modificação. Ex: crítico, dano extra, cargas, recarga.</p>`;
+}
+
+function adicionarModTemp(chave) {
+  const nomeEl = document.getElementById("modNome_" + chave);
+  const efeitoEl = document.getElementById("modEfeito_" + chave);
+  const nome = (nomeEl?.value || "").trim();
+  const efeito = (efeitoEl?.value || "").trim();
+  if (!nome && !efeito) return;
+  (window._modsTemp[chave] = window._modsTemp[chave] || []).push({ nome: nome || efeito, efeito: nome ? efeito : "" });
+  if (nomeEl) nomeEl.value = "";
+  if (efeitoEl) efeitoEl.value = "";
+  renderModsTemp(chave);
+  nomeEl?.focus();
+}
+
+function removerModTemp(chave, i) {
+  (window._modsTemp[chave] || []).splice(i, 1);
+  renderModsTemp(chave);
+}
+
+// usado ao criar: pega o que foi digitado (inclusive o que ficou nos campos sem apertar +) e limpa o editor
+function consumirModsTemp(chave) {
+  const nomeEl = document.getElementById("modNome_" + chave);
+  if (nomeEl && (nomeEl.value.trim() || document.getElementById("modEfeito_" + chave)?.value.trim())) {
+    adicionarModTemp(chave);
+  }
+  const mods = [...(window._modsTemp[chave] || [])];
+  window._modsTemp[chave] = [];
+  renderModsTemp(chave);
+  return mods;
+}
+
+function modsChipsHTML(mods) {
+  if (!Array.isArray(mods) || !mods.length) return "";
+  return `<div class="mods-chips">${mods
+    .map((m) => `<span class="mods-chip">${esc(m.nome)}${m.efeito ? ` <b>${esc(m.efeito)}</b>` : ""}</span>`)
+    .join("")}</div>`;
+}
+
+function modsVerHTML(mods) {
+  if (!Array.isArray(mods) || !mods.length) return "";
+  return `
+    <div style="margin-top: 12px;">
+      <span class="popup-label">Modificações</span>
+      <div class="mods-ver">${mods
+        .map((m) => `<div class="mods-ver-linha"><strong>${esc(m.nome)}</strong>${m.efeito ? `<span>${esc(m.efeito)}</span>` : ""}</div>`)
+        .join("")}</div>
+    </div>`;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  montarEditorMods("armaMods", "arma");
+  montarEditorMods("armaduraMods", "armadura");
+  montarEditorMods("itemMods", "item");
+});
+
+
+/* =====================================================================
+   PODERES E MAGIAS
+   - Poderes agrupados por custo de ação, com recarga, origem e favoritos
+   - Magias com painel de espaços, seletor de círculos, conjurar,
+     concentração, ritual, componentes e preparadas
+   ===================================================================== */
+
+var PM_ACOES = [
+  ["acao", "Ação", "Ações"],
+  ["bonus", "Ação Bônus", "Ações Bônus"],
+  ["reacao", "Reação", "Reações"],
+  ["livre", "Livre", "Ações Livres"],
+  ["passiva", "Passiva", "Passivas"],
+  ["", "Sem definição", "Outros"],
+];
+
+var PM_RECARGAS = {
+  "": "Sem recarga",
+  vontade: "À vontade",
+  unico: "Uso único",
+  curto: "Descanso curto",
+  longo: "Descanso longo",
+  dia: "Por dia",
+};
+
+var PM_ORIGENS = {
+  "": "Sem origem",
+  classe: "Classe",
+  subclasse: "Subclasse",
+  raca: "Raça",
+  talento: "Talento",
+  item: "Item",
+};
+
+var PM_TIPOS = [
+  ["", "Tipo de dano"], ["fogo", "🔥 Fogo"], ["gelo", "❄️ Gelo"], ["raio", "⚡ Raio"],
+  ["cura", "🩹 Cura"], ["trovejante", "🌩️ Trovejante"], ["necrotico", "💀 Necrótico"],
+  ["radiante", "✨ Radiante"], ["veneno", "☠️ Veneno"], ["agua", "💧 Água"],
+  ["magico", "☄️ Mágico"], ["psiquico", "🧠 Psíquico"], ["corte", "🔪 Corte"],
+  ["perfurante", "📌 Perfurante"], ["concussao", "💥 Concussão"], ["metal", "⚙️ Metal"],
+  ["fisico", "🗡️ Físico"], ["vento", "🍃 Vento"], ["madeira", "🌳 Madeira"],
+  ["terra", "🌍 Terra"], ["trevas", "🌑 Trevas"], ["luz", "🌕 Luz"], ["espirito", "🌓 Espírito"],
+];
+
+var ROMANOS = ["Truques", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"];
+
+var concentracaoAtiva = "";
+window._visaoPM = window._visaoPM || "poderes";
+window._circuloSelecionado = window._circuloSelecionado || 0;
+window._filtroOrigem = "";
+window._soPreparadas = false;
+try {
+  window._modoCompactoPM = localStorage.getItem("pmCompacto") === "1";
+} catch (e) {
+  window._modoCompactoPM = false;
+}
+
+function pmSetText(id, texto) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = texto;
+}
+
+function ehMagia(p) {
+  return /^[0-9]$/.test(String(p?.circulo ?? "").trim());
+}
+
+function circuloDe(p) {
+  return parseInt(p.circulo);
+}
+
+function nomeCirculo(c) {
+  return c === 0 ? "Truque" : `${ROMANOS[c]} círculo`;
+}
+
+function contMagias(c) {
+  return poderes.filter((p) => ehMagia(p) && circuloDe(p) === c).length;
+}
+
+// converte poderes antigos (abas Talentos/Passivas, campo "Conjuração" em texto) pro formato novo
+function normalizarPoder(p) {
+  if (!p) return;
+  if (!p.id) p.id = "pw_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+  const c = String(p.circulo ?? "").trim();
+  if (c === "talento") {
+    p.circulo = "";
+    if (!p.origem) p.origem = "talento";
+  }
+  if (c === "passiva") {
+    p.circulo = "";
+    if (p.acao === undefined) p.acao = "passiva";
+  }
+  if (p.acao === undefined) {
+    const t = normalizarTipo(p.tempo);
+    p.acao = t.includes("bonus") ? "bonus"
+      : t.includes("reac") ? "reacao"
+      : t.includes("livre") ? "livre"
+      : t.includes("acao") ? "acao"
+      : "";
+  }
+  if (p.recarga === undefined) p.recarga = "";
+  if (p.origem === undefined) p.origem = "";
+  if (ehMagia(p) && p.preparada === undefined) p.preparada = true;
+}
+
+/* ---------- render geral ---------- */
+
+function renderPoderes() {
+  poderes.forEach(normalizarPoder);
+
+  const nMagias = poderes.filter(ehMagia).length;
+  pmSetText("contadorPoderes", `(${poderes.length - nMagias})`);
+  pmSetText("contadorMagias", `(${nMagias})`);
+
+  document
+    .querySelectorAll('[onclick="alternarModoCompacto()"]')
+    .forEach((b) => b.classList.toggle("ativo", !!window._modoCompactoPM));
+
+  renderListaPoderes();
+  renderPainelMagias();
+}
+
+// chamado pelo código antigo sempre que os espaços mudam
+function renderSlotsCirculo() {
+  if (window.__pmPronto) renderPainelMagias();
+}
+
+function trocarVisaoPM(visao) {
+  window._visaoPM = visao;
+  const p = document.getElementById("pmPoderes");
+  const m = document.getElementById("pmMagias");
+  if (p) p.style.display = visao === "poderes" ? "" : "none";
+  if (m) m.style.display = visao === "magias" ? "" : "none";
+  document.getElementById("pmBtnPoderes")?.classList.toggle("ativo", visao === "poderes");
+  document.getElementById("pmBtnMagias")?.classList.toggle("ativo", visao === "magias");
+  renderPoderes();
+}
+
+function alternarModoCompacto() {
+  window._modoCompactoPM = !window._modoCompactoPM;
+  try {
+    localStorage.setItem("pmCompacto", window._modoCompactoPM ? "1" : "0");
+  } catch (e) {}
+  renderPoderes();
+}
+
+// todos os filtros possíveis da visão Poderes (só aparecem os que têm algum poder)
+function filtrosPoderDisponiveis() {
+  const todos = [];
+  PM_ACOES.forEach(([k, rotulo, plural]) => {
+    if (!k) return;
+    todos.push({ v: "acao:" + k, g: "acao", r: k === "passiva" ? "Passivas" : plural, teste: (p) => p.acao === k });
+  });
+  todos.push({ v: "acao:", g: "acao", r: "Sem ação", teste: (p) => !p.acao });
+
+  todos.push({ v: "usos", g: "rec", r: "Com usos", teste: (p) => p.temCargas && p.maxCargas > 0 });
+  Object.entries(PM_RECARGAS).forEach(([k, rotulo]) => {
+    if (!k) return;
+    todos.push({ v: "rec:" + k, g: "rec", r: rotulo, teste: (p) => p.recarga === k });
+  });
+
+  Object.entries(PM_ORIGENS).forEach(([k, rotulo]) => {
+    if (!k) return;
+    todos.push({ v: "orig:" + k, g: "orig", r: rotulo, teste: (p) => p.origem === k });
+  });
+
+  const lista = poderes.filter((p) => !ehMagia(p));
+  return todos
+    .map((f) => ({ ...f, n: lista.filter(f.teste).length }))
+    .filter((f) => f.n > 0);
+}
+
+function filtrarOrigemPoder(origem) {
+  window._filtroOrigem = origem;
+  renderPoderes();
+}
+
+/* ---------- card (usado em poderes e magias) ---------- */
+
+function cardPoderEl(index, semArrastar) {
+  const p = poderes[index];
+  const magia = ehMagia(p);
+  const li = document.createElement("li");
+  li.className =
+    "pw-card" +
+    (magia && p.preparada === false ? " nao-preparada" : "") +
+    (concentracaoAtiva && concentracaoAtiva === p.id ? " concentrando" : "");
+  li.dataset.index = index;
+
+  const tags = [];
+  if (magia) tags.push(`<span class="pw-tag pw-tag-circulo">${nomeCirculo(circuloDe(p))}</span>`);
+  if (p.acao) tags.push(`<span class="pw-tag">${PM_ACOES.find((a) => a[0] === p.acao)?.[1] || ""}</span>`);
+  if (p.dano) tags.push(`<span class="tag-dano">${esc(p.dano)}</span>`);
+  if (p.recarga) tags.push(`<span class="pw-tag">${PM_RECARGAS[p.recarga] || ""}</span>`);
+  if (p.origem) tags.push(`<span class="pw-tag pw-tag-suave">${PM_ORIGENS[p.origem] || ""}</span>`);
+  if (magia) {
+    if (p.concentracao) tags.push(`<span class="pw-tag pw-tag-magia">Concentração</span>`);
+    if (p.ritual) tags.push(`<span class="pw-tag pw-tag-magia">Ritual</span>`);
+    const comp = ["v", "s", "m"].filter((k) => p.componentes && p.componentes[k]).map((k) => k.toUpperCase());
+    if (comp.length) tags.push(`<span class="pw-tag pw-tag-suave">${comp.join(" ")}</span>`);
+  }
+
+  const pips =
+    p.temCargas && p.maxCargas > 0
+      ? `<div class="pw-pips">${Array.from(
+          { length: p.maxCargas },
+          (_, k) =>
+            `<span class="pw-pip ${p.cargasGastas?.[k] ? "gasto" : ""}" onclick="event.stopPropagation(); toggleCargaPoder(${index}, ${k})"></span>`,
+        ).join("")}</div>`
+      : "";
+
+  const conjurar = magia
+    ? `<button type="button" class="pw-conjurar" onclick="event.stopPropagation(); conjurarMagia(${index})"><i class="ti ti-sparkles"></i> <span>Conjurar</span></button>`
+    : "";
+
+  const preparar = magia
+    ? `<button type="button" class="pw-mini ${p.preparada === false ? "" : "ativo"}" title="${p.preparada === false ? "Não preparada (toque para preparar)" : "Preparada (toque para desmarcar)"}" onclick="event.stopPropagation(); alternarPreparada(${index})"><i class="ti ti-bookmark"></i></button>`
+    : "";
+
+  li.innerHTML = `
+    ${semArrastar ? "" : `<button type="button" class="drag-handle" aria-label="Arrastar para reordenar"></button>`}
+    <div class="pw-corpo" onclick="verPoder(${index})">
+      <div class="pw-topo">
+        <span class="pw-icone">${getIconeTipo(p.tipo)}</span>
+        <strong class="pw-nome">${esc(p.nome) || "Sem nome"}</strong>
+      </div>
+      ${tags.length ? `<div class="pw-tags">${tags.join("")}</div>` : ""}
+      ${pips || conjurar ? `<div class="pw-rodape">${pips}${conjurar}</div>` : ""}
+    </div>
+    <div class="pw-acoes">
+      <button type="button" class="pw-mini pw-fav ${p.favorito ? "ativo" : ""}" title="Em mãos" onclick="event.stopPropagation(); alternarFavoritoPoder(${index})"><i class="ti ${p.favorito ? "ti-star-filled" : "ti-star"}"></i></button>
+      ${preparar}
+      <button type="button" class="pw-mini" title="Editar" onclick="event.stopPropagation(); abrirFormPoder(${index})"><i class="ti ti-pencil"></i></button>
+    </div>`;
+  return li;
+}
+
+/* ---------- visão Poderes ---------- */
+
+function renderListaPoderes() {
+  const box = document.getElementById("listaPoderesSecoes");
+  if (!box) return;
+
+  const filtros = filtrosPoderDisponiveis();
+  if (window._filtroOrigem && !filtros.some((f) => f.v === window._filtroOrigem)) window._filtroOrigem = "";
+  const filtroAtivo = filtros.find((f) => f.v === window._filtroOrigem);
+
+  const filtrosBox = document.getElementById("filtrosOrigem");
+  if (filtrosBox) {
+    let grupoAnterior = null;
+    filtrosBox.innerHTML = !filtros.length ? "" :
+      `<button type="button" class="pm-filtro ${!window._filtroOrigem ? "ativo" : ""}" onclick="filtrarOrigemPoder('')">Todos</button>` +
+      filtros
+        .map((f) => {
+          const sep = grupoAnterior !== null && grupoAnterior !== f.g ? `<span class="pm-filtro-sep"></span>` : "";
+          grupoAnterior = f.g;
+          return `${sep}<button type="button" class="pm-filtro ${window._filtroOrigem === f.v ? "ativo" : ""}" onclick="filtrarOrigemPoder('${f.v}')">${f.r} <small>${f.n}</small></button>`;
+        })
+        .join("");
+  }
+
+  const busca = normalizarTipo(document.getElementById("buscaPoder")?.value || "");
+  const passaBusca = (p) => !busca || normalizarTipo(`${p.nome || ""} ${p.desc || ""}`).includes(busca);
+
+  box.innerHTML = "";
+  let algum = false;
+
+  // Em mãos: favoritos (poderes e magias)
+  const favoritos = [];
+  poderes.forEach((p, i) => {
+    if (p.favorito && passaBusca(p) && (!filtroAtivo || (!ehMagia(p) && filtroAtivo.teste(p)))) favoritos.push(i);
+  });
+  if (favoritos.length) {
+    box.appendChild(secaoPoderes("Em mãos", "ti-star", favoritos, true));
+    algum = true;
+  }
+
+  PM_ACOES.forEach(([chave, , titulo]) => {
+    const indices = [];
+    poderes.forEach((p, i) => {
+      if (ehMagia(p)) return;
+      if ((p.acao || "") !== chave) return;
+      if (filtroAtivo && !filtroAtivo.teste(p)) return;
+      if (!passaBusca(p)) return;
+      indices.push(i);
+    });
+    if (indices.length) {
+      box.appendChild(secaoPoderes(titulo, null, indices, false));
+      algum = true;
+    }
+  });
+
+  if (!algum) {
+    box.innerHTML = `<p class="pm-vazio">${
+      busca || window._filtroOrigem ? "Nada encontrado." : "Nenhum poder ainda. Toque em <b>+ Novo</b>."
+    }</p>`;
+  }
+}
+
+function secaoPoderes(titulo, icone, indices, ehFavoritos) {
+  const sec = document.createElement("div");
+  sec.className = "pm-secao" + (ehFavoritos ? " pm-secao-fav" : "");
+  sec.innerHTML = `<div class="pm-secao-titulo">${icone ? `<i class="ti ${icone}"></i>` : ""}<span>${titulo}</span><small>${indices.length}</small></div>`;
+
+  const ul = document.createElement("ul");
+  ul.className = "pm-lista" + (window._modoCompactoPM ? " compacto" : "");
+  indices.forEach((i) => ul.appendChild(cardPoderEl(i, ehFavoritos)));
+  sec.appendChild(ul);
+
+  if (!ehFavoritos) habilitarArrastarReordenar(ul, poderes, renderPoderes);
+  return sec;
+}
+
+function alternarFavoritoPoder(index) {
+  const p = poderes[index];
+  if (!p) return;
+  p.favorito = !p.favorito;
+  renderPoderes();
+  salvarTudo();
+}
+
+/* ---------- visão Magias ---------- */
+
+function atualizarCabecalhoConjurador() {
+  const base = parseInt(document.getElementById("dtBase")?.value) || 0;
+  const atr = parseInt(document.getElementById("dtAtributo")?.value) || 0;
+  const prof = parseInt(document.getElementById("dtProf")?.value) || 0;
+  pmSetText("cabCD", base + atr + prof);
+  const atk = atr + prof;
+  pmSetText("cabAtk", (atk >= 0 ? "+" : "") + atk);
+}
+
+function alternarAjusteCD() {
+  const box = document.getElementById("dtBoxMagia");
+  if (box) box.style.display = box.style.display === "none" ? "" : "none";
+}
+
+function renderPainelMagias() {
+  const lista = document.getElementById("listaMagias");
+  if (!lista) return;
+
+  atualizarCabecalhoConjurador();
+
+  // concentração
+  const banner = document.getElementById("concentracaoBanner");
+  const pConc = concentracaoAtiva ? poderes.find((p) => p.id === concentracaoAtiva) : null;
+  if (concentracaoAtiva && !pConc) concentracaoAtiva = "";
+  if (banner) {
+    banner.innerHTML = pConc
+      ? `<div class="concentracao-banner"><i class="ti ti-brain"></i><span>Concentrando em <b>${esc(pConc.nome)}</b></span><button type="button" onclick="encerrarConcentracao()">Encerrar</button></div>`
+      : "";
+  }
+
+  // painel de espaços (gemas)
+  const painel = document.getElementById("painelEspacos");
+  if (painel) {
+    const linhas = [];
+    for (let c = 1; c <= 9; c++) {
+      const arr = gastosCirculos[c] || [];
+      if (!arr.length) continue;
+      const restam = arr.filter((g) => !g).length;
+      linhas.push(`
+        <div class="esp-linha ${window._circuloSelecionado === c ? "selecionado" : ""}">
+          <button type="button" class="esp-num" onclick="selecionarCirculo(${c})">${ROMANOS[c]}</button>
+          <div class="esp-gemas">${arr
+            .map(
+              (g, k) =>
+                `<button type="button" class="esp-gema ${g ? "gasta" : ""}" title="${g ? "Gasto (toque para recuperar)" : "Disponível (toque para gastar)"}" onclick="alternarEspaco(${c}, ${k})"></button>`,
+            )
+            .join("")}</div>
+          <span class="esp-restam">${restam}/${arr.length}</span>
+        </div>`);
+    }
+    painel.innerHTML = linhas.length
+      ? linhas.join("")
+      : `<p class="pm-vazio">Nenhum espaço configurado. Toque na engrenagem para dizer quantos você tem em cada círculo.</p>`;
+  }
+
+  // seletor de círculos (só os que você usa)
+  const seletor = document.getElementById("seletorCirculos");
+  if (seletor) {
+    const visiveis = [];
+    for (let c = 0; c <= 9; c++) {
+      const tem = (gastosCirculos[c] || []).length || contMagias(c);
+      if (c === 0 || tem || c === window._circuloSelecionado) visiveis.push(c);
+    }
+    seletor.innerHTML = visiveis
+      .map((c) => {
+        const qtd = contMagias(c);
+        return `<button type="button" class="circ-anel ${c === window._circuloSelecionado ? "ativo" : ""} ${c === 0 ? "truques" : ""}" onclick="selecionarCirculo(${c})">
+          <span>${ROMANOS[c]}</span>${qtd ? `<small>${qtd}</small>` : ""}
+        </button>`;
+      })
+      .join("");
+  }
+
+  // lista do círculo escolhido
+  const sc = window._circuloSelecionado;
+  lista.className = "pm-lista lista-sempre-visivel" + (window._modoCompactoPM ? " compacto" : "");
+  lista.innerHTML = "";
+  poderes.forEach((p, i) => {
+    if (!ehMagia(p) || circuloDe(p) !== sc) return;
+    if (window._soPreparadas && p.preparada === false) return;
+    lista.appendChild(cardPoderEl(i, false));
+  });
+
+  if (!lista.children.length) {
+    lista.innerHTML = `<p class="pm-vazio">${
+      window._soPreparadas
+        ? "Nenhuma magia preparada aqui."
+        : sc === 0
+          ? "Nenhum truque ainda."
+          : `Nenhuma magia do ${ROMANOS[sc]} círculo ainda.`
+    }</p>`;
+  } else {
+    habilitarArrastarReordenar(lista, poderes, renderPoderes);
+  }
+
+  document.getElementById("btnSoPreparadas")?.classList.toggle("ativo", !!window._soPreparadas);
+}
+
+function selecionarCirculo(c) {
+  window._circuloSelecionado = c;
+  renderPainelMagias();
+}
+
+function alternarEspaco(c, k) {
+  if (!Array.isArray(gastosCirculos[c])) return;
+  gastosCirculos[c][k] = !gastosCirculos[c][k];
+  renderPainelMagias();
+  salvarTudo();
+}
+
+function alternarSoPreparadas() {
+  window._soPreparadas = !window._soPreparadas;
+  renderPainelMagias();
+}
+
+function alternarPreparada(index) {
+  const p = poderes[index];
+  if (!p) return;
+  p.preparada = p.preparada === false;
+  renderPoderes();
+  salvarTudo();
+}
+
+function encerrarConcentracao() {
+  concentracaoAtiva = "";
+  renderPoderes();
+  salvarTudo();
+}
+
+function abrirGerenciarEspacos() {
+  let html = `<div class="popup-form"><p class="pm-dica">Quantos espaços de magia você tem em cada círculo:</p><div class="esp-config">`;
+  for (let c = 1; c <= 9; c++) {
+    html += `<label class="esp-config-linha"><span>${ROMANOS[c]} círculo</span><input type="number" min="0" max="20" id="cfgEsp${c}" value="${(gastosCirculos[c] || []).length}"></label>`;
+  }
+  html += `</div><button class="popup-salvar-btn" onclick="salvarGerenciarEspacos()">Salvar</button></div>`;
+  abrirPopup("Espaços de magia", html, true, null);
+}
+
+function salvarGerenciarEspacos() {
+  for (let c = 1; c <= 9; c++) {
+    let n = parseInt(document.getElementById("cfgEsp" + c)?.value) || 0;
+    n = Math.max(0, Math.min(20, n));
+    const atual = Array.isArray(gastosCirculos[c]) ? gastosCirculos[c] : [];
+    gastosCirculos[c] = Array.from({ length: n }, (_, k) => !!atual[k]);
+  }
+  fecharPopup();
+  renderPoderes();
+  salvarTudo();
+}
+
+/* ---------- conjurar ---------- */
+
+async function conjurarMagia(index) {
+  const p = poderes[index];
+  if (!p || !ehMagia(p)) return;
+  const c = circuloDe(p);
+
+  if (p.concentracao && concentracaoAtiva && concentracaoAtiva !== p.id) {
+    const atual = poderes.find((x) => x.id === concentracaoAtiva);
+    if (atual && !(await confirmBonito(`Você está concentrado em "${atual.nome}". Conjurar "${p.nome}" encerra essa concentração. Continuar?`))) {
+      return;
+    }
+  }
+
+  if (c === 0) {
+    finalizarConjuracao(index, 0);
+    return;
+  }
+
+  const opcoes = [];
+  for (let k = c; k <= 9; k++) {
+    const arr = gastosCirculos[k] || [];
+    const livres = arr.filter((g) => !g).length;
+    if (livres) opcoes.push({ k, livres });
+  }
+
+  if (!opcoes.length) {
+    alertBonito(`Sem espaços livres do ${ROMANOS[c]} círculo ou maior. Faça um descanso longo ou ajuste os espaços.`);
+    return;
+  }
+
+  // só existe o próprio círculo: gasta direto
+  if (opcoes.length === 1 && opcoes[0].k === c) {
+    gastarEspacoECojurar(index, c);
+    return;
+  }
+
+  const html = `
+    <div class="popup-form">
+      <p class="pm-dica">Em qual círculo conjurar?</p>
+      ${opcoes
+        .map(
+          (o) => `<button type="button" class="guardar-opcao" onclick="gastarEspacoECojurar(${index}, ${o.k})">
+            <i class="ti ti-sparkles"></i>
+            <span>${ROMANOS[o.k]} círculo${o.k > c ? " (elevada)" : ""}</span>
+            <small>${o.livres} ${o.livres === 1 ? "livre" : "livres"}</small>
+          </button>`,
+        )
+        .join("")}
+    </div>`;
+  abrirPopup(`Conjurar ${p.nome || "magia"}`, html, true, null);
+}
+
+function gastarEspacoECojurar(index, k) {
+  const arr = gastosCirculos[k] || [];
+  const livre = arr.findIndex((g) => !g);
+  if (livre >= 0) arr[livre] = true;
+  fecharPopup();
+  finalizarConjuracao(index, k);
+}
+
+function finalizarConjuracao(index, k) {
+  const p = poderes[index];
+  if (!p) return;
+  if (p.concentracao) concentracaoAtiva = p.id;
+  renderPoderes();
+  salvarTudo();
+  mostrarToastMundo(`${p.nome || "Magia"} conjurada${k ? ` no ${ROMANOS[k]} círculo` : ""}`);
+}
+
+/* ---------- descansos ---------- */
+
+async function descansoCurto() {
+  if (!(await confirmBonito("Descanso curto: recupera os usos dos poderes que recarregam em descanso curto. Continuar?"))) return;
+  let n = 0;
+  poderes.forEach((p) => {
+    if (p.recarga === "curto" && Array.isArray(p.cargasGastas)) {
+      if (p.cargasGastas.some(Boolean)) n++;
+      p.cargasGastas = p.cargasGastas.map(() => false);
+    }
+  });
+  renderPoderes();
+  salvarTudo();
+  mostrarToastMundo(n ? `${n} ${n === 1 ? "poder recuperado" : "poderes recuperados"}` : "Descanso curto feito");
+}
+
+async function descansoLongo() {
+  if (
+    !(await confirmBonito(
+      "Descanso longo: recupera os usos de todos os poderes (menos os de uso único), todos os espaços de magia e a vida até o máximo, e encerra a concentração. Continuar?",
+    ))
+  )
+    return;
+
+  poderes.forEach((p) => {
+    if (p.recarga !== "vontade" && p.recarga !== "unico" && Array.isArray(p.cargasGastas)) {
+      p.cargasGastas = p.cargasGastas.map(() => false);
+    }
+  });
+  for (let c = 0; c <= 9; c++) {
+    if (Array.isArray(gastosCirculos[c])) gastosCirculos[c] = gastosCirculos[c].map(() => false);
+  }
+  concentracaoAtiva = "";
+
+  const max = get("vidaMax");
+  if (max > 0) {
+    vidaAtual = max;
+    if (typeof atualizarHP === "function") atualizarHP();
+  }
+
+  renderPoderes();
+  salvarTudo();
+  mostrarToastMundo("Descanso longo: tudo recuperado");
+}
+
+/* ---------- formulário (novo / editar) ---------- */
+
+function abrirFormPoder(index, circuloPadrao) {
+  const editando = index >= 0;
+  const p = editando
+    ? poderes[index]
+    : { circulo: circuloPadrao ?? "", acao: "", recarga: "", origem: "", preparada: true };
+  if (editando) normalizarPoder(p);
+
+  const opts = (pares, sel) =>
+    pares.map(([v, rot]) => `<option value="${v}" ${String(v) === String(sel ?? "") ? "selected" : ""}>${rot}</option>`).join("");
+
+  const circulos = [["", "Poder (sem círculo)"], ["0", "Truque (círculo 0)"]].concat(
+    [1, 2, 3, 4, 5, 6, 7, 8, 9].map((c) => [String(c), `Magia · ${ROMANOS[c]} círculo`]),
+  );
+  const comp = p.componentes || {};
+  const magia = ehMagia(p);
+
+  const html = `
+    <div class="popup-form pf-form">
+      <label class="popup-label">Nome</label>
+      <input id="pfNome" value="${esc(p.nome || "")}" placeholder="Ex: Bola de Fogo">
+
+      <label class="popup-label">É um...</label>
+      <select id="pfCirculo" onchange="atualizarCamposMagiaForm()">${opts(circulos, p.circulo)}</select>
+
+      <div class="pf-duplo">
+        <div>
+          <span class="pf-mini">Ação</span>
+          <select id="pfAcao">${opts(PM_ACOES.map((a) => [a[0], a[0] ? a[1] : "Sem definição"]), p.acao)}</select>
+        </div>
+        <div>
+          <span class="pf-mini">Recarga</span>
+          <select id="pfRecarga">${opts(Object.entries(PM_RECARGAS), p.recarga)}</select>
+        </div>
+      </div>
+
+      <div class="pf-duplo">
+        <div>
+          <span class="pf-mini">Origem</span>
+          <select id="pfOrigem">${opts(Object.entries(PM_ORIGENS), p.origem)}</select>
+        </div>
+        <div>
+          <span class="pf-mini">Tipo de dano</span>
+          <select id="pfTipo">${opts(PM_TIPOS, normalizarTipo(p.tipo))}</select>
+        </div>
+      </div>
+
+      <div class="pf-duplo">
+        <div>
+          <span class="pf-mini">Dano / efeito</span>
+          <input id="pfDano" value="${esc(p.dano || "")}" placeholder="Ex: 8d6">
+        </div>
+        <div>
+          <span class="pf-mini">Alcance</span>
+          <input id="pfAlcance" value="${esc(p.alcance || "")}" placeholder="Ex: 36m">
+        </div>
+      </div>
+
+      <div class="pf-duplo">
+        <div>
+          <span class="pf-mini">Duração</span>
+          <input id="pfDuracao" value="${esc(p.duracao || "")}" placeholder="Ex: 1 minuto">
+        </div>
+        <div>
+          <span class="pf-mini">Tempo de conjuração</span>
+          <input id="pfTempo" value="${esc(p.tempo || "")}" placeholder="Ex: 1 ação">
+        </div>
+      </div>
+
+      <div id="pfCamposMagia" style="display:${magia ? "block" : "none"};">
+        <span class="pf-mini">Componentes</span>
+        <div class="pf-componentes">
+          <label><input type="checkbox" id="pfCompV" ${comp.v ? "checked" : ""}><span>V</span></label>
+          <label><input type="checkbox" id="pfCompS" ${comp.s ? "checked" : ""}><span>S</span></label>
+          <label><input type="checkbox" id="pfCompM" ${comp.m ? "checked" : ""}><span>M</span></label>
+        </div>
+
+        <div class="toggle-cargas">
+          <span class="toggle-cargas-texto">Concentração</span>
+          <label class="switch-cargas"><input type="checkbox" id="pfConcentracao" ${p.concentracao ? "checked" : ""}><span class="slider-cargas"></span></label>
+        </div>
+        <div class="toggle-cargas">
+          <span class="toggle-cargas-texto">Ritual</span>
+          <label class="switch-cargas"><input type="checkbox" id="pfRitual" ${p.ritual ? "checked" : ""}><span class="slider-cargas"></span></label>
+        </div>
+        <div class="toggle-cargas">
+          <span class="toggle-cargas-texto">Preparada</span>
+          <label class="switch-cargas"><input type="checkbox" id="pfPreparada" ${p.preparada === false ? "" : "checked"}><span class="slider-cargas"></span></label>
+        </div>
+      </div>
+
+      <label class="popup-label">Descrição</label>
+      <textarea id="pfDesc" placeholder="O que esse poder faz?">${esc(p.desc || "")}</textarea>
+
+      <div class="toggle-cargas">
+        <span class="toggle-cargas-texto">Possui usos</span>
+        <label class="switch-cargas">
+          <input type="checkbox" id="pfTemCargas" ${p.temCargas ? "checked" : ""} onchange="document.getElementById('pfMaxCargas').style.display = this.checked ? 'block' : 'none'">
+          <span class="slider-cargas"></span>
+        </label>
+      </div>
+      <input id="pfMaxCargas" type="number" min="1" max="30" placeholder="Quantos usos?" value="${p.maxCargas || ""}" style="display:${p.temCargas ? "block" : "none"};">
+
+      <button class="popup-salvar-btn" onclick="salvarFormPoder(${index})">${editando ? "Salvar" : "Adicionar"}</button>
+      ${editando ? `<button type="button" class="pf-remover" onclick="fecharPopup(); removerPoder(${index})"><i class="ti ti-trash"></i> Remover</button>` : ""}
+    </div>`;
+
+  abrirPopup(editando ? `Editar ${p.nome || "poder"}` : magia ? "Nova magia" : "Novo poder", html, true, null);
+}
+
+function atualizarCamposMagiaForm() {
+  const c = document.getElementById("pfCirculo")?.value || "";
+  const box = document.getElementById("pfCamposMagia");
+  if (box) box.style.display = /^[0-9]$/.test(c) ? "block" : "none";
+}
+
+function salvarFormPoder(index) {
+  const v = (id) => document.getElementById(id);
+  const nome = v("pfNome")?.value.trim();
+  if (!nome) {
+    v("pfNome")?.focus();
+    return;
+  }
+
+  const circulo = v("pfCirculo").value;
+  const magia = /^[0-9]$/.test(circulo);
+  const temCargas = !!v("pfTemCargas").checked;
+  const maxCargas = temCargas ? Math.max(1, parseInt(v("pfMaxCargas").value) || 1) : 0;
+  const anterior = index >= 0 ? poderes[index] : {};
+
+  let cargasGastas = [];
+  if (temCargas) {
+    cargasGastas =
+      anterior.temCargas && anterior.maxCargas === maxCargas && Array.isArray(anterior.cargasGastas)
+        ? anterior.cargasGastas
+        : Array(maxCargas).fill(false);
+  }
+
+  const poder = {
+    ...anterior,
+    id: anterior.id || "pw_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+    nome,
+    circulo,
+    acao: v("pfAcao").value,
+    recarga: v("pfRecarga").value,
+    origem: v("pfOrigem").value,
+    tipo: v("pfTipo").value,
+    dano: v("pfDano").value.trim(),
+    alcance: v("pfAlcance").value.trim(),
+    duracao: v("pfDuracao").value.trim(),
+    tempo: v("pfTempo").value.trim(),
+    desc: v("pfDesc").value.trim(),
+    temCargas,
+    maxCargas,
+    cargasGastas,
+    concentracao: magia && !!v("pfConcentracao").checked,
+    ritual: magia && !!v("pfRitual").checked,
+    preparada: magia ? !!v("pfPreparada").checked : anterior.preparada,
+    componentes: magia
+      ? { v: !!v("pfCompV").checked, s: !!v("pfCompS").checked, m: !!v("pfCompM").checked }
+      : anterior.componentes || {},
+  };
+
+  if (index >= 0) poderes[index] = poder;
+  else poderes.push(poder);
+
+  if (!poder.concentracao && concentracaoAtiva === poder.id) concentracaoAtiva = "";
+
+  fecharPopup();
+  salvarTudo();
+
+  if (magia) {
+    window._circuloSelecionado = parseInt(circulo);
+    trocarVisaoPM("magias");
+  } else {
+    trocarVisaoPM("poderes");
+  }
+}
+
+/* ---------- ver detalhes ---------- */
+
+function verPoder(index) {
+  const p = poderes[index];
+  if (!p) return;
+  normalizarPoder(p);
+  const magia = ehMagia(p);
+
+  const info = (rotulo, valor) =>
+    valor ? `<div class="pv-info"><span>${rotulo}</span><b>${esc(valor)}</b></div>` : "";
+
+  const tipoRotulo = (PM_TIPOS.find((t) => t[0] && t[0] === normalizarTipo(p.tipo)) || [])[1] || p.tipo || "";
+  const comp = ["v", "s", "m"].filter((k) => p.componentes && p.componentes[k]).map((k) => k.toUpperCase()).join(" ");
+
+  const marcas = [];
+  if (magia && p.concentracao) marcas.push(`<span class="pw-tag pw-tag-magia">Concentração</span>`);
+  if (magia && p.ritual) marcas.push(`<span class="pw-tag pw-tag-magia">Ritual</span>`);
+  if (magia && p.preparada === false) marcas.push(`<span class="pw-tag pw-tag-suave">Não preparada</span>`);
+  if (p.favorito) marcas.push(`<span class="pw-tag">Em mãos</span>`);
+
+  const html = `
+    <div class="popup-bloco">
+      <div class="pv-grade">
+        ${magia ? info("Círculo", nomeCirculo(circuloDe(p))) : ""}
+        ${info("Ação", p.acao ? PM_ACOES.find((a) => a[0] === p.acao)?.[1] : "")}
+        ${info("Dano / efeito", p.dano)}
+        ${info("Tipo", tipoRotulo)}
+        ${info("Recarga", p.recarga ? PM_RECARGAS[p.recarga] : "")}
+        ${info("Origem", p.origem ? PM_ORIGENS[p.origem] : "")}
+        ${info("Alcance", p.alcance)}
+        ${info("Duração", p.duracao)}
+        ${info("Conjuração", p.tempo)}
+        ${magia ? info("Componentes", comp) : ""}
+        ${p.temCargas && p.maxCargas ? info("Usos", `${p.maxCargas - (p.cargasGastas || []).filter(Boolean).length}/${p.maxCargas}`) : ""}
+      </div>
+
+      ${marcas.length ? `<div class="pw-tags">${marcas.join("")}</div>` : ""}
+
+      <div>
+        <span class="popup-label">Descrição</span>
+        <div class="popup-descricao">${esc(p.desc) || "Sem descrição"}</div>
+      </div>
+
+      ${magia ? `<button type="button" class="pw-conjurar pw-conjurar-grande" onclick="fecharPopup(); conjurarMagia(${index})"><i class="ti ti-sparkles"></i> Conjurar</button>` : ""}
+    </div>`;
+
+  abrirPopup(`${getIconeTipo(p.tipo)} ${p.nome || "Sem nome"}`, html, true, () => abrirFormPoder(index));
+}
+
+// compatibilidade: nomes antigos ainda chamados em outros lugares
+function editarPoder(index) {
+  abrirFormPoder(index);
+}
+
+function addPoder() {
+  abrirFormPoder(-1, "");
+}
+
+window.__pmPronto = true;
