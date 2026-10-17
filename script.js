@@ -25,15 +25,25 @@ function habilitarArrastarReordenar(ulEl, arrayRef, aoSoltarCallback) {
       const pointerId = ev.pointerId;
 
       // cria um clone flutuante que segue o cursor/dedo de verdade
-      const fantasma = liArrastado.cloneNode(true);
-      fantasma.classList.add("card-fantasma");
+      // o clone vai dentro de uma "lista" igual à original pra manter o mesmo visual
+      const clone = liArrastado.cloneNode(true);
+      clone.classList.add("card-fantasma");
+      clone.style.margin = "0";
+      const listaClone = document.createElement(ulEl.tagName);
+      listaClone.className = ulEl.className;
+      if (ulEl.id) listaClone.id = ulEl.id; // mesmo id = mesmo CSS (o original vem antes no documento)
+      listaClone.style.cssText = "list-style:none;margin:0;padding:0;display:block;";
+      listaClone.appendChild(clone);
+
+      const fantasma = document.createElement("div");
+      fantasma.className = "fantasma-arraste" + (ulEl.closest("#poderes") ? " fantasma-poderes" : "");
       fantasma.style.position = "fixed";
       fantasma.style.left = rectOriginal.left + "px";
       fantasma.style.top = rectOriginal.top + "px";
       fantasma.style.width = rectOriginal.width + "px";
-      fantasma.style.margin = "0";
       fantasma.style.pointerEvents = "none";
       fantasma.style.zIndex = "9999";
+      fantasma.appendChild(listaClone);
       document.body.appendChild(fantasma);
 
       liArrastado.classList.add("arrastando");
@@ -1142,13 +1152,13 @@ function editarItem(index) {
 
       <label class="popup-label">Imagem (opcional)</label>
       <input type="file" id="editItemImagem" accept="image/*" onchange="previewEditItemImagem()" />
-      <label for="editItemImagem" class="botao-upload">🖼 Trocar imagem</label>
+      <label for="editItemImagem" class="botao-upload"><i class="ti ti-photo-plus"></i><span>${item.imagemUrl ? "Trocar imagem" : "Adicionar imagem"}</span></label>
       <img
         id="editItemImagemPreview"
         src="${item.imagemUrl || ""}"
         style="display:${item.imagemUrl ? "block" : "none"}; max-width:100%; border-radius:10px; margin-top:8px;"
       />
-      <span class="link-remover-imagem" onclick="removerEditImagemItem()">Remover imagem</span>
+      <span class="link-remover-imagem" onclick="removerEditImagemItem()"><i class="ti ti-trash"></i> Remover imagem</span>
 
       <div class="toggle-cargas" style="margin-top:10px;">
         <span class="toggle-cargas-texto">Requer sintonia</span>
@@ -1309,13 +1319,13 @@ function editarArma(index) {
 
       <label class="popup-label">Imagem (opcional)</label>
       <input type="file" id="editArmaImagem" accept="image/*" onchange="previewEditArmaImagem()" />
-      <label for="editArmaImagem" class="botao-upload">🖼 Trocar imagem</label>
+      <label for="editArmaImagem" class="botao-upload"><i class="ti ti-photo-plus"></i><span>${arma.imagemUrl ? "Trocar imagem" : "Adicionar imagem"}</span></label>
       <img
         id="editArmaImagemPreview"
         src="${arma.imagemUrl || ""}"
         style="display:${arma.imagemUrl ? "block" : "none"}; max-width:100%; border-radius:10px; margin-top:8px;"
       />
-      <span class="link-remover-imagem" onclick="removerEditImagemArma()">Remover imagem</span>
+      <span class="link-remover-imagem" onclick="removerEditImagemArma()"><i class="ti ti-trash"></i> Remover imagem</span>
 
       <div class="toggle-cargas" style="margin-top:10px;">
         <span class="toggle-cargas-texto">Usa cargas</span>
@@ -1415,15 +1425,17 @@ function toggleEditCampoCargasPoder() {
 
 function atualizarTextoBotaoEdicao() {
   const btnItem = document.querySelector("#inventario .inv-add-btn");
-  const btnArma = document.querySelector(
-    "#combate .arma-add .inv-add-btn, #combate .arma-add button",
-  );
-  const btnPoder = document.querySelector("#poderes .inv-add-btn");
+  const btnArma = document.querySelector("#combate .arma-add .inv-add-btn");
 
-  if (btnItem) btnItem.textContent = editandoItem >= 0 ? "Salvar edição" : "+";
-  if (btnArma) btnArma.textContent = editandoArma >= 0 ? "Salvar edição" : "+";
-  if (btnPoder)
-    btnPoder.textContent = editandoPoder >= 0 ? "Salvar edição" : "+";
+  rotuloBotaoAdd(btnItem, editandoItem >= 0 ? "Salvar edição" : null);
+  rotuloBotaoAdd(btnArma, editandoArma >= 0 ? "Salvar edição" : null);
+}
+
+// troca o texto de um botão "Adicionar ..." sem perder o rótulo original (null = volta ao original)
+function rotuloBotaoAdd(btn, texto) {
+  if (!btn) return;
+  if (!btn.dataset.orig) btn.dataset.orig = btn.innerHTML;
+  btn.innerHTML = texto == null ? btn.dataset.orig : `<span>${texto}</span>`;
 }
 
 function fecharPopup() {
@@ -1515,7 +1527,7 @@ function controlarHeader(mostrar) {
   }
 }
 
-const ORDEM_ABAS_FICHA = ["personagem", "atributos", "combate", "inventario", "poderes"];
+const ORDEM_ABAS_FICHA = ["personagem", "atributos", "combate", "inventario", "poderes", "veiculos"];
 window._abaFichaAtualId = window._abaFichaAtualId || "personagem";
 
 function trocarAba(id, btn = null) {
@@ -1617,6 +1629,7 @@ const dir = indexNovo > indexAntigo ? 1 : -1;
   );
 
   atualizarEstadoLowHP();
+  if (id === "veiculos" && typeof abrirAbaVeiculos === "function") abrirAbaVeiculos();
 
   setTimeout(() => {
     if (id === "personagem") {
@@ -1869,27 +1882,6 @@ function renderAliados() {
 
       </div>
 
-      <div class="item-acoes">
-
-        <div class="acoes-topo">
-          <button
-            type="button"
-            class="btn-editar"
-            onclick="event.stopPropagation(); editarAliado(${index})"
-          >
-            ✏️
-          </button>
-        </div>
-
-        <button
-          type="button"
-          class="item-remover"
-          onclick="event.stopPropagation(); removerAliado(${index})"
-        >
-          X
-        </button>
-
-      </div>
     `;
 
     ul.appendChild(li);
@@ -1988,27 +1980,6 @@ function filtrarAliados(tipo, botao) {
 
       </div>
 
-      <div class="item-acoes">
-
-        <div class="acoes-topo">
-          <button
-            type="button"
-            class="btn-editar"
-            onclick="event.stopPropagation(); editarAliado(${index})"
-          >
-            ✏️
-          </button>
-        </div>
-
-        <button
-          type="button"
-          class="item-remover"
-          onclick="event.stopPropagation(); removerAliado(${index})"
-        >
-          X
-        </button>
-
-      </div>
     `;
 
     ul.appendChild(li);
@@ -2159,7 +2130,7 @@ function editarAliado(index) {
           for="editAliadoImagem"
           class="botao-upload"
         >
-          🖼 ${aliado.imagem ? "Alterar imagem" : "Escolher imagem"}
+          <i class="ti ti-photo-plus"></i><span>${aliado.imagem ? "Trocar imagem" : "Adicionar imagem"}</span>
         </label>
 
         <input
@@ -2181,7 +2152,7 @@ function editarAliado(index) {
                 class="link-remover-imagem"
                 onclick="removerImagemEdicaoAliado()"
               >
-                Remover imagem
+                <i class="ti ti-trash"></i> Remover imagem
               </span>
             `
             : `
@@ -2197,7 +2168,7 @@ function editarAliado(index) {
                 style="display:none;"
                 onclick="removerImagemEdicaoAliado()"
               >
-                Remover imagem
+                <i class="ti ti-trash"></i> Remover imagem
               </span>
             `
         }
@@ -2286,7 +2257,7 @@ function removerImagemEdicaoAliado() {
     );
 
   if (botao) {
-    botao.textContent = "🖼 Escolher imagem";
+    botao.innerHTML = `<i class="ti ti-photo-plus"></i><span>Adicionar imagem</span>`;
   }
 }
 
@@ -2487,12 +2458,21 @@ function abrirDetalhesAliado(index) {
     </div>
   `;
 
-  abrirPopup(
-    aliado.nome || "Detalhes",
-    html,
-    true,
-    () => editarAliado(index)
-  );
+  const acoes = `
+    <div class="pv-acoes">
+      <button type="button" class="pv-editar" onclick="fecharPopup(); editarAliado(${index})"><i class="ti ti-pencil"></i><span>Editar</span></button>
+      <button type="button" class="perigo" onclick="removerAliadoConfirmando(${index})"><i class="ti ti-trash"></i><span>Remover</span></button>
+    </div>`;
+
+  abrirPopup(aliado.nome || "Detalhes", html + acoes, true, null);
+}
+
+async function removerAliadoConfirmando(index) {
+  const aliado = personagens[personagemAtual]?.aliados?.[index];
+  if (!aliado) return;
+  if (!(await confirmBonito(`Remover "${aliado.nome || "este personagem"}"?`))) return;
+  fecharPopup();
+  removerAliado(index);
 }
 
 function criarPersonagem() {
@@ -2802,26 +2782,12 @@ function renderArmaduras() {
   ${esc(armadura.nome) || "Sem nome"}
   ${
     armadura.requerSintonia
-      ? `<span class="item-tag-sintonia">${armadura.sintonizado ? "Sint." : "Req. Sint."}</span>`
+      ? `<span class="item-tag-sintonia ${armadura.sintonizado ? "ativo" : ""}">${armadura.sintonizado ? "Sintonizado" : "Requer sintonia"}</span>`
       : ""
   }
 </strong>
         <p class="armadura-ca-preview">CA: ${esc(armadura.ca) || "Sem CA"}</p>
         ${modsChipsHTML(armadura.modificacoes)}
-
-<div class="item-subtags">
-  ${
-    armadura.requerSintonia
-      ? `<span class="item-subtag">🔗 Requer sintonia</span>`
-      : ""
-  }
-
-  ${
-    armadura.sintonizado
-      ? `<span class="item-subtag ativo">✅ Sintonizado</span>`
-      : ""
-  }
-</div>
 
 <p class="armadura-desc-preview">
   ${armadura.desc ? esc(armadura.desc).substring(0, 60) + (armadura.desc.length > 60 ? "..." : "") : "Sem descrição"}
@@ -2830,10 +2796,8 @@ function renderArmaduras() {
 ${cargasHTML}
       </div>
 
-      <div class="item-acoes">
-        <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarArmadura(${index})">✏️</button>
-        <button type="button" onclick="event.stopPropagation(); window.abrirDarItem('armaduras', ${index})" style="background:#4a3b31;border:none;color:#C4A95B;border-radius:8px;padding:4px 8px;font-size:11px;cursor:pointer;">Dar</button>
-        <button type="button" class="arma-remover" onclick="event.stopPropagation(); removerArmadura(${index})">X</button>
+      <div class="card-acoes-ico">
+        <button type="button" class="card-ico" title="Dar para outro jogador" onclick="event.stopPropagation(); window.abrirDarItem('armaduras', ${index})"><i class="ti ti-gift"></i></button>
       </div>
     `;
 
@@ -2861,31 +2825,22 @@ function verArmadura(index) {
   const armadura = armaduras[index];
   if (!armadura) return;
 
-  const html = `
-    <div class="popup-bloco">
-      ${
-        armadura.imagemUrl
-          ? `<div><img src="${armadura.imagemUrl}" class="popup-imagem-item" /></div>`
-          : ""
-      }
+  const html = popupVerHTML({
+    imagem: armadura.imagemUrl,
+    infos: [
+      ["CA", esc(armadura.ca) || "—", true],
+      ["Cargas", pvCargas(armadura)],
+      ["Sintonia", pvSintonia(armadura)],
+    ],
+    mods: armadura.modificacoes,
+    desc: armadura.desc,
+    acoes: `
+      <button type="button" onclick="fecharPopup(); window.abrirDarItem('armaduras', ${index})"><i class="ti ti-gift"></i><span>Dar</span></button>
+      <button type="button" class="pv-editar" onclick="editarArmadura(${index})"><i class="ti ti-pencil"></i><span>Editar</span></button>
+      <button type="button" class="perigo" onclick="fecharPopup(); removerArmadura(${index})"><i class="ti ti-trash"></i><span>Remover</span></button>`,
+  });
 
-      <div>
-        <span class="popup-label">CA</span>
-        <div class="popup-descricao-pequena">${esc(armadura.ca) || "Sem CA"}</div>
-      </div>
-
-      ${modsVerHTML(armadura.modificacoes)}
-
-      <div style="margin-top: 12px;">
-        <span class="popup-label">Descrição</span>
-        <div class="popup-descricao">${esc(armadura.desc) || "Sem descrição"}</div>
-      </div>
-    </div>
-  `;
-
-  abrirPopup(armadura.nome || "Sem nome", html, true, () =>
-    editarArmadura(index),
-  );
+  abrirPopup(armadura.nome || "Sem nome", html, true, null);
 }
 
 function abrirTelaPlanos() {
@@ -2924,13 +2879,13 @@ function editarArmadura(index) {
 
       <label class="popup-label">Imagem (opcional)</label>
       <input type="file" id="editArmaduraImagem" accept="image/*" onchange="previewEditArmaduraImagem()" />
-      <label for="editArmaduraImagem" class="botao-upload">🖼 Trocar imagem</label>
+      <label for="editArmaduraImagem" class="botao-upload"><i class="ti ti-photo-plus"></i><span>${armadura.imagemUrl ? "Trocar imagem" : "Adicionar imagem"}</span></label>
       <img
         id="editArmaduraImagemPreview"
         src="${armadura.imagemUrl || ""}"
         style="display:${armadura.imagemUrl ? "block" : "none"}; max-width:100%; border-radius:10px; margin-top:8px;"
       />
-      <span class="link-remover-imagem" onclick="removerEditImagemArmadura()">Remover imagem</span>
+      <span class="link-remover-imagem" onclick="removerEditImagemArmadura()"><i class="ti ti-trash"></i> Remover imagem</span>
 
       <div class="toggle-cargas" style="margin-top:10px;">
         <span class="toggle-cargas-texto">Usa cargas</span>
@@ -3245,6 +3200,9 @@ function carregarPersonagem(index) {
   saves = p.saves || {};
   exaustao = p.exaustao ?? 0;
   concentracaoAtiva = p.concentracao || "";
+  moedas = normalizarMoedas(p.moedas);
+  if (typeof pararEscutasVeiculos === "function") pararEscutasVeiculos();
+  if (typeof escutarRolagensGrupo === "function") escutarRolagensGrupo(p.grupoAtivo || null);
   morte = p.morte || {
     sucessos: [false, false, false],
     falhas: [false, false, false],
@@ -3330,6 +3288,7 @@ p.nivel = document.getElementById("nivel")?.value || "";
   p.exaustao = exaustao;
   p.morte = morte;
   p.concentracao = concentracaoAtiva || "";
+  p.moedas = normalizarMoedas(moedas);
   p.dominio = dominio;
 
   const inspiracao = document.getElementById("inspiracao");
@@ -4609,9 +4568,9 @@ function cardItemInvHTML(item, index, guardado) {
   const botaoMover = item.recipiente
     ? ""
     : guardado
-      ? `<button type="button" class="btn-mochila-acao" title="Tirar da mochila" onclick="event.stopPropagation(); moverItemParaRecipiente(${index}, '')"><i class="ti ti-arrow-bar-up"></i></button>`
+      ? `<button type="button" class="card-ico" title="Tirar da mochila" onclick="event.stopPropagation(); moverItemParaRecipiente(${index}, '')"><i class="ti ti-arrow-bar-up"></i></button>`
       : temMochila
-        ? `<button type="button" class="btn-mochila-acao" title="Guardar em uma mochila" onclick="event.stopPropagation(); abrirGuardarItem(${index})"><i class="ti ti-backpack"></i></button>`
+        ? `<button type="button" class="card-ico" title="Guardar em uma mochila" onclick="event.stopPropagation(); abrirGuardarItem(${index})"><i class="ti ti-backpack"></i></button>`
         : "";
 
   return `
@@ -4622,15 +4581,10 @@ function cardItemInvHTML(item, index, guardado) {
           <strong class="item-nome">
             ${item.recipiente ? `<i class="ti ti-backpack mochila-icone"></i>` : ""}
             ${item.nome ? esc(item.nome) : "Sem nome"}
-            ${item.requerSintonia ? `<span class="item-tag-sintonia">${item.sintonizado ? "Sint." : "Req. Sint."}</span>` : ""}
+            ${item.requerSintonia ? `<span class="item-tag-sintonia ${item.sintonizado ? "ativo" : ""}">${item.sintonizado ? "Sintonizado" : "Requer sintonia"}</span>` : ""}
           </strong>
 
           ${badge}
-        </div>
-
-        <div class="item-subtags">
-          ${item.requerSintonia ? `<span class="item-subtag">🔗 Requer sintonia</span>` : ""}
-          ${item.sintonizado ? `<span class="item-subtag ativo">✅ Sintonizado</span>` : ""}
         </div>
 
         ${modsChipsHTML(item.modificacoes)}
@@ -4644,15 +4598,9 @@ function cardItemInvHTML(item, index, guardado) {
         }
       </div>
 
-      <div class="item-acoes">
-        <div class="acoes-topo">
-          ${botaoMover}
-          <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarItem(${index})">✏️</button>
-        </div>
-
-        <button type="button" onclick="event.stopPropagation(); window.abrirDarItem('inventario', ${index})" style="background:#4a3b31;border:none;color:#C4A95B;border-radius:8px;padding:4px 8px;font-size:11px;cursor:pointer;">Dar</button>
-
-        <button type="button" class="item-remover" onclick="event.stopPropagation(); removerItem(${index})">X</button>
+      <div class="card-acoes-ico">
+        ${botaoMover}
+        <button type="button" class="card-ico" title="Dar para outro jogador" onclick="event.stopPropagation(); window.abrirDarItem('inventario', ${index})"><i class="ti ti-gift"></i></button>
       </div>
 
       ${
@@ -4671,13 +4619,19 @@ function cardRecipienteHTML(item, index) {
   inventario.forEach((f, i) => { if (f && f.dentroDe === item.id) filhos.push({ f, i }); });
   const unidades = filhos.reduce((soma, { f }) => soma + (parseInt(f.qtd) || 1), 0);
 
+  const MAX_CHIPS = 4;
+  const extras = filhos.length - MAX_CHIPS;
   const chips = filhos.length
     ? filhos
+        .slice(0, MAX_CHIPS)
         .map(
           ({ f, i }) =>
             `<button type="button" class="recipiente-chip" onclick="event.stopPropagation(); verItem(${i})">${esc(f.nome || "Sem nome")}${(parseInt(f.qtd) || 1) > 1 ? ` <small>x${f.qtd}</small>` : ""}</button>`,
         )
-        .join("")
+        .join("") +
+      (extras > 0
+        ? `<button type="button" class="recipiente-chip recipiente-chip-mais" title="Ver tudo" onclick="event.stopPropagation(); abrirMochila(${index})">+${extras}</button>`
+        : "")
     : `<span class="recipiente-vazio">Vazia</span>`;
 
   return `
@@ -4733,6 +4687,7 @@ function renderInv() {
   }
 
   atualizarCampoGuardarEm();
+  if (typeof renderBolsaMoedas === "function") renderBolsaMoedas();
 }
 
 /* ---------- painel da mochila (igual ao da ficha de Ordem) ---------- */
@@ -4952,19 +4907,56 @@ function acoesVerItemHTML(item, index) {
 
   if (guardado) {
     const iMochila = inventario.indexOf(mochila);
-    botoes.push(`<button type="button" onclick="abrirMochila(${iMochila})"><i class="ti ti-arrow-left"></i> Voltar</button>`);
-    botoes.push(`<button type="button" onclick="moverItemParaRecipiente(${index}, '')"><i class="ti ti-arrow-bar-up"></i> Tirar de ${esc(mochila?.nome || "mochila")}</button>`);
+    botoes.push(`<button type="button" onclick="abrirMochila(${iMochila})"><i class="ti ti-arrow-left"></i><span>Voltar</span></button>`);
+    botoes.push(`<button type="button" onclick="moverItemParaRecipiente(${index}, '')"><i class="ti ti-arrow-bar-up"></i><span>Tirar</span></button>`);
   } else if (!item.recipiente && recipientesInventario().length) {
-    botoes.push(`<button type="button" onclick="abrirGuardarItem(${index})"><i class="ti ti-backpack"></i> Guardar</button>`);
+    botoes.push(`<button type="button" onclick="abrirGuardarItem(${index})"><i class="ti ti-backpack"></i><span>Guardar</span></button>`);
   }
 
-  botoes.push(`<button type="button" onclick="fecharPopup(); window.abrirDarItem('inventario', ${index})"><i class="ti ti-gift"></i> Dar</button>`);
-
-  if (guardado || item.recipiente) {
-    botoes.push(`<button type="button" class="perigo" onclick="fecharPopup(); removerItem(${index})"><i class="ti ti-trash"></i> Remover</button>`);
-  }
+  botoes.push(`<button type="button" onclick="fecharPopup(); window.abrirDarItem('inventario', ${index})"><i class="ti ti-gift"></i><span>Dar</span></button>`);
+  botoes.push(`<button type="button" class="pv-editar" onclick="editarItem(${index})"><i class="ti ti-pencil"></i><span>Editar</span></button>`);
+  botoes.push(`<button type="button" class="perigo" onclick="fecharPopup(); removerItem(${index})"><i class="ti ti-trash"></i><span>Remover</span></button>`);
 
   return botoes.join("");
+}
+
+// monta o corpo padrão dos popups de "ver" (item, arma, armadura, poder)
+function popupVerHTML({ imagem, infos, tags, mods, desc, extra, acoes }) {
+  const tiles = (infos || [])
+    .filter(([, v]) => v !== undefined && v !== null && String(v).trim() !== "")
+    .map(([rotulo, valor, destaque]) => `<div class="pv-info ${destaque ? "destaque" : ""}"><span>${rotulo}</span><b>${valor}</b></div>`)
+    .join("");
+
+  return `
+    <div class="pv">
+      ${imagem ? `<img src="${esc(imagem)}" class="pv-imagem" alt="">` : ""}
+      ${tiles ? `<div class="pv-grade">${tiles}</div>` : ""}
+      ${tags && tags.length ? `<div class="pw-tags">${tags.join("")}</div>` : ""}
+      ${extra || ""}
+      ${mods && mods.length ? `
+        <div class="pv-secao">
+          <span class="pv-rotulo"><i class="ti ti-sparkles"></i> Modificações</span>
+          <div class="pv-mods">${mods
+            .map((m) => `<div class="pv-mod"><strong>${esc(m.nome)}</strong>${m.efeito ? `<span>${esc(m.efeito)}</span>` : ""}</div>`)
+            .join("")}</div>
+        </div>` : ""}
+      <div class="pv-secao">
+        <span class="pv-rotulo"><i class="ti ti-file-text"></i> Descrição</span>
+        <div class="pv-desc ${desc ? "" : "vazia"}">${desc ? esc(desc) : "Sem descrição"}</div>
+      </div>
+      ${acoes ? `<div class="pv-acoes">${acoes}</div>` : ""}
+    </div>`;
+}
+
+function pvCargas(obj) {
+  if (!obj || !obj.temCargas || !(obj.maxCargas > 0)) return "";
+  const gastas = (obj.cargasGastas || []).filter(Boolean).length;
+  return `${obj.maxCargas - gastas}/${obj.maxCargas}`;
+}
+
+function pvSintonia(obj) {
+  if (!obj?.requerSintonia) return "";
+  return obj.sintonizado ? "Sintonizado" : "Não sintonizado";
 }
 
 function verItem(index) {
@@ -4972,61 +4964,21 @@ function verItem(index) {
   if (!item) return;
   if (item.recipiente) { abrirMochila(index); return; }
 
-  const html = `
-  <div class="popup-bloco">
-    ${
-      item.imagemUrl
-        ? `<div><img src="${item.imagemUrl}" class="popup-imagem-item" /></div>`
-        : ""
-    }
+  const mochila = estaGuardado(item) ? inventario.find((i) => i.id === item.dentroDe) : null;
 
-    <div>
-      <span class="popup-label">Quantidade</span>
-      <div class="popup-descricao popup-descricao-pequena">${item.qtd || 1}</div>
-    </div>
+  const html = popupVerHTML({
+    imagem: item.imagemUrl,
+    infos: [
+      ["Quantidade", `x${item.qtd || 1}`, true],
+      ["Sintonia", pvSintonia(item)],
+      ["Guardado em", mochila ? esc(mochila.nome || "Mochila") : ""],
+    ],
+    mods: item.modificacoes,
+    desc: item.desc,
+    acoes: acoesVerItemHTML(item, index),
+  });
 
-    <div style="margin-top: 12px;">
-      <span class="popup-label">Sintonia</span>
-      <div class="popup-descricao popup-descricao-pequena">
-        ${
-          item.requerSintonia
-            ? item.sintonizado
-              ? "Requer sintonia — Sintonizado"
-              : "Requer sintonia — Não sintonizado"
-            : "Não requer sintonia"
-        }
-      </div>
-    </div>
-
-    ${
-      item.recipiente
-        ? `<div style="margin-top: 12px;">
-      <span class="popup-label">Conteúdo</span>
-      <div class="recipiente-chips">${
-        filhosDoRecipiente(item.id).length
-          ? inventario
-              .map((f, i) => (f && f.dentroDe === item.id
-                ? `<button type="button" class="recipiente-chip" onclick="verItem(${i})">${esc(f.nome || "Sem nome")}${(parseInt(f.qtd) || 1) > 1 ? ` <small>x${f.qtd}</small>` : ""}</button>`
-                : ""))
-              .join("")
-          : `<span class="recipiente-vazio">Vazia</span>`
-      }</div>
-    </div>`
-        : ""
-    }
-
-    ${modsVerHTML(item.modificacoes)}
-
-    <div style="margin-top: 12px;">
-      <span class="popup-label">Descrição</span>
-      <div class="popup-descricao popup-descricao-grande">${item.desc || "Sem descrição"}</div>
-    </div>
-
-    <div class="popup-acoes-item">${acoesVerItemHTML(item, index)}</div>
-  </div>
-`;
-
-  abrirPopup(item.nome || "Sem nome", html, true, () => editarItem(index));
+  abrirPopup(item.nome || "Sem nome", html, true, null);
 }
 
 async function removerItem(index) {
@@ -5180,27 +5132,12 @@ function renderArmas() {
   ${esc(arma.nome) || "Sem nome"}
   ${
     arma.requerSintonia
-      ? `<span class="item-tag-sintonia">${arma.sintonizado ? "Sint." : "Req. Sint."}</span>`
+      ? `<span class="item-tag-sintonia ${arma.sintonizado ? "ativo" : ""}">${arma.sintonizado ? "Sintonizado" : "Requer sintonia"}</span>`
       : ""
   }
 </strong>
         <p class="arma-dano-preview">${esc(arma.dano) || "Sem dano"}</p>
         ${modsChipsHTML(arma.modificacoes)}
-
-
-<div class="item-subtags">
-  ${
-    arma.requerSintonia
-      ? `<span class="item-subtag">🔗 Requer sintonia</span>`
-      : ""
-  }
-
-  ${
-    arma.sintonizado
-      ? `<span class="item-subtag ativo">✅ Sintonizado</span>`
-      : ""
-  }
-</div>
 
 <p class="arma-desc-preview">
   ${arma.desc ? esc(arma.desc).substring(0, 60) + (arma.desc.length > 60 ? "..." : "") : "Sem descrição"}
@@ -5209,10 +5146,8 @@ function renderArmas() {
 ${cargasHTML}
       </div>
 
-      <div class="item-acoes">
-        <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarArma(${index})">✏️</button>
-        <button type="button" onclick="event.stopPropagation(); window.abrirDarItem('armas', ${index})" style="background:#4a3b31;border:none;color:#C4A95B;border-radius:8px;padding:4px 8px;font-size:11px;cursor:pointer;">Dar</button>
-        <button type="button" class="arma-remover" onclick="event.stopPropagation(); removerArma(${index})">X</button>
+      <div class="card-acoes-ico">
+        <button type="button" class="card-ico" title="Dar para outro jogador" onclick="event.stopPropagation(); window.abrirDarItem('armas', ${index})"><i class="ti ti-gift"></i></button>
       </div>
     `;
 
@@ -5235,34 +5170,24 @@ function verArma(index) {
   const arma = armas[index];
   if (!arma) return;
 
-  const html = `
-    <div class="popup-bloco">
-      ${
-        arma.imagemUrl
-          ? `<div><img src="${arma.imagemUrl}" class="popup-imagem-item" /></div>`
-          : ""
-      }
+  const html = popupVerHTML({
+    imagem: arma.imagemUrl,
+    infos: [
+      ["Dano", esc(arma.dano) || "—", true],
+      ["Cargas", pvCargas(arma)],
+      ["Sintonia", pvSintonia(arma)],
+    ],
+    mods: arma.modificacoes,
+    desc: arma.desc,
+    acoes: `
+      <button type="button" class="pv-principal pv-meia" onclick="rolarAtaqueArma(${index})">🎲 <span>Atacar</span></button>
+      ${extrairDados(arma.dano) ? `<button type="button" class="pv-principal pv-meia" onclick="rolarDanoArma(${index})">🎲 <span>Dano</span></button>` : ""}
+      <button type="button" onclick="fecharPopup(); window.abrirDarItem('armas', ${index})"><i class="ti ti-gift"></i><span>Dar</span></button>
+      <button type="button" class="pv-editar" onclick="editarArma(${index})"><i class="ti ti-pencil"></i><span>Editar</span></button>
+      <button type="button" class="perigo" onclick="fecharPopup(); removerArma(${index})"><i class="ti ti-trash"></i><span>Remover</span></button>`,
+  });
 
-      <div>
-        <span class="popup-label">Dano</span>
-        <div class="popup-tags">
-  <span class="tag-dano">${arma.dano || "—"}</span>
-</div>
-        </div>
-      </div>
-
-      ${modsVerHTML(arma.modificacoes)}
-
-      <div style="margin-top: 12px;">
-        <span class="popup-label">Descrição</span>
-        <div class="popup-descricao">
-          ${arma.desc || "Sem descrição"}
-        </div>
-      </div>
-    </div>
-  `;
-
-  abrirPopup(arma.nome || "Sem nome", html, true, () => editarArma(index));
+  abrirPopup(arma.nome || "Sem nome", html, true, null);
 }
 
 async function removerArma(index) {
@@ -5839,7 +5764,7 @@ function atualizarTudo() {
           ${pericia.nome}
           <small class="pericia-attr">${siglas[pericia.attr] || ""}</small>
         </label>
-        <span>${valor >= 0 ? `+${valor}` : valor}</span>
+        <span class="pericia-valor" title="Rolar ${pericia.nome}" onclick="rolarPericia('${pericia.nome}')">${valor >= 0 ? `+${valor}` : valor}</span>
       `;
       lista.appendChild(div);
     });
@@ -7236,7 +7161,7 @@ async function addMapa() {
   if (mapas.length >= 15) { alertBonito("Limite de 15 mapas por personagem."); return; }
 
   const btn = document.querySelector("#boxMapasForm .inv-add-btn");
-  if (btn) { btn.disabled = true; btn.textContent = "..."; }
+  if (btn) { btn.disabled = true; rotuloBotaoAdd(btn, "Enviando..."); }
 
   let imagemUrl = "";
   let imagemDeleteUrl = "";
@@ -7244,7 +7169,7 @@ async function addMapa() {
   const resultado = await uploadImagemFirebase(mapaBase64Temp, "mapa");
   if (resultado.erro || !resultado.url) {
     alertBonito(_mensagemErroUpload("O mapa foi salvo sem imagem."))
-    if (btn) { btn.disabled = false; btn.textContent = "+"; }
+    if (btn) { btn.disabled = false; rotuloBotaoAdd(btn, null); }
     return;
   }
   imagemUrl = resultado.url;
@@ -7258,7 +7183,7 @@ async function addMapa() {
   document.getElementById("mapaPreviewBox").style.display = "none";
   mapaBase64Temp = "";
 
-  if (btn) { btn.disabled = false; btn.textContent = "+"; }
+  if (btn) { btn.disabled = false; rotuloBotaoAdd(btn, null); }
 
   salvarTudo();
   renderMapas();
@@ -7298,30 +7223,17 @@ function verMapa(index) {
   const mapa = mapas[index];
   if (!mapa) return;
 
-  const thumbHTML = mapa.imagemUrl
-    ? `<img src="${mapa.imagemUrl}" style="width:100%;max-height:180px;object-fit:cover;border-radius:12px;margin-bottom:12px;border:1px solid rgba(200,169,107,0.2)" />`
-    : "";
+  const html = popupVerHTML({
+    imagem: mapa.imagemUrl,
+    infos: [["Anotações", `${(mapa.anotacoes || []).length}/30`, true]],
+    desc: mapa.desc,
+    acoes: `
+      <button type="button" class="pv-principal" onclick="fecharPopup(); abrirMapaViewer(${index})"><i class="ti ti-map-2"></i><span>Abrir mapa</span></button>
+      <button type="button" class="pv-editar" onclick="editarMapa(${index})"><i class="ti ti-pencil"></i><span>Editar</span></button>
+      <button type="button" class="perigo" onclick="fecharPopup(); removerMapa(${index})"><i class="ti ti-trash"></i><span>Remover</span></button>`,
+  });
 
-  const html = `
-    <div class="popup-bloco">
-      ${thumbHTML}
-      <div>
-        <span class="popup-label">Descrição</span>
-        <div class="popup-descricao" style="min-height:auto;padding:10px 12px">${mapa.desc || "Sem descrição"}</div>
-      </div>
-      <div style="margin-top:14px;text-align:center">
-        <span class="popup-label" style="color:#b89654">${(mapa.anotacoes||[]).length}/30 anotações</span>
-      </div>
-      <button
-        onclick="fecharPopup(); abrirMapaViewer(${index})"
-        style="margin-top:14px;width:100%;padding:11px;border-radius:12px;background:#b89654;color:#1b1411;font-weight:bold;border:none;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:1px"
-      >
-        Abrir Mapa
-      </button>
-    </div>
-  `;
-
-  abrirPopup(mapa.nome, html, true, () => editarMapa(index));
+  abrirPopup(mapa.nome || "Mapa", html, true, null);
 }
 
 function editarMapa(index) {
@@ -11987,6 +11899,7 @@ window.renderGrupoMaster = async function () {
   const alvos = g.membros.filter(m => m.uid !== meuUid && m.fichaId);
 
   window._grupoMasterAlvos = alvos;
+  if (typeof escutarRolagensGrupo === "function") escutarRolagensGrupo(grupoId);
 
   if (alvos.length === 0) {
     conteudo.innerHTML = `<p style="color:#9A8A70;font-size:13px;text-align:center;padding:20px 0;font-style:italic;">Nenhum jogador vinculou uma ficha a esse grupo ainda.</p>`;
@@ -12943,9 +12856,8 @@ function filtrosPoderDisponiveis() {
   });
 
   const lista = poderes.filter((p) => !ehMagia(p));
-  return todos
-    .map((f) => ({ ...f, n: lista.filter(f.teste).length }))
-    .filter((f) => f.n > 0);
+  // todos aparecem sempre; os que não têm nenhum poder ficam apagadinhos
+  return todos.map((f) => ({ ...f, n: lista.filter(f.teste).length }));
 }
 
 function filtrarOrigemPoder(origem) {
@@ -12955,7 +12867,7 @@ function filtrarOrigemPoder(origem) {
 
 /* ---------- card (usado em poderes e magias) ---------- */
 
-function cardPoderEl(index, semArrastar) {
+function cardPoderEl(index, mostrarCirculo) {
   const p = poderes[index];
   const magia = ehMagia(p);
   const li = document.createElement("li");
@@ -12966,7 +12878,7 @@ function cardPoderEl(index, semArrastar) {
   li.dataset.index = index;
 
   const tags = [];
-  if (magia) tags.push(`<span class="pw-tag pw-tag-circulo">${nomeCirculo(circuloDe(p))}</span>`);
+  if (magia && mostrarCirculo) tags.push(`<span class="pw-tag pw-tag-circulo">${nomeCirculo(circuloDe(p))}</span>`);
   if (p.acao) tags.push(`<span class="pw-tag">${PM_ACOES.find((a) => a[0] === p.acao)?.[1] || ""}</span>`);
   if (p.dano) tags.push(`<span class="tag-dano">${esc(p.dano)}</span>`);
   if (p.recarga) tags.push(`<span class="pw-tag">${PM_RECARGAS[p.recarga] || ""}</span>`);
@@ -12995,20 +12907,22 @@ function cardPoderEl(index, semArrastar) {
     ? `<button type="button" class="pw-mini ${p.preparada === false ? "" : "ativo"}" title="${p.preparada === false ? "Não preparada (toque para preparar)" : "Preparada (toque para desmarcar)"}" onclick="event.stopPropagation(); alternarPreparada(${index})"><i class="ti ti-bookmark"></i></button>`
     : "";
 
+  li.className += magia ? ` pw-magia pw-c${circuloDe(p)}` : "";
+
   li.innerHTML = `
-    ${semArrastar ? "" : `<button type="button" class="drag-handle" aria-label="Arrastar para reordenar"></button>`}
+    <button type="button" class="drag-handle" aria-label="Arrastar para reordenar"></button>
+    <div class="pw-selo" onclick="verPoder(${index})">${magia ? `<small>${ROMANOS[circuloDe(p)] === "Truques" ? "0" : ROMANOS[circuloDe(p)]}</small>` : ""}<span>${getIconeTipo(p.tipo)}</span></div>
     <div class="pw-corpo" onclick="verPoder(${index})">
-      <div class="pw-topo">
-        <span class="pw-icone">${getIconeTipo(p.tipo)}</span>
-        <strong class="pw-nome">${esc(p.nome) || "Sem nome"}</strong>
-      </div>
+      <strong class="pw-nome">${esc(p.nome) || "Sem nome"}</strong>
       ${tags.length ? `<div class="pw-tags">${tags.join("")}</div>` : ""}
-      ${pips || conjurar ? `<div class="pw-rodape">${pips}${conjurar}</div>` : ""}
+      ${pips ? `<div class="pw-rodape">${pips}</div>` : ""}
     </div>
-    <div class="pw-acoes">
-      <button type="button" class="pw-mini pw-fav ${p.favorito ? "ativo" : ""}" title="Em mãos" onclick="event.stopPropagation(); alternarFavoritoPoder(${index})"><i class="ti ${p.favorito ? "ti-star-filled" : "ti-star"}"></i></button>
-      ${preparar}
-      <button type="button" class="pw-mini" title="Editar" onclick="event.stopPropagation(); abrirFormPoder(${index})"><i class="ti ti-pencil"></i></button>
+    <div class="pw-lado">
+      <div class="pw-acoes">
+        ${preparar}
+        <button type="button" class="pw-mini pw-fav ${p.favorito ? "ativo" : ""}" title="Favorito" onclick="event.stopPropagation(); alternarFavoritoPoder(${index})"><i class="ti ${p.favorito ? "ti-star-filled" : "ti-star"}"></i></button>
+      </div>
+      ${conjurar}
     </div>`;
   return li;
 }
@@ -13019,7 +12933,7 @@ function renderListaPoderes() {
   const box = document.getElementById("listaPoderesSecoes");
   if (!box) return;
 
-  const filtros = filtrosPoderDisponiveis();
+  const filtros = poderes.some((p) => !ehMagia(p)) ? filtrosPoderDisponiveis() : [];
   if (window._filtroOrigem && !filtros.some((f) => f.v === window._filtroOrigem)) window._filtroOrigem = "";
   const filtroAtivo = filtros.find((f) => f.v === window._filtroOrigem);
 
@@ -13032,7 +12946,7 @@ function renderListaPoderes() {
         .map((f) => {
           const sep = grupoAnterior !== null && grupoAnterior !== f.g ? `<span class="pm-filtro-sep"></span>` : "";
           grupoAnterior = f.g;
-          return `${sep}<button type="button" class="pm-filtro ${window._filtroOrigem === f.v ? "ativo" : ""}" onclick="filtrarOrigemPoder('${f.v}')">${f.r} <small>${f.n}</small></button>`;
+          return `${sep}<button type="button" class="pm-filtro ${window._filtroOrigem === f.v ? "ativo" : ""} ${f.n ? "" : "vazio"}" onclick="filtrarOrigemPoder('${f.v}')">${f.r} <small>${f.n}</small></button>`;
         })
         .join("");
   }
@@ -13043,13 +12957,14 @@ function renderListaPoderes() {
   box.innerHTML = "";
   let algum = false;
 
-  // Em mãos: favoritos (poderes e magias)
+  // Favoritos (poderes e magias), com ordem própria
   const favoritos = [];
   poderes.forEach((p, i) => {
     if (p.favorito && passaBusca(p) && (!filtroAtivo || (!ehMagia(p) && filtroAtivo.teste(p)))) favoritos.push(i);
   });
+  favoritos.sort((a, b) => (poderes[a].ordemFav ?? 1e9) - (poderes[b].ordemFav ?? 1e9) || a - b);
   if (favoritos.length) {
-    box.appendChild(secaoPoderes("Em mãos", "ti-star", favoritos, true));
+    box.appendChild(secaoPoderes("Favoritos", "ti-star", favoritos, true));
     algum = true;
   }
 
@@ -13082,10 +12997,24 @@ function secaoPoderes(titulo, icone, indices, ehFavoritos) {
 
   const ul = document.createElement("ul");
   ul.className = "pm-lista" + (window._modoCompactoPM ? " compacto" : "");
-  indices.forEach((i) => ul.appendChild(cardPoderEl(i, ehFavoritos)));
+  indices.forEach((i, k) => {
+    const li = cardPoderEl(i, ehFavoritos);
+    // nos favoritos a ordem é só deles: o índice do arraste é a posição na lista
+    if (ehFavoritos) li.dataset.index = k;
+    ul.appendChild(li);
+  });
   sec.appendChild(ul);
 
-  if (!ehFavoritos) habilitarArrastarReordenar(ul, poderes, renderPoderes);
+  if (ehFavoritos) {
+    const favArr = indices.map((i) => poderes[i]);
+    habilitarArrastarReordenar(ul, favArr, () => {
+      favArr.forEach((p, k) => (p.ordemFav = k));
+      renderPoderes();
+      salvarTudo();
+    });
+  } else {
+    habilitarArrastarReordenar(ul, poderes, renderPoderes);
+  }
   return sec;
 }
 
@@ -13093,6 +13022,10 @@ function alternarFavoritoPoder(index) {
   const p = poderes[index];
   if (!p) return;
   p.favorito = !p.favorito;
+  if (p.favorito) {
+    // entra no fim da lista de favoritos
+    p.ordemFav = Math.max(-1, ...poderes.filter((x) => x.favorito && x !== p).map((x) => x.ordemFav ?? -1)) + 1;
+  }
   renderPoderes();
   salvarTudo();
 }
@@ -13139,7 +13072,7 @@ function renderPainelMagias() {
       const restam = arr.filter((g) => !g).length;
       linhas.push(`
         <div class="esp-linha ${window._circuloSelecionado === c ? "selecionado" : ""}">
-          <button type="button" class="esp-num" onclick="selecionarCirculo(${c})">${ROMANOS[c]}</button>
+          <button type="button" class="esp-num pw-c${c}" onclick="selecionarCirculo(${c})">${ROMANOS[c]}</button>
           <div class="esp-gemas">${arr
             .map(
               (g, k) =>
@@ -13165,7 +13098,7 @@ function renderPainelMagias() {
     seletor.innerHTML = visiveis
       .map((c) => {
         const qtd = contMagias(c);
-        return `<button type="button" class="circ-anel ${c === window._circuloSelecionado ? "ativo" : ""} ${c === 0 ? "truques" : ""}" onclick="selecionarCirculo(${c})">
+        return `<button type="button" class="circ-anel pw-c${c} ${c === window._circuloSelecionado ? "ativo" : ""} ${c === 0 ? "truques" : ""}" onclick="selecionarCirculo(${c})">
           <span>${ROMANOS[c]}</span>${qtd ? `<small>${qtd}</small>` : ""}
         </button>`;
       })
@@ -13317,6 +13250,7 @@ function finalizarConjuracao(index, k) {
   renderPoderes();
   salvarTudo();
   mostrarToastMundo(`${p.nome || "Magia"} conjurada${k ? ` no ${ROMANOS[k]} círculo` : ""}`);
+  if (extrairDados(p.dano)) rolarDanoPoder(index);
 }
 
 /* ---------- descansos ---------- */
@@ -13552,45 +13486,41 @@ function verPoder(index) {
   normalizarPoder(p);
   const magia = ehMagia(p);
 
-  const info = (rotulo, valor) =>
-    valor ? `<div class="pv-info"><span>${rotulo}</span><b>${esc(valor)}</b></div>` : "";
-
   const tipoRotulo = (PM_TIPOS.find((t) => t[0] && t[0] === normalizarTipo(p.tipo)) || [])[1] || p.tipo || "";
   const comp = ["v", "s", "m"].filter((k) => p.componentes && p.componentes[k]).map((k) => k.toUpperCase()).join(" ");
 
-  const marcas = [];
-  if (magia && p.concentracao) marcas.push(`<span class="pw-tag pw-tag-magia">Concentração</span>`);
-  if (magia && p.ritual) marcas.push(`<span class="pw-tag pw-tag-magia">Ritual</span>`);
-  if (magia && p.preparada === false) marcas.push(`<span class="pw-tag pw-tag-suave">Não preparada</span>`);
-  if (p.favorito) marcas.push(`<span class="pw-tag">Em mãos</span>`);
+  const tags = [];
+  if (magia && p.concentracao) tags.push(`<span class="pw-tag pw-tag-magia">Concentração</span>`);
+  if (magia && p.ritual) tags.push(`<span class="pw-tag pw-tag-magia">Ritual</span>`);
+  if (magia && p.preparada === false) tags.push(`<span class="pw-tag pw-tag-suave">Não preparada</span>`);
+  if (p.favorito) tags.push(`<span class="pw-tag">Favorito</span>`);
 
-  const html = `
-    <div class="popup-bloco">
-      <div class="pv-grade">
-        ${magia ? info("Círculo", nomeCirculo(circuloDe(p))) : ""}
-        ${info("Ação", p.acao ? PM_ACOES.find((a) => a[0] === p.acao)?.[1] : "")}
-        ${info("Dano / efeito", p.dano)}
-        ${info("Tipo", tipoRotulo)}
-        ${info("Recarga", p.recarga ? PM_RECARGAS[p.recarga] : "")}
-        ${info("Origem", p.origem ? PM_ORIGENS[p.origem] : "")}
-        ${info("Alcance", p.alcance)}
-        ${info("Duração", p.duracao)}
-        ${info("Conjuração", p.tempo)}
-        ${magia ? info("Componentes", comp) : ""}
-        ${p.temCargas && p.maxCargas ? info("Usos", `${p.maxCargas - (p.cargasGastas || []).filter(Boolean).length}/${p.maxCargas}`) : ""}
-      </div>
+  const e = (v) => (v ? esc(v) : "");
+  const html = popupVerHTML({
+    infos: [
+      ["Círculo", magia ? nomeCirculo(circuloDe(p)) : ""],
+      ["Dano / efeito", e(p.dano), true],
+      ["Ação", p.acao ? PM_ACOES.find((a) => a[0] === p.acao)?.[1] : ""],
+      ["Tipo", e(tipoRotulo)],
+      ["Recarga", p.recarga ? PM_RECARGAS[p.recarga] : ""],
+      ["Origem", p.origem ? PM_ORIGENS[p.origem] : ""],
+      ["Alcance", e(p.alcance)],
+      ["Duração", e(p.duracao)],
+      ["Conjuração", e(p.tempo)],
+      ["Componentes", magia ? comp : ""],
+      ["Usos", pvCargas(p)],
+    ],
+    tags,
+    desc: p.desc,
+    acoes: `
+      ${magia ? `<button type="button" class="pv-principal ${extrairDados(p.dano) ? "pv-meia" : ""}" onclick="fecharPopup(); conjurarMagia(${index})"><i class="ti ti-sparkles"></i><span>Conjurar</span></button>` : ""}
+      ${extrairDados(p.dano) ? `<button type="button" class="pv-principal ${magia ? "pv-meia" : ""}" onclick="rolarDanoPoder(${index})">🎲 <span>Rolar ${esc(extrairDados(p.dano))}</span></button>` : ""}
+      <button type="button" onclick="alternarFavoritoPoder(${index}); verPoder(${index})"><i class="ti ${p.favorito ? "ti-star-filled" : "ti-star"}"></i><span>${p.favorito ? "Desfavoritar" : "Favoritar"}</span></button>
+      <button type="button" class="pv-editar" onclick="abrirFormPoder(${index})"><i class="ti ti-pencil"></i><span>Editar</span></button>
+      <button type="button" class="perigo" onclick="fecharPopup(); removerPoder(${index})"><i class="ti ti-trash"></i><span>Remover</span></button>`,
+  });
 
-      ${marcas.length ? `<div class="pw-tags">${marcas.join("")}</div>` : ""}
-
-      <div>
-        <span class="popup-label">Descrição</span>
-        <div class="popup-descricao">${esc(p.desc) || "Sem descrição"}</div>
-      </div>
-
-      ${magia ? `<button type="button" class="pw-conjurar pw-conjurar-grande" onclick="fecharPopup(); conjurarMagia(${index})"><i class="ti ti-sparkles"></i> Conjurar</button>` : ""}
-    </div>`;
-
-  abrirPopup(`${getIconeTipo(p.tipo)} ${p.nome || "Sem nome"}`, html, true, () => abrirFormPoder(index));
+  abrirPopup(`${getIconeTipo(p.tipo)} ${p.nome || "Sem nome"}`, html, true, null);
 }
 
 // compatibilidade: nomes antigos ainda chamados em outros lugares
@@ -13603,3 +13533,1435 @@ function addPoder() {
 }
 
 window.__pmPronto = true;
+
+
+/* =====================================================================
+   MOEDAS (bolsa do personagem)
+   1 PL = 10 PO · 1 PO = 2 PE = 10 PP = 100 PC
+   ===================================================================== */
+var MOEDAS = ["pl", "po", "pe", "pp", "pc"];
+var MOEDA_VALOR = { pc: 1, pp: 10, pe: 50, po: 100, pl: 1000 }; // em PC
+var MOEDA_NOME = { pl: "Platina", po: "Ouro", pe: "Electrum", pp: "Prata", pc: "Cobre" };
+var moedas = { pl: 0, po: 0, pe: 0, pp: 0, pc: 0 };
+
+function normalizarMoedas(m) {
+  const r = {};
+  MOEDAS.forEach((k) => (r[k] = Math.max(0, parseInt(m && m[k]) || 0)));
+  return r;
+}
+
+function totalEmPC(m) {
+  return MOEDAS.reduce((s, k) => s + (m[k] || 0) * MOEDA_VALOR[k], 0);
+}
+
+function formatarPO(pc) {
+  const po = pc / 100;
+  return po.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
+}
+
+// tira "qtd" moedas do tipo "tipo" de uma bolsa, quebrando moedas maiores se faltar (devolve troco)
+function pagarDaBolsa(bolsa, qtd, tipo) {
+  const m = normalizarMoedas(bolsa);
+  let resta = qtd * MOEDA_VALOR[tipo];
+  if (totalEmPC(m) < resta) return null;
+
+  // 1) usa a própria moeda primeiro
+  const usaMesma = Math.min(m[tipo], qtd);
+  m[tipo] -= usaMesma;
+  resta -= usaMesma * MOEDA_VALOR[tipo];
+
+  // 2) usa as outras, das menores pras maiores, sem passar do valor
+  const asc = [...MOEDAS].sort((a, b) => MOEDA_VALOR[a] - MOEDA_VALOR[b]);
+  for (const c of asc) {
+    if (resta <= 0) break;
+    const k = Math.min(m[c], Math.floor(resta / MOEDA_VALOR[c]));
+    m[c] -= k;
+    resta -= k * MOEDA_VALOR[c];
+  }
+
+  // 3) se ainda falta, quebra a menor moeda que cubra o resto e devolve troco
+  if (resta > 0) {
+    const quebra = asc.find((c) => m[c] > 0 && MOEDA_VALOR[c] > resta);
+    if (!quebra) return null;
+    m[quebra] -= 1;
+    let troco = MOEDA_VALOR[quebra] - resta;
+    for (const c of ["po", "pp", "pc"]) {
+      const k = Math.floor(troco / MOEDA_VALOR[c]);
+      m[c] += k;
+      troco -= k * MOEDA_VALOR[c];
+    }
+  }
+  return m;
+}
+
+// junta moedas pequenas em maiores (cobre → prata → ouro; electrum → ouro)
+function organizarBolsa(bolsa) {
+  const m = normalizarMoedas(bolsa);
+  m.pp += Math.floor(m.pc / 10); m.pc %= 10;
+  m.po += Math.floor(m.pp / 10); m.pp %= 10;
+  m.po += Math.floor(m.pe / 2); m.pe %= 2;
+  return m;
+}
+
+// itens antigos tipo "Peças de ouro x190" que podem virar moeda
+function detectarMoedasNoInventario() {
+  const mapa = { ouro: "po", prata: "pp", cobre: "pc", electrum: "pe", platina: "pl" };
+  const achados = [];
+  inventario.forEach((item, i) => {
+    if (!item || item.recipiente) return;
+    const n = normalizarTipo(item.nome || "").trim();
+    let tipo = null;
+    const m1 = n.match(/^(pecas?|moedas?)\s+de\s+(ouro|prata|cobre|electrum|platina)$/);
+    if (m1) tipo = mapa[m1[2]];
+    else if (/^(po|pp|pc|pe|pl)$/.test(n)) tipo = n;
+    if (tipo) achados.push({ index: i, tipo, qtd: parseInt(item.qtd) || 1, nome: item.nome });
+  });
+  return achados;
+}
+
+function renderBolsaMoedas() {
+  const box = document.getElementById("bolsaMoedas");
+  if (!box) return;
+  moedas = normalizarMoedas(moedas);
+
+  const achados = detectarMoedasNoInventario();
+  const aviso = achados.length
+    ? `<div class="bolsa-aviso">
+        <span>Encontrei ${achados.map((a) => `<b>${esc(a.nome)} x${a.qtd}</b>`).join(", ")} no inventário.</span>
+        <button type="button" onclick="moverMoedasDoInventario()">Mover pra bolsa</button>
+      </div>`
+    : "";
+
+  box.innerHTML = `
+    <div class="bolsa-topo">
+      <span class="bolsa-titulo"><i class="ti ti-coins"></i> Bolsa</span>
+      <span class="bolsa-total">≈ <b>${formatarPO(totalEmPC(moedas))}</b> PO</span>
+    </div>
+    <div class="bolsa-grade">
+      ${MOEDAS.map(
+        (k) => `
+        <label class="moeda moeda-${k}" title="${MOEDA_NOME[k]}">
+          <span class="moeda-sigla">${k.toUpperCase()}</span>
+          <input type="number" min="0" inputmode="numeric" value="${moedas[k]}" onchange="alterarMoeda('${k}', this.value)">
+        </label>`,
+      ).join("")}
+    </div>
+    <div class="bolsa-acoes">
+      <button type="button" onclick="abrirMovimentoMoedas('pagar')"><i class="ti ti-minus"></i> Pagar</button>
+      <button type="button" onclick="abrirMovimentoMoedas('receber')"><i class="ti ti-plus"></i> Receber</button>
+      <button type="button" onclick="organizarMinhaBolsa()" title="Junta moedas pequenas em maiores"><i class="ti ti-arrows-sort"></i> Organizar</button>
+    </div>
+    ${aviso}`;
+}
+
+function alterarMoeda(tipo, valor) {
+  moedas[tipo] = Math.max(0, parseInt(valor) || 0);
+  renderBolsaMoedas();
+  salvarTudo();
+}
+
+function organizarMinhaBolsa() {
+  moedas = organizarBolsa(moedas);
+  renderBolsaMoedas();
+  salvarTudo();
+  mostrarToastMundo("Moedas organizadas");
+}
+
+function seletorMoedaHTML(id, padrao) {
+  return `<div class="moeda-seletor" id="${id}">${MOEDAS.map(
+    (k) => `<button type="button" class="moeda-opt moeda-${k} ${k === padrao ? "ativo" : ""}" data-moeda="${k}" onclick="this.parentElement.querySelectorAll('.moeda-opt').forEach(b=>b.classList.remove('ativo')); this.classList.add('ativo')">${k.toUpperCase()}</button>`,
+  ).join("")}</div>`;
+}
+
+function lerSeletorMoeda(id) {
+  return document.querySelector(`#${id} .moeda-opt.ativo`)?.dataset.moeda || "po";
+}
+
+function abrirMovimentoMoedas(modo) {
+  const html = `
+    <div class="popup-form">
+      <label class="popup-label">Quantidade</label>
+      <input id="movQtd" type="number" min="1" inputmode="numeric" placeholder="Ex: 25">
+      <label class="popup-label">Moeda</label>
+      ${seletorMoedaHTML("movMoeda", "po")}
+      ${modo === "pagar" ? `<p class="pm-dica">Se faltar dessa moeda, o app quebra uma maior e devolve o troco.</p>` : ""}
+      <button class="popup-salvar-btn" onclick="confirmarMovimentoMoedas('${modo}')">${modo === "pagar" ? "Pagar" : "Receber"}</button>
+    </div>`;
+  abrirPopup(modo === "pagar" ? "Pagar" : "Receber", html, true, null);
+  setTimeout(() => document.getElementById("movQtd")?.focus(), 50);
+}
+
+function confirmarMovimentoMoedas(modo) {
+  const qtd = parseInt(document.getElementById("movQtd")?.value) || 0;
+  const tipo = lerSeletorMoeda("movMoeda");
+  if (qtd <= 0) return;
+
+  if (modo === "pagar") {
+    const nova = pagarDaBolsa(moedas, qtd, tipo);
+    if (!nova) {
+      alertBonito(`Você não tem o suficiente. Total na bolsa: ${formatarPO(totalEmPC(moedas))} PO.`);
+      return;
+    }
+    moedas = nova;
+  } else {
+    moedas[tipo] = (moedas[tipo] || 0) + qtd;
+  }
+  fecharPopup();
+  renderBolsaMoedas();
+  salvarTudo();
+  mostrarToastMundo(`${modo === "pagar" ? "Pagou" : "Recebeu"} ${qtd} ${tipo.toUpperCase()}`);
+}
+
+function moverMoedasDoInventario() {
+  const achados = detectarMoedasNoInventario();
+  if (!achados.length) return;
+  achados.forEach((a) => (moedas[a.tipo] = (moedas[a.tipo] || 0) + a.qtd));
+  const indices = new Set(achados.map((a) => a.index));
+  inventario = inventario.filter((_, i) => !indices.has(i));
+  renderInv();
+  renderBolsaMoedas();
+  salvarTudo();
+  mostrarToastMundo("Moedas movidas pra bolsa");
+}
+
+/* =====================================================================
+   DADOS
+   ===================================================================== */
+var historicoRolagens = [];
+window._ultimaRolagem = null;
+
+function dado(faces) {
+  const arr = new Uint32Array(1);
+  (window.crypto || window.msCrypto).getRandomValues(arr);
+  return (arr[0] % faces) + 1;
+}
+
+// "2d6+3", "1d20 + 1d4 - 1", "8d6" → { total, texto }
+function rolarExpressao(expr, dobrarDados) {
+  const limpo = String(expr || "").toLowerCase().replace(/\s+/g, "");
+  if (!limpo) return null;
+  const re = /([+-])?(\d*)d(\d+)|([+-])?(\d+)/g;
+  let m, total = 0, partes = [], achouAlgo = false, consumido = 0;
+  while ((m = re.exec(limpo))) {
+    if (m.index !== consumido) return null; // lixo no meio
+    consumido = re.lastIndex;
+    achouAlgo = true;
+    if (m[3]) {
+      const sinal = m[1] === "-" ? -1 : 1;
+      let qtd = parseInt(m[2] || "1");
+      const faces = parseInt(m[3]);
+      if (qtd < 1 || qtd > 100 || faces < 2 || faces > 1000) return null;
+      if (dobrarDados) qtd *= 2;
+      const vals = Array.from({ length: qtd }, () => dado(faces));
+      const soma = vals.reduce((a, b) => a + b, 0);
+      total += sinal * soma;
+      partes.push(`${sinal < 0 ? "− " : partes.length ? "+ " : ""}${qtd}d${faces} [${vals.join(", ")}]`);
+    } else {
+      const sinal = m[4] === "-" ? -1 : 1;
+      const n = parseInt(m[5]);
+      total += sinal * n;
+      partes.push(`${sinal < 0 ? "− " : partes.length ? "+ " : ""}${n}`);
+    }
+  }
+  if (!achouAlgo || consumido !== limpo.length) return null;
+  return { total, texto: partes.join(" ") };
+}
+
+function extrairDados(texto) {
+  const m = String(texto || "").match(/\d*\s*d\s*\d+(\s*[+-]\s*\d+(?!\s*d))*/i);
+  return m ? m[0].replace(/\s+/g, "") : "";
+}
+
+function fmtBonus(n) {
+  return n >= 0 ? `+${n}` : `${n}`;
+}
+
+// teste com d20: rotulo, bonus, modo ("normal" | "vantagem" | "desvantagem")
+function rolarD20(rotulo, bonus, modo, extras) {
+  modo = modo || "normal";
+  const a = dado(20);
+  const b = modo === "normal" ? null : dado(20);
+  const escolhido = b == null ? a : modo === "vantagem" ? Math.max(a, b) : Math.min(a, b);
+  const descartado = b == null ? null : escolhido === a ? b : a;
+  const total = escolhido + bonus;
+
+  const detalhe =
+    `d20 <b>${escolhido}</b>` +
+    (descartado != null ? ` <s>${descartado}</s>` : "") +
+    (bonus ? ` ${bonus >= 0 ? "+" : "−"} ${Math.abs(bonus)}` : "");
+
+  const r = {
+    rotulo,
+    total,
+    detalhe,
+    textoSimples: `d20 ${escolhido}${descartado != null ? ` (${descartado})` : ""}${bonus ? ` ${fmtBonus(bonus)}` : ""}`,
+    modo,
+    nat: escolhido === 20 ? "crit" : escolhido === 1 ? "falha" : "",
+    tipo: "d20",
+    bonus,
+    extras: extras || [],
+  };
+  registrarRolagem(r);
+  return r;
+}
+
+function rolarDano(rotulo, expr, critico, extras) {
+  const res = rolarExpressao(expr, critico);
+  if (!res) {
+    alertBonito(`Não entendi "${expr}". Use algo como 2d6+3.`);
+    return null;
+  }
+  const r = {
+    rotulo: rotulo + (critico ? " (crítico)" : ""),
+    total: res.total,
+    detalhe: esc(res.texto),
+    textoSimples: res.texto,
+    tipo: "expr",
+    expr,
+    critico: !!critico,
+    extras: extras || [],
+  };
+  registrarRolagem(r);
+  return r;
+}
+
+function registrarRolagem(r) {
+  r.em = Date.now();
+  historicoRolagens.unshift(r);
+  historicoRolagens = historicoRolagens.slice(0, 25);
+  window._ultimaRolagem = r;
+  mostrarRolagem(r);
+  compartilharRolagem(r);
+}
+
+function mostrarRolagem(r) {
+  const sheet = document.getElementById("rolagemSheet");
+  if (!sheet) return;
+
+  const botoes = [];
+  if (r.tipo === "d20") {
+    botoes.push(`<button type="button" class="${r.modo === "vantagem" ? "ativo" : ""}" onclick="rerolar('vantagem')">Vantagem</button>`);
+    botoes.push(`<button type="button" class="${r.modo === "desvantagem" ? "ativo" : ""}" onclick="rerolar('desvantagem')">Desvantagem</button>`);
+    botoes.push(`<button type="button" onclick="rerolar('normal')"><i class="ti ti-refresh"></i> De novo</button>`);
+  } else {
+    botoes.push(`<button type="button" class="${r.critico ? "ativo" : ""}" onclick="rerolarDano(true)">Crítico</button>`);
+    botoes.push(`<button type="button" onclick="rerolarDano(false)"><i class="ti ti-refresh"></i> De novo</button>`);
+  }
+  (r.extras || []).forEach((e, i) => botoes.push(`<button type="button" class="rs-extra" onclick="executarExtraRolagem(${i})">${e.rotulo}</button>`));
+
+  sheet.innerHTML = `
+    <div class="rs-card ${r.nat}">
+      <div class="rs-topo">
+        <span class="rs-rotulo">${esc(r.rotulo)}</span>
+        <button type="button" class="rs-fechar" onclick="fecharRolagem()">×</button>
+      </div>
+      <div class="rs-total">${r.total}</div>
+      <div class="rs-detalhe">${r.detalhe}${r.nat === "crit" ? ` · <b>Crítico!</b>` : r.nat === "falha" ? ` · <b>Falha crítica</b>` : ""}</div>
+      <div class="rs-acoes">${botoes.join("")}</div>
+    </div>`;
+  sheet.style.display = "block";
+  sheet.classList.remove("rs-anim");
+  void sheet.offsetWidth;
+  sheet.classList.add("rs-anim");
+}
+
+function fecharRolagem() {
+  const sheet = document.getElementById("rolagemSheet");
+  if (sheet) sheet.style.display = "none";
+}
+
+function rerolar(modo) {
+  const r = window._ultimaRolagem;
+  if (!r || r.tipo !== "d20") return;
+  rolarD20(r.rotulo, r.bonus, modo, r.extras);
+}
+
+function rerolarDano(critico) {
+  const r = window._ultimaRolagem;
+  if (!r || r.tipo !== "expr") return;
+  rolarDano(r.rotulo.replace(/ \(crítico\)$/, ""), r.expr, critico, r.extras);
+}
+
+function executarExtraRolagem(i) {
+  const e = window._ultimaRolagem?.extras?.[i];
+  if (e && typeof e.acao === "function") e.acao();
+}
+
+/* ---------- atalhos de rolagem na ficha ---------- */
+var NOMES_ATRIBUTO = { forca: "Força", destreza: "Destreza", constituicao: "Constituição", inteligencia: "Inteligência", sabedoria: "Sabedoria", carisma: "Carisma" };
+
+function modAtributo(attr) {
+  return mod(getAtributoFinal(attr));
+}
+
+function rolarAtributo(attr) {
+  rolarD20(`Teste de ${NOMES_ATRIBUTO[attr]}`, modAtributo(attr), "normal", [
+    { rotulo: "Salvaguarda", acao: () => rolarSalvaguarda(attr) },
+  ]);
+}
+
+function rolarSalvaguarda(attr) {
+  const bonus = modAtributo(attr) + (saves[attr] ? get("bonusProf") : 0);
+  rolarD20(`Salvaguarda de ${NOMES_ATRIBUTO[attr]}`, bonus, "normal", [
+    { rotulo: "Teste", acao: () => rolarAtributo(attr) },
+  ]);
+}
+
+function rolarPericia(nome) {
+  const p = pericias.find((x) => x.nome === nome);
+  if (!p) return;
+  const nivel = profs[nome] || 0;
+  const bonus = modAtributo(p.attr) + (nivel === 1 ? get("bonusProf") : nivel === 2 ? get("bonusProf") * 2 : 0);
+  rolarD20(nome, bonus);
+}
+
+function rolarIniciativa() {
+  rolarD20("Iniciativa", modAtributo("destreza"));
+}
+
+function rolarAtaqueArma(index, attr) {
+  const arma = armas[index];
+  if (!arma) return;
+  attr = attr || "forca";
+  const bonus = modAtributo(attr) + get("bonusProf");
+  const outro = attr === "forca" ? "destreza" : "forca";
+  const extras = [{ rotulo: `Usar ${outro === "forca" ? "FOR" : "DES"}`, acao: () => rolarAtaqueArma(index, outro) }];
+  if (extrairDados(arma.dano)) extras.push({ rotulo: "Dano", acao: () => rolarDanoArma(index, attr) });
+  rolarD20(`Ataque · ${arma.nome || "arma"}`, bonus, "normal", extras);
+}
+
+function rolarDanoArma(index, attr) {
+  const arma = armas[index];
+  const expr = extrairDados(arma?.dano);
+  if (!expr) return;
+  rolarDano(`Dano · ${arma.nome || "arma"}`, expr, false, [
+    { rotulo: "Ataque", acao: () => rolarAtaqueArma(index, attr) },
+  ]);
+}
+
+function rolarAtaqueMagico() {
+  const atr = parseInt(document.getElementById("dtAtributo")?.value) || 0;
+  const prof = parseInt(document.getElementById("dtProf")?.value) || 0;
+  rolarD20("Ataque mágico", atr + prof);
+}
+
+function rolarDanoPoder(index) {
+  const p = poderes[index];
+  const expr = extrairDados(p?.dano);
+  if (!expr) return;
+  rolarDano(p.nome || "Poder", expr, false);
+}
+
+/* ---------- bandeja de dados ---------- */
+function abrirBandejaDados() {
+  const compart = lerPrefCompartilhar();
+  const html = `
+    <div class="bandeja">
+      <div class="bandeja-dados">
+        ${[4, 6, 8, 10, 12, 20, 100]
+          .map((f) => `<button type="button" class="bd-dado" onclick="adicionarDadoBandeja(${f})"><span>d${f}</span></button>`)
+          .join("")}
+      </div>
+      <div class="bandeja-linha">
+        <input id="bandejaExpr" placeholder="Ex: 2d6+3" autocomplete="off" onkeydown="if(event.key==='Enter') rolarBandeja()">
+        <button type="button" class="bd-limpar" onclick="document.getElementById('bandejaExpr').value=''" title="Limpar"><i class="ti ti-backspace"></i></button>
+      </div>
+      <button type="button" class="bandeja-rolar" onclick="rolarBandeja()">🎲 Rolar</button>
+      <div class="bandeja-rapidos">
+        <button type="button" onclick="rolarIniciativa()">Iniciativa</button>
+        <button type="button" onclick="rolarD20('d20', 0, 'vantagem')">d20 vantagem</button>
+        <button type="button" onclick="rolarD20('d20', 0, 'desvantagem')">d20 desvantagem</button>
+      </div>
+
+      <label class="bandeja-compart">
+        <input type="checkbox" ${compart ? "checked" : ""} onchange="salvarPrefCompartilhar(this.checked)">
+        <span>Mostrar minhas rolagens pro grupo</span>
+      </label>
+
+      <div class="bandeja-abas">
+        <button type="button" class="ativo" onclick="trocarAbaBandeja('minhas', this)">Minhas</button>
+        <button type="button" onclick="trocarAbaBandeja('grupo', this)">Grupo</button>
+      </div>
+      <div id="bandejaHistorico" class="bandeja-hist"></div>
+    </div>`;
+  abrirPopup("Dados", html, true, null);
+  window._abaBandeja = "minhas";
+  renderHistoricoBandeja();
+}
+
+function adicionarDadoBandeja(faces) {
+  const input = document.getElementById("bandejaExpr");
+  if (!input) return;
+  const v = input.value.replace(/\s+/g, "");
+  // se o último termo já é do mesmo dado, soma 1 (d6 → 2d6)
+  const re = new RegExp(`(^|[+-])(\\d*)d${faces}$`);
+  const m = v.match(re);
+  if (m) {
+    const n = (parseInt(m[2] || "1") || 1) + 1;
+    input.value = v.slice(0, v.length - m[0].length) + `${m[1]}${n}d${faces}`;
+  } else {
+    input.value = v ? `${v}+1d${faces}` : `1d${faces}`;
+  }
+}
+
+function rolarBandeja() {
+  const expr = document.getElementById("bandejaExpr")?.value || "";
+  if (!expr.trim()) return;
+  // d20 sozinho com modificador → rolagem de teste (com vantagem/desvantagem)
+  const m = expr.replace(/\s+/g, "").toLowerCase().match(/^1?d20([+-]\d+)?$/);
+  if (m) rolarD20("d20", parseInt(m[1] || "0"));
+  else rolarDano(expr.replace(/\s+/g, ""), expr, false);
+  renderHistoricoBandeja();
+}
+
+function trocarAbaBandeja(aba, btn) {
+  window._abaBandeja = aba;
+  btn.parentElement.querySelectorAll("button").forEach((b) => b.classList.remove("ativo"));
+  btn.classList.add("ativo");
+  renderHistoricoBandeja();
+}
+
+function renderHistoricoBandeja() {
+  const box = document.getElementById("bandejaHistorico");
+  if (!box) return;
+  if (window._abaBandeja === "grupo") {
+    const feed = window._feedRolagensGrupo || [];
+    box.innerHTML = !personagens[personagemAtual]?.grupoAtivo
+      ? `<p class="pm-vazio">Essa ficha não está num grupo.</p>`
+      : feed.length
+        ? feed
+            .map(
+              (r) => `<div class="bh-linha ${r.nat || ""}"><span class="bh-quem">${esc(r.personagem || "Alguém")}</span><span class="bh-rot">${esc(r.rotulo)}</span><b>${r.total}</b><small>${tempoRelativo(r.em)}</small></div>`,
+            )
+            .join("")
+        : `<p class="pm-vazio">Nenhuma rolagem do grupo ainda.</p>`;
+    return;
+  }
+  box.innerHTML = historicoRolagens.length
+    ? historicoRolagens
+        .map(
+          (r) => `<div class="bh-linha ${r.nat || ""}"><span class="bh-rot">${esc(r.rotulo)}</span><small class="bh-det">${esc(r.textoSimples)}</small><b>${r.total}</b></div>`,
+        )
+        .join("")
+    : `<p class="pm-vazio">Nenhuma rolagem ainda.</p>`;
+}
+
+function lerPrefCompartilhar() {
+  try {
+    return localStorage.getItem("compartilharRolagens") !== "0";
+  } catch (e) {
+    return true;
+  }
+}
+
+function salvarPrefCompartilhar(v) {
+  try {
+    localStorage.setItem("compartilharRolagens", v ? "1" : "0");
+  } catch (e) {}
+}
+
+function tempoRelativo(ms) {
+  const s = Math.max(0, Math.round((Date.now() - (ms || 0)) / 1000));
+  if (s < 45) return "agora";
+  const min = Math.round(s / 60);
+  if (min < 60) return `há ${min} min`;
+  const h = Math.round(min / 60);
+  if (h < 24) return `há ${h} h`;
+  const d = Math.round(h / 24);
+  return `há ${d} ${d === 1 ? "dia" : "dias"}`;
+}
+
+/* ---------- rolagens compartilhadas com o grupo ---------- */
+async function compartilharRolagem(r) {
+  try {
+    const ficha = personagens[personagemAtual];
+    if (!ficha?.grupoAtivo || !window.usuarioAtual || !window.addDoc || !lerPrefCompartilhar()) return;
+    await addDoc(collection(db, "grupos", ficha.grupoAtivo, "rolagens"), {
+      uid: window.usuarioAtual.uid,
+      personagem: ficha.nome || "Sem nome",
+      rotulo: r.rotulo,
+      total: r.total,
+      detalhe: r.textoSimples || "",
+      nat: r.nat || "",
+      em: r.em || Date.now(),
+    });
+  } catch (e) {
+    console.warn("Não deu pra compartilhar a rolagem:", e.code || e.message);
+  }
+}
+
+window._unsubRolagens = null;
+window._rolagensGrupoId = null;
+window._feedRolagensGrupo = [];
+
+// escuta as rolagens do grupo (jogador pela ficha; mestre pelo painel do grupo)
+function escutarRolagensGrupo(grupoId) {
+  if (window._rolagensGrupoId === grupoId) return;
+  if (window._unsubRolagens) window._unsubRolagens();
+  window._unsubRolagens = null;
+  window._rolagensGrupoId = grupoId || null;
+  window._feedRolagensGrupo = [];
+  if (!grupoId || !window.usuarioAtual || !window.orderBy) return;
+
+  const inicio = Date.now();
+  try {
+    const q = query(collection(db, "grupos", grupoId, "rolagens"), orderBy("em", "desc"), limit(20));
+    window._unsubRolagens = onSnapshot(
+      q,
+      (snap) => {
+        window._feedRolagensGrupo = snap.docs.map((d) => d.data());
+        snap.docChanges().forEach((ch) => {
+          if (ch.type !== "added") return;
+          const r = ch.doc.data();
+          if (r.uid === window.usuarioAtual?.uid || (r.em || 0) < inicio) return;
+          toastRolagemGrupo(r);
+        });
+        if (window._abaBandeja === "grupo") renderHistoricoBandeja();
+      },
+      (err) => console.warn("Rolagens do grupo:", err.code || err.message),
+    );
+  } catch (e) {
+    console.warn(e);
+  }
+}
+
+function toastRolagemGrupo(r) {
+  const t = document.createElement("div");
+  t.className = "toast-rolagem " + (r.nat || "");
+  t.innerHTML = `<span>🎲 <b>${esc(r.personagem || "Alguém")}</b> · ${esc(r.rotulo)}</span><strong>${r.total}</strong>`;
+  document.body.appendChild(t);
+  setTimeout(() => t.classList.add("sair"), 3600);
+  setTimeout(() => t.remove(), 4100);
+}
+
+/* =====================================================================
+   VEÍCULOS (compartilhados com o grupo, tempo real, sem o mestre)
+   grupos/{g}/veiculos/{v}            → dados do veículo + cofre
+   grupos/{g}/veiculos/{v}/itens/{i}  → um item por documento
+   grupos/{g}/veiculos/{v}/historico  → quem fez o quê
+   ===================================================================== */
+
+
+window._veic = {
+  gid: null,
+  status: "",
+  unsubLista: null,
+  unsubItens: {},
+  unsubHist: null,
+  lista: [],
+  itens: {},
+  hist: [],
+  aberto: null,
+};
+
+function veicRef(vid) {
+  return doc(db, "grupos", window._veic.gid, "veiculos", vid);
+}
+function veicItensCol(vid) {
+  return collection(db, "grupos", window._veic.gid, "veiculos", vid, "itens");
+}
+function veicHistCol(vid) {
+  return collection(db, "grupos", window._veic.gid, "veiculos", vid, "historico");
+}
+
+function meuNomeVeiculo() {
+  return personagens[personagemAtual]?.nome || "Alguém";
+}
+
+function pararEscutasVeiculos() {
+  const v = window._veic;
+  if (v.unsubLista) v.unsubLista();
+  Object.values(v.unsubItens).forEach((u) => u());
+  if (v.unsubHist) v.unsubHist();
+  window._veic = { gid: null, status: "", unsubLista: null, unsubItens: {}, unsubHist: null, lista: [], itens: {}, hist: [], aberto: null };
+}
+
+async function abrirAbaVeiculos() {
+  const ficha = personagens[personagemAtual];
+  const gid = ficha?.grupoAtivo || null;
+
+  if (!window.usuarioAtual) {
+    window._veic.status = "login";
+    renderVeiculos();
+    return;
+  }
+  if (!gid) {
+    pararEscutasVeiculos();
+    window._veic.status = "semgrupo";
+    renderVeiculos();
+    return;
+  }
+  if (window._veic.gid === gid && window._veic.status === "ok") {
+    renderVeiculos();
+    return;
+  }
+
+  pararEscutasVeiculos();
+  window._veic.gid = gid;
+  window._veic.status = "carregando";
+  renderVeiculos();
+
+  try {
+    const gSnap = await getDoc(doc(db, "grupos", gid));
+    if (!gSnap.exists()) {
+      window._veic.status = "semgrupo";
+      renderVeiculos();
+      return;
+    }
+    const g = gSnap.data();
+    const uid = window.usuarioAtual.uid;
+    const souMestre = g.criadoPor === uid || (g.mestresUids || []).includes(uid);
+    window._veic.nomeGrupo = g.nome || "grupo";
+    if (souMestre) {
+      window._veic.status = "mestre";
+      renderVeiculos();
+      return;
+    }
+
+    window._veic.status = "ok";
+    window._veic.unsubLista = onSnapshot(
+      collection(db, "grupos", gid, "veiculos"),
+      (snap) => {
+        window._veic.lista = snap.docs
+          .map((d) => ({ id: d.id, ...d.data() }))
+          .sort((a, b) => (a.criadoEm || 0) - (b.criadoEm || 0));
+        sincronizarEscutasItens();
+        if (window._veic.aberto && !window._veic.lista.some((x) => x.id === window._veic.aberto)) {
+          window._veic.aberto = null;
+        }
+        renderVeiculos();
+      },
+      (err) => {
+        console.warn("Veículos:", err);
+        window._veic.status = "erro";
+        window._veic.erro = err.code || err.message;
+        renderVeiculos();
+      },
+    );
+  } catch (e) {
+    console.warn(e);
+    window._veic.status = "erro";
+    window._veic.erro = e.code || e.message;
+    renderVeiculos();
+  }
+}
+
+function sincronizarEscutasItens() {
+  const v = window._veic;
+  const ids = new Set(v.lista.map((x) => x.id));
+  Object.keys(v.unsubItens).forEach((id) => {
+    if (!ids.has(id)) {
+      v.unsubItens[id]();
+      delete v.unsubItens[id];
+      delete v.itens[id];
+    }
+  });
+  ids.forEach((id) => {
+    if (v.unsubItens[id]) return;
+    v.unsubItens[id] = onSnapshot(veicItensCol(id), (snap) => {
+      v.itens[id] = snap.docs
+        .map((d) => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR"));
+      renderVeiculos();
+    });
+  });
+}
+
+function escutarHistorico(vid) {
+  const v = window._veic;
+  if (v.unsubHist) v.unsubHist();
+  v.unsubHist = null;
+  v.hist = [];
+  if (!vid) return;
+  v.unsubHist = onSnapshot(query(veicHistCol(vid), orderBy("em", "desc"), limit(30)), (snap) => {
+    v.hist = snap.docs.map((d) => d.data());
+    renderVeiculos();
+  });
+}
+
+async function registrarHistorico(vid, texto) {
+  try {
+    await addDoc(veicHistCol(vid), { texto, uid: window.usuarioAtual.uid, nome: meuNomeVeiculo(), em: Date.now() });
+  } catch (e) {
+    console.warn("Histórico:", e.code || e.message);
+  }
+}
+
+function unidadesNoVeiculo(vid) {
+  return (window._veic.itens[vid] || []).reduce((s, it) => s + (parseInt(it.qtd) || 1), 0);
+}
+
+/* ---------- render ---------- */
+
+
+
+
+
+
+
+
+function abrirVeiculo(vid) {
+  window._veic.aberto = vid;
+  escutarHistorico(vid);
+  renderVeiculos();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function fecharVeiculo() {
+  window._veic.aberto = null;
+  escutarHistorico(null);
+  renderVeiculos();
+}
+
+
+
+/* ---------- criar / editar / apagar ---------- */
+window._veicImagemTemp = "";
+
+
+
+function previewImagemVeiculo(input) {
+  const f = input.files && input.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    window._veicImagemTemp = reader.result;
+    const img = document.getElementById("vImagemPreview");
+    if (img) {
+      img.src = reader.result;
+      img.style.display = "block";
+    }
+  };
+  reader.readAsDataURL(f);
+}
+
+async function salvarVeiculo(vid) {
+  const nome = document.getElementById("vNome")?.value.trim();
+  if (!nome) {
+    document.getElementById("vNome")?.focus();
+    return;
+  }
+  const btn = document.getElementById("vSalvar");
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Salvando...";
+  }
+
+  const pvMax = Math.max(0, parseInt(document.getElementById("vPvMax").value) || 0);
+  const dados = {
+    nome,
+    tipo: document.getElementById("vTipo")?.dataset.valor || "carroca",
+    pvMax,
+    ca: document.getElementById("vCA").value.trim(),
+    desloc: document.getElementById("vDesloc").value.trim(),
+    capacidade: Math.max(0, parseInt(document.getElementById("vCap").value) || 0),
+  };
+
+  if (window._veicImagemTemp) {
+    const up = await uploadImagemFirebase(window._veicImagemTemp, "veiculo");
+    if (up.url) dados.imagemUrl = up.url;
+    else alertBonito(_mensagemErroUpload("O veículo vai ser salvo sem a imagem nova."));
+  }
+
+  try {
+    if (vid) {
+      const atual = window._veic.lista.find((x) => x.id === vid) || {};
+      if (pvMax && (atual.pv == null || atual.pv > pvMax)) dados.pv = pvMax;
+      await updateDoc(veicRef(vid), dados);
+      registrarHistorico(vid, "editou o veículo");
+    } else {
+      const novo = {
+        ...dados,
+        pv: pvMax,
+        moedas: { pl: 0, po: 0, pe: 0, pp: 0, pc: 0 },
+        criadoPor: window.usuarioAtual.uid,
+        criadoPorNome: meuNomeVeiculo(),
+        criadoEm: Date.now(),
+      };
+      const ref = await addDoc(collection(db, "grupos", window._veic.gid, "veiculos"), novo);
+      registrarHistorico(ref.id, "criou o veículo");
+    }
+    fecharPopup();
+    mostrarToastMundo(vid ? "Veículo salvo" : "Veículo criado");
+  } catch (e) {
+    console.error(e);
+    alertBonito("Não consegui salvar o veículo. " + (e.code === "permission-denied" ? "As regras do Firebase ainda não liberam veículos." : ""));
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = vid ? "Salvar" : "Criar veículo";
+    }
+  }
+}
+
+async function apagarVeiculo(vid) {
+  const veic = window._veic.lista.find((x) => x.id === vid);
+  if (!veic) return;
+  const itens = window._veic.itens[vid] || [];
+  const m = totalEmPC(normalizarMoedas(veic.moedas));
+  if (itens.length || m) {
+    alertBonito("Esvazie o veículo antes de apagar (itens e cofre), pra ninguém perder nada.");
+    return;
+  }
+  if (!(await confirmBonito(`Apagar "${veic.nome}"? Isso some pra todo mundo do grupo.`))) return;
+  try {
+    const hist = await getDocs(veicHistCol(vid));
+    const batch = writeBatch(db);
+    hist.docs.forEach((d) => batch.delete(d.ref));
+    batch.delete(veicRef(vid));
+    await batch.commit();
+    window._veic.aberto = null;
+    escutarHistorico(null);
+    mostrarToastMundo("Veículo apagado");
+  } catch (e) {
+    console.error(e);
+    alertBonito("Não consegui apagar. Só quem criou o veículo pode apagar.");
+  }
+}
+
+/* ---------- PV ---------- */
+async function alterarPVVeiculo(vid, delta) {
+  try {
+    let antes = 0, depois = 0;
+    await runTransaction(db, async (t) => {
+      const s = await t.get(veicRef(vid));
+      if (!s.exists()) return;
+      const d = s.data();
+      antes = d.pv ?? d.pvMax ?? 0;
+      depois = Math.max(0, Math.min(d.pvMax || 0, antes + delta));
+      t.update(veicRef(vid), { pv: depois });
+    });
+    // agrupa cliques rápidos num registro só
+    clearTimeout(window._veicPvTimer);
+    window._veicPvInicio = window._veicPvInicio ?? antes;
+    window._veicPvTimer = setTimeout(() => {
+      if (window._veicPvInicio !== depois) registrarHistorico(vid, `mudou o PV: ${window._veicPvInicio} → ${depois}`);
+      window._veicPvInicio = null;
+    }, 1500);
+  } catch (e) {
+    console.warn(e);
+  }
+}
+
+async function alterarPVVeiculoValor(vid) {
+  const v = await promptBonito("Dano (ex: -12) ou cura (ex: 8):", "");
+  const n = parseInt(v);
+  if (!n) return;
+  alterarPVVeiculo(vid, n);
+}
+
+/* ---------- cofre ---------- */
+function abrirMovimentoCofre(vid, modo) {
+  const html = `
+    <div class="popup-form">
+      <p class="pm-dica">${modo === "depositar" ? `Sai da sua bolsa (você tem ≈ ${formatarPO(totalEmPC(moedas))} PO) e vai pro cofre.` : "Sai do cofre e vai pra sua bolsa."}</p>
+      <label class="popup-label">Quantidade</label>
+      <input id="cofreQtd" type="number" min="1" inputmode="numeric" placeholder="Ex: 50">
+      <label class="popup-label">Moeda</label>
+      ${seletorMoedaHTML("cofreMoeda", "po")}
+      <button class="popup-salvar-btn" id="cofreOk" onclick="confirmarMovimentoCofre('${vid}', '${modo}')">${modo === "depositar" ? "Guardar no cofre" : "Pegar do cofre"}</button>
+    </div>`;
+  abrirPopup(modo === "depositar" ? "Guardar no cofre" : "Pegar do cofre", html, true, null);
+  setTimeout(() => document.getElementById("cofreQtd")?.focus(), 50);
+}
+
+async function confirmarMovimentoCofre(vid, modo) {
+  const qtd = parseInt(document.getElementById("cofreQtd")?.value) || 0;
+  const tipo = lerSeletorMoeda("cofreMoeda");
+  if (qtd <= 0) return;
+  const btn = document.getElementById("cofreOk");
+  if (btn) btn.disabled = true;
+
+  try {
+    if (modo === "depositar") {
+      const nova = pagarDaBolsa(moedas, qtd, tipo);
+      if (!nova) {
+        alertBonito("Você não tem tudo isso na bolsa.");
+        if (btn) btn.disabled = false;
+        return;
+      }
+      await runTransaction(db, async (t) => {
+        const s = await t.get(veicRef(vid));
+        if (!s.exists()) throw new Error("sumiu");
+        const m = normalizarMoedas(s.data().moedas);
+        m[tipo] += qtd;
+        t.update(veicRef(vid), { moedas: m });
+      });
+      moedas = nova;
+    } else {
+      await runTransaction(db, async (t) => {
+        const s = await t.get(veicRef(vid));
+        if (!s.exists()) throw new Error("sumiu");
+        const m = pagarDaBolsa(s.data().moedas, qtd, tipo);
+        if (!m) throw new Error("sem-saldo");
+        t.update(veicRef(vid), { moedas: m });
+      });
+      moedas[tipo] = (moedas[tipo] || 0) + qtd;
+    }
+    renderBolsaMoedas();
+    salvarTudo();
+    registrarHistorico(vid, `${modo === "depositar" ? "guardou" : "pegou"} ${qtd} ${tipo.toUpperCase()} ${modo === "depositar" ? "no" : "do"} cofre`);
+    fecharPopup();
+  } catch (e) {
+    if (btn) btn.disabled = false;
+    alertBonito(e.message === "sem-saldo" ? "O cofre não tem tudo isso." : "Não consegui mexer no cofre agora. Tenta de novo.");
+  }
+}
+
+/* ---------- itens ---------- */
+function chaveMesclagem(tipoItem, item) {
+  // itens "simples" e iguais se juntam numa pilha só (ex: 3 cordas + 2 cordas)
+  if (tipoItem !== "inventario") return null;
+  if (item.imagemUrl || (item.modificacoes && item.modificacoes.length) || item.requerSintonia) return null;
+  const base = `${normalizarTipo(item.nome || "")}|${normalizarTipo(item.desc || "")}`;
+  let h = 5381;
+  for (let i = 0; i < base.length; i++) h = ((h << 5) + h + base.charCodeAt(i)) >>> 0;
+  return "m_" + h.toString(36);
+}
+
+function abrirColocarNoVeiculo(vid) {
+  const veic = window._veic.lista.find((x) => x.id === vid);
+  if (!veic) return;
+  window._colocarVeic = { vid, sel: new Set() };
+
+  const grupos = [
+    ["inventario", "Inventário", inventario.map((it, i) => ({ it, i })).filter(({ it }) => it && !it.recipiente)],
+    ["armas", "Armas", armas.map((it, i) => ({ it, i }))],
+    ["armaduras", "Armaduras", armaduras.map((it, i) => ({ it, i }))],
+  ];
+
+  const corpo = grupos
+    .filter(([, , l]) => l.length)
+    .map(
+      ([tipo, titulo, l]) => `
+      <div class="pm-secao-titulo"><span>${titulo}</span><small>${l.length}</small></div>
+      ${l
+        .map(
+          ({ it, i }) => `
+        <button type="button" class="mochila-linha colocar-linha" data-chave="${tipo}:${i}" onclick="alternarColocarVeiculo(this)">
+          <span class="sel-check"><i class="ti ti-check"></i></span>
+          <span class="mochila-linha-nome">${esc(it.nome || "Sem nome")}${(it.qtd || 1) > 1 ? ` <small>x${it.qtd}</small>` : ""}</span>
+        </button>`,
+        )
+        .join("")}`,
+    )
+    .join("");
+
+  const livre = veic.capacidade > 0 ? veic.capacidade - unidadesNoVeiculo(vid) : null;
+  const html = `
+    <div class="mochila-painel">
+      ${livre != null ? `<p class="pm-dica">Espaço livre: <b>${Math.max(0, livre)}</b> ${livre === 1 ? "item" : "itens"}.</p>` : ""}
+      ${corpo || `<p class="pm-vazio">Você não tem itens pra colocar.</p>`}
+      <button class="popup-salvar-btn" id="btnConfirmarVeic" onclick="confirmarColocarNoVeiculo()" disabled>Colocar</button>
+    </div>`;
+  abrirPopup(`Colocar em ${veic.nome}`, html, true, null);
+}
+
+function alternarColocarVeiculo(btn) {
+  const s = window._colocarVeic?.sel;
+  if (!s) return;
+  const k = btn.dataset.chave;
+  if (s.has(k)) s.delete(k);
+  else s.add(k);
+  btn.classList.toggle("selecionada", s.has(k));
+  btn.querySelector(".sel-check")?.classList.toggle("ativo", s.has(k));
+  const ok = document.getElementById("btnConfirmarVeic");
+  if (ok) {
+    ok.disabled = !s.size;
+    ok.textContent = s.size ? `Colocar ${s.size} ${s.size === 1 ? "item" : "itens"}` : "Colocar";
+  }
+}
+
+async function confirmarColocarNoVeiculo() {
+  const ctx = window._colocarVeic;
+  if (!ctx || !ctx.sel.size) return;
+  const veic = window._veic.lista.find((x) => x.id === ctx.vid);
+  if (!veic) return;
+
+  const fontes = { inventario, armas, armaduras };
+  const escolhidos = [...ctx.sel].map((k) => {
+    const [tipo, i] = k.split(":");
+    return { tipo, i: parseInt(i), item: fontes[tipo][parseInt(i)] };
+  }).filter((x) => x.item);
+
+  const unidades = escolhidos.reduce((s, x) => s + (x.tipo === "inventario" ? parseInt(x.item.qtd) || 1 : 1), 0);
+  if (veic.capacidade > 0 && unidadesNoVeiculo(ctx.vid) + unidades > veic.capacidade) {
+    const livre = Math.max(0, veic.capacidade - unidadesNoVeiculo(ctx.vid));
+    if (!(await confirmBonito(`${veic.nome} só tem espaço pra mais ${livre} ${livre === 1 ? "item" : "itens"} e você está colocando ${unidades}. Colocar mesmo assim?`))) return;
+  }
+
+  const btn = document.getElementById("btnConfirmarVeic");
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Colocando...";
+  }
+
+  const feitos = [];
+  for (const x of escolhidos) {
+    const { id, dentroDe, ...limpo } = x.item;
+    const qtd = x.tipo === "inventario" ? parseInt(limpo.qtd) || 1 : 1;
+    const chave = chaveMesclagem(x.tipo, limpo);
+    try {
+      if (chave) {
+        const ref = doc(veicItensCol(ctx.vid), chave);
+        await runTransaction(db, async (t) => {
+          const s = await t.get(ref);
+          if (s.exists()) t.update(ref, { qtd: (s.data().qtd || 1) + qtd, em: Date.now() });
+          else t.set(ref, { nome: limpo.nome || "Sem nome", qtd, tipoItem: x.tipo, item: { ...limpo, qtd: 1 }, colocadoPor: window.usuarioAtual.uid, colocadoPorNome: meuNomeVeiculo(), em: Date.now() });
+        });
+      } else {
+        await addDoc(veicItensCol(ctx.vid), { nome: limpo.nome || "Sem nome", qtd, tipoItem: x.tipo, item: limpo, colocadoPor: window.usuarioAtual.uid, colocadoPorNome: meuNomeVeiculo(), em: Date.now() });
+      }
+      feitos.push(x);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  // tira da ficha só o que foi mesmo pro veículo (de trás pra frente pra não bagunçar os índices)
+  ["inventario", "armas", "armaduras"].forEach((tipo) => {
+    feitos
+      .filter((x) => x.tipo === tipo)
+      .sort((a, b) => b.i - a.i)
+      .forEach((x) => fontes[tipo].splice(x.i, 1));
+  });
+  renderInv();
+  renderArmas();
+  renderArmaduras();
+  salvarTudo();
+
+  if (feitos.length) {
+    const desc = feitos.map((x) => `${(x.item.qtd || 1) > 1 && x.tipo === "inventario" ? `${x.item.qtd}× ` : ""}${x.item.nome || "item"}`).join(", ");
+    registrarHistorico(ctx.vid, `colocou ${desc}`);
+  }
+  fecharPopup();
+  if (feitos.length < escolhidos.length) alertBonito("Alguns itens não foram colocados. Tenta de novo.");
+}
+
+function verItemVeiculo(vid, iid) {
+  const it = (window._veic.itens[vid] || []).find((x) => x.id === iid);
+  if (!it) return;
+  const d = it.item || {};
+  const html = popupVerHTML({
+    imagem: d.imagemUrl,
+    infos: [
+      ["Quantidade", `x${it.qtd || 1}`, true],
+      ["Dano", it.tipoItem === "armas" ? esc(d.dano || "") : ""],
+      ["CA", it.tipoItem === "armaduras" ? esc(d.ca || "") : ""],
+      ["Colocado por", esc(it.colocadoPorNome || "")],
+    ],
+    mods: d.modificacoes,
+    desc: d.desc,
+    acoes: `<button type="button" class="pv-principal" onclick="fecharPopup(); tirarDoVeiculo('${vid}', '${iid}')"><i class="ti ti-arrow-bar-up"></i><span>Pegar pra mim</span></button>`,
+  });
+  abrirPopup(it.nome || "Item", html, true, null);
+}
+
+async function tirarDoVeiculo(vid, iid) {
+  const it = (window._veic.itens[vid] || []).find((x) => x.id === iid);
+  if (!it) return;
+
+  let quantos = 1;
+  if ((it.qtd || 1) > 1) {
+    const r = await promptBonito(`Quantos "${it.nome}" você quer pegar? (tem ${it.qtd})`, String(it.qtd));
+    if (r == null) return;
+    quantos = Math.max(1, Math.min(it.qtd, parseInt(r) || 0));
+    if (!parseInt(r)) return;
+  }
+
+  let dados = null;
+  try {
+    const ref = doc(veicItensCol(vid), iid);
+    await runTransaction(db, async (t) => {
+      const s = await t.get(ref);
+      if (!s.exists()) throw new Error("sumiu");
+      const d = s.data();
+      const tem = d.qtd || 1;
+      if (quantos > tem) quantos = tem;
+      if (quantos >= tem) t.delete(ref);
+      else t.update(ref, { qtd: tem - quantos });
+      dados = d;
+    });
+  } catch (e) {
+    alertBonito(e.message === "sumiu" ? "Alguém já pegou esse item." : "Não consegui pegar agora. Tenta de novo.");
+    return;
+  }
+
+  const base = { ...(dados.item || {}), nome: dados.item?.nome || dados.nome };
+  if (dados.tipoItem === "armas") armas.push(base);
+  else if (dados.tipoItem === "armaduras") armaduras.push(base);
+  else {
+    // se já tenho um igual solto no inventário, junta
+    const igual = inventario.find(
+      (x) => x && !x.recipiente && !x.dentroDe && chaveMesclagem("inventario", x) && chaveMesclagem("inventario", x) === chaveMesclagem("inventario", base),
+    );
+    if (igual) igual.qtd = (parseInt(igual.qtd) || 1) + quantos;
+    else inventario.push({ ...base, id: gerarIdItem(), qtd: quantos, dentroDe: "" });
+  }
+
+  renderInv();
+  renderArmas();
+  renderArmaduras();
+  salvarTudo();
+  registrarHistorico(vid, `pegou ${quantos > 1 ? `${quantos}× ` : ""}${dados.nome}`);
+  mostrarToastMundo(`${quantos > 1 ? `${quantos}× ` : ""}${dados.nome} foi pra sua ficha`);
+}
+
+// ícones desenhados (traço dourado, combinam com o app)
+var ICONES_VEICULO = {
+  carroca: `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 26V18c0-6 7-10 16-10s16 4 16 10v8"/><path d="M16 10.5V26M24 8v18M32 10.5V26"/><path d="M5 26h38l-2 6H7z"/><circle cx="14" cy="37" r="5"/><circle cx="34" cy="37" r="5"/><path d="M14 37h.01M34 37h.01"/><path d="M43 29l3 0"/></svg>`,
+  carruagem: `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 28V16a4 4 0 0 1 4-4h16a4 4 0 0 1 4 4v12"/><path d="M14 18h7v7h-7zM25 18h5v7h-5z"/><path d="M6 28h34l-2 5H8z"/><path d="M22 12V8M19 8h6"/><circle cx="13" cy="38" r="4.5"/><circle cx="33" cy="38" r="4.5"/><path d="M40 30h5"/></svg>`,
+  barco: `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M24 6v26"/><path d="M24 8l13 20H24"/><path d="M24 12L13 28h11"/><path d="M6 32h36l-5 8H11z"/><path d="M4 44c3 0 3-2 6-2s3 2 6 2 3-2 6-2 3 2 6 2 3-2 6-2 3 2 6 2"/></svg>`,
+  navio: `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 6v24M32 9v21"/><path d="M10 10h12v8H10zM27 12h10v7H27z"/><path d="M10 22h12M27 23h10"/><path d="M4 30h40l-6 9H10z"/><path d="M38 30l4-6"/><path d="M4 44c3 0 3-2 6-2s3 2 6 2 3-2 6-2 3 2 6 2 3-2 6-2 3 2 6 2"/></svg>`,
+  montaria: `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 40c-4-5-6-10-6-16C8 14 15 7 24 7s16 7 16 17c0 6-2 11-6 16"/><path d="M18 40c-3-4-4-9-4-16 0-6 4-11 10-11s10 5 10 11c0 7-1 12-4 16"/><path d="M11 18h.01M37 18h.01M9 28h.01M39 28h.01"/></svg>`,
+  voadora: `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M24 30c-4-8-12-12-20-12 3 4 4 8 4 12 5-1 10 0 16 4"/><path d="M24 30c4-8 12-12 20-12-3 4-4 8-4 12-5-1-10 0-16 4"/><path d="M24 34v6M21 42h6"/><path d="M12 22c2 1 4 3 5 5M36 22c-2 1-4 3-5 5"/><circle cx="24" cy="24" r="3"/></svg>`,
+  aeronave: `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="24" cy="15" rx="16" ry="9"/><path d="M8 15h32M24 6c-5 3-5 15 0 18M24 6c5 3 5 15 0 18"/><path d="M40 15l5-4v8z"/><path d="M18 23l-2 9M30 23l2 9"/><path d="M15 32h18l-2 7H17z"/></svg>`,
+  outro: `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20h34v20H7z"/><path d="M7 20c0-7 7-12 17-12s17 5 17 12"/><path d="M7 27h34"/><path d="M21 24h6v7h-6z"/><path d="M15 9v11M33 9v11"/></svg>`,
+};
+
+var TIPOS_VEICULO = {
+  carroca: ["Carroça", ""],
+  carruagem: ["Carruagem", ""],
+  montaria: ["Montaria", ""],
+  barco: ["Barco", ""],
+  navio: ["Navio", ""],
+  aeronave: ["Dirigível", ""],
+  voadora: ["Montaria voadora", ""],
+  outro: ["Outro", ""],
+};
+
+function iconeVeiculo(tipo) {
+  return ICONES_VEICULO[tipo] || ICONES_VEICULO.outro;
+}
+
+function medalhaoVeiculo(veic, grande) {
+  return `<div class="veic-medalhao ${grande ? "grande" : ""}">${
+    veic.imagemUrl ? `<img src="${esc(veic.imagemUrl)}" alt="">` : `<span class="veic-medalhao-ic">${iconeVeiculo(veic.tipo)}</span>`
+  }</div>`;
+}
+
+function medidorVeiculo(icone, rotulo, atual, max, classe) {
+  const pct = max > 0 ? Math.max(0, Math.min(100, (atual / max) * 100)) : 0;
+  return `
+    <div class="veic-medidor ${classe || ""}">
+      <div class="veic-medidor-topo"><span><i class="ti ${icone}"></i> ${rotulo}</span><b>${atual}${max > 0 ? `<small>/${max}</small>` : ""}</b></div>
+      ${max > 0 ? `<div class="veic-medidor-barra"><div style="width:${pct}%"></div></div>` : ""}
+    </div>`;
+}
+
+function classeCapacidade(veic) {
+  if (!(veic.capacidade > 0)) return "";
+  const u = unidadesNoVeiculo(veic.id);
+  return u >= veic.capacidade ? "lotado" : u / veic.capacidade >= 0.8 ? "quase" : "";
+}
+
+function medidoresVeiculo(veic) {
+  const out = [];
+  if (veic.pvMax > 0) {
+    const pv = veic.pv ?? veic.pvMax;
+    out.push(medidorVeiculo("ti-heart", "PV", pv, veic.pvMax, "pv" + (pv / veic.pvMax <= 0.25 ? " critico" : "")));
+  }
+  const cls = classeCapacidade(veic);
+  out.push(medidorVeiculo("ti-package", cls === "lotado" ? "Lotado" : "Carga", unidadesNoVeiculo(veic.id), veic.capacidade || 0, "carga " + cls));
+  return out.join("");
+}
+
+function renderVeiculos() {
+  const box = document.getElementById("veiculosConteudo");
+  if (!box) return;
+  const v = window._veic;
+
+  const aviso = (icone, titulo, texto) =>
+    `<div class="veic-aviso"><div class="veic-aviso-icone">${icone}</div><strong>${titulo}</strong><p>${texto}</p></div>`;
+
+  if (v.status === "login") return (box.innerHTML = aviso('<i class="ti ti-lock"></i>', "Entre na sua conta", "Os veículos ficam salvos no grupo, então é preciso estar logado."));
+  if (v.status === "semgrupo")
+    return (box.innerHTML = aviso(iconeVeiculo("carroca"), "Essa ficha não está num grupo", "Vá em <b>Amigos → Grupos</b>, abra o grupo e escolha essa ficha. Aí todo mundo do grupo divide os mesmos veículos, em tempo real."));
+  if (v.status === "mestre")
+    return (box.innerHTML = aviso('<i class="ti ti-shield"></i>', "Só para jogadores", "Os veículos são do grupo de jogadores. Como você é mestre desse grupo, eles não aparecem pra você."));
+  if (v.status === "erro")
+    return (box.innerHTML = aviso('<i class="ti ti-alert-triangle"></i>', "Não consegui abrir os veículos", `Confira se as regras do Firebase foram atualizadas. <small>(${esc(v.erro || "")})</small>`));
+  if (v.status === "carregando" || v.status === "") return (box.innerHTML = `<p class="veic-vazio">Carregando veículos...</p>`);
+
+  if (v.aberto) return renderDetalheVeiculo(box, v.lista.find((x) => x.id === v.aberto));
+
+  const cards = v.lista.map((veic) => cardVeiculoHTML(veic)).join("");
+  box.innerHTML = `
+    <div class="veic-grupo-chip"><i class="ti ti-users"></i> <span>${esc(v.nomeGrupo || "Grupo")}</span><small><span class="veic-ao-vivo"></span> ao vivo</small></div>
+    <div class="veic-lista">${
+      cards ||
+      `<div class="veic-aviso veic-aviso-vazio"><div class="veic-aviso-icone">${iconeVeiculo("carroca")}</div><strong>Nenhum veículo ainda</strong><p>Crie a carroça, o barco ou a montaria do grupo. Todo mundo vê e mexe junto.</p></div>`
+    }</div>
+    <button type="button" class="inv-add-btn btn-adicionar" onclick="abrirFormVeiculo()"><i class="ti ti-plus"></i><span>Adicionar veículo</span></button>`;
+}
+
+function cardVeiculoHTML(veic) {
+  const tipo = TIPOS_VEICULO[veic.tipo] || TIPOS_VEICULO.outro;
+  const itens = window._veic.itens[veic.id] || [];
+  const chips = itens.length
+    ? itens
+        .slice(0, 4)
+        .map((it) => `<span class="recipiente-chip">${esc(it.nome)}${(it.qtd || 1) > 1 ? ` <small>x${it.qtd}</small>` : ""}</span>`)
+        .join("") + (itens.length > 4 ? `<span class="recipiente-chip recipiente-chip-mais">+${itens.length - 4}</span>` : "")
+    : `<span class="recipiente-vazio">Vazio</span>`;
+  const moedasTot = totalEmPC(normalizarMoedas(veic.moedas));
+
+  return `
+    <div class="veic-card" onclick="abrirVeiculo('${veic.id}')">
+      <div class="veic-card-topo">
+        ${medalhaoVeiculo(veic)}
+        <div class="veic-card-nome">
+          <strong>${esc(veic.nome || "Sem nome")}</strong>
+          <span><span class="veic-tipo-ic">${iconeVeiculo(veic.tipo)}</span>${tipo[0]}${moedasTot ? ` · <i class="ti ti-coins"></i> ${formatarPO(moedasTot)} PO` : ""}</span>
+        </div>
+        <i class="ti ti-chevron-right veic-seta"></i>
+      </div>
+      <div class="veic-medidores">${medidoresVeiculo(veic)}</div>
+      <div class="recipiente-chips">${chips}</div>
+    </div>`;
+}
+
+function renderDetalheVeiculo(box, veic) {
+  if (!veic) {
+    fecharVeiculo();
+    return;
+  }
+  const tipo = TIPOS_VEICULO[veic.tipo] || TIPOS_VEICULO.outro;
+  const itens = window._veic.itens[veic.id] || [];
+  const m = normalizarMoedas(veic.moedas);
+  const souDono = veic.criadoPor === window.usuarioAtual?.uid;
+  const iconeTipoItem = { inventario: "ti-package", armas: "ti-sword", armaduras: "ti-shield-half" };
+  const pv = veic.pv ?? veic.pvMax ?? 0;
+
+  box.innerHTML = `
+    <div class="veic-barra-topo">
+      <button type="button" class="veic-voltar" onclick="fecharVeiculo()"><i class="ti ti-arrow-left"></i> Veículos</button>
+      <div class="veic-cab-acoes">
+        <button type="button" class="card-ico" title="Editar" onclick="abrirFormVeiculo('${veic.id}')"><i class="ti ti-pencil"></i></button>
+        ${souDono ? `<button type="button" class="card-ico perigo" title="Apagar veículo" onclick="apagarVeiculo('${veic.id}')"><i class="ti ti-trash"></i></button>` : ""}
+      </div>
+    </div>
+
+    <div class="veic-hero ${veic.imagemUrl ? "com-imagem" : ""}">
+      ${veic.imagemUrl ? `<img class="veic-hero-img" src="${esc(veic.imagemUrl)}" alt="">` : `<div class="veic-hero-ic">${iconeVeiculo(veic.tipo)}</div>`}
+      <div class="veic-hero-texto">
+        <span class="veic-hero-tipo">${tipo[0]}</span>
+        <strong>${esc(veic.nome || "Sem nome")}</strong>
+        ${veic.criadoPorNome ? `<small>criado por ${esc(veic.criadoPorNome)}</small>` : ""}
+      </div>
+    </div>
+
+    <div class="veic-stats">
+      <div class="veic-stat"><i class="ti ti-shield"></i><span>CA</span><b>${esc(veic.ca || "—")}</b></div>
+      <div class="veic-stat"><i class="ti ti-route"></i><span>Desloc.</span><b>${esc(veic.desloc || "—")}</b></div>
+      <div class="veic-stat ${classeCapacidade(veic)}"><i class="ti ti-package"></i><span>Carga</span><b>${unidadesNoVeiculo(veic.id)}${veic.capacidade > 0 ? `<small>/${veic.capacidade}</small>` : ""}</b></div>
+    </div>
+
+    ${
+      veic.pvMax > 0
+        ? `<div class="veic-painel">
+            <div class="veic-painel-titulo"><i class="ti ti-heart"></i><span>Pontos de vida</span><small>${pv}/${veic.pvMax}</small></div>
+            <div class="veic-pv-linha">
+              <button type="button" onclick="alterarPVVeiculo('${veic.id}', -1)" aria-label="Menos 1">−</button>
+              <div class="veic-pv-grande ${pv / veic.pvMax <= 0.25 ? "critico" : ""}"><div style="width:${Math.max(0, Math.min(100, (pv / veic.pvMax) * 100))}%"></div><span>${pv} / ${veic.pvMax}</span></div>
+              <button type="button" onclick="alterarPVVeiculo('${veic.id}', 1)" aria-label="Mais 1">+</button>
+            </div>
+            <button type="button" class="veic-btn-sec" onclick="alterarPVVeiculoValor('${veic.id}')"><i class="ti ti-plus-minus"></i> Dano ou reparo de uma vez</button>
+          </div>`
+        : ""
+    }
+
+    <div class="veic-painel">
+      <div class="veic-painel-titulo"><i class="ti ti-coins"></i><span>Cofre</span><small>≈ ${formatarPO(totalEmPC(m))} PO</small></div>
+      <div class="veic-cofre">${MOEDAS.map((k) => `<div class="moeda moeda-${k}"><span class="moeda-sigla">${k.toUpperCase()}</span><b>${m[k]}</b></div>`).join("")}</div>
+      <div class="bolsa-acoes">
+        <button type="button" onclick="abrirMovimentoCofre('${veic.id}', 'depositar')"><i class="ti ti-arrow-bar-to-down"></i> Guardar</button>
+        <button type="button" onclick="abrirMovimentoCofre('${veic.id}', 'sacar')"><i class="ti ti-arrow-bar-up"></i> Pegar</button>
+      </div>
+    </div>
+
+    <div class="veic-painel">
+      <div class="veic-painel-titulo"><i class="ti ti-box"></i><span>Itens</span><small>${itens.length}</small></div>
+      ${veic.capacidade > 0 ? medidorVeiculo("ti-package", "Carga", unidadesNoVeiculo(veic.id), veic.capacidade, "carga " + classeCapacidade(veic)) : ""}
+      <div class="veic-itens">
+        ${
+          itens.length
+            ? itens
+                .map(
+                  (it) => `
+          <div class="veic-item" onclick="verItemVeiculo('${veic.id}', '${it.id}')">
+            <span class="veic-item-ic"><i class="ti ${iconeTipoItem[it.tipoItem] || "ti-package"}"></i></span>
+            <div class="veic-item-info">
+              <strong>${esc(it.nome)}</strong>
+              <span>${esc(it.colocadoPorNome || "")}</span>
+            </div>
+            ${(it.qtd || 1) > 1 ? `<span class="item-qtd-badge">x${it.qtd}</span>` : ""}
+            <button type="button" class="veic-tirar" title="Pegar pra mim" onclick="event.stopPropagation(); tirarDoVeiculo('${veic.id}', '${it.id}')"><i class="ti ti-arrow-bar-up"></i></button>
+          </div>`,
+                )
+                .join("")
+            : `<p class="veic-vazio">Nada guardado ainda.</p>`
+        }
+      </div>
+      <button type="button" class="inv-add-btn btn-adicionar" onclick="abrirColocarNoVeiculo('${veic.id}')"><i class="ti ti-package-import"></i><span>Colocar itens</span></button>
+    </div>
+
+    <div class="veic-painel">
+      <div class="veic-painel-titulo"><i class="ti ti-history"></i><span>Histórico</span></div>
+      <div class="veic-hist">
+        ${
+          window._veic.hist.length
+            ? window._veic.hist
+                .map((h) => `<div class="veic-hist-linha"><span class="veic-hist-ponto"></span><span class="veic-hist-txt"><b>${esc(h.nome || "Alguém")}</b> ${esc(h.texto)}</span><small>${tempoRelativo(h.em)}</small></div>`)
+                .join("")
+            : `<p class="veic-vazio">Sem movimentações ainda.</p>`
+        }
+      </div>
+    </div>`;
+}
+
+function abrirFormVeiculo(vid) {
+  const veic = vid ? window._veic.lista.find((x) => x.id === vid) : null;
+  const e = veic || { tipo: "carroca", capacidade: 0 };
+  window._veicImagemTemp = "";
+
+  const html = `
+    <div class="popup-form">
+      <label class="popup-label">Tipo</label>
+      <div class="veic-tipos" id="vTipo" data-valor="${esc(e.tipo || "carroca")}">
+        ${Object.entries(TIPOS_VEICULO)
+          .map(
+            ([k, [rot]]) => `<button type="button" class="veic-tipo-opt ${k === (e.tipo || "carroca") ? "ativo" : ""}" onclick="escolherTipoVeiculo(this, '${k}')">
+              <span>${iconeVeiculo(k)}</span><small>${rot}</small>
+            </button>`,
+          )
+          .join("")}
+      </div>
+
+      <label class="popup-label">Nome</label>
+      <input id="vNome" value="${esc(e.nome || "")}" placeholder="Ex: Carroça do grupo">
+
+      <div class="pf-duplo">
+        <div><span class="pf-mini">PV máximo</span><input id="vPvMax" type="number" min="0" value="${e.pvMax || ""}" placeholder="Ex: 100"></div>
+        <div><span class="pf-mini">CA</span><input id="vCA" value="${esc(e.ca || "")}" placeholder="Ex: 11"></div>
+      </div>
+      <div class="pf-duplo">
+        <div><span class="pf-mini">Deslocamento</span><input id="vDesloc" value="${esc(e.desloc || "")}" placeholder="Ex: 9 m"></div>
+        <div><span class="pf-mini">Capacidade (itens)</span><input id="vCap" type="number" min="0" value="${e.capacidade || ""}" placeholder="Sem limite"></div>
+      </div>
+
+      <label class="popup-label">Imagem (opcional)</label>
+      <input type="file" id="vImagem" accept="image/*" onchange="previewImagemVeiculo(this)">
+      <label for="vImagem" class="botao-upload"><i class="ti ti-photo-plus"></i><span>${e.imagemUrl ? "Trocar imagem" : "Adicionar imagem"}</span></label>
+      <img id="vImagemPreview" src="${esc(e.imagemUrl || "")}" style="display:${e.imagemUrl ? "block" : "none"}; width:100%; max-height:180px; object-fit:cover; border-radius:12px;">
+
+      <button class="popup-salvar-btn" id="vSalvar" onclick="salvarVeiculo(${vid ? `'${vid}'` : "null"})">${vid ? "Salvar" : "Criar veículo"}</button>
+    </div>`;
+  abrirPopup(vid ? `Editar ${e.nome || "veículo"}` : "Novo veículo", html, true, null);
+}
+
+function escolherTipoVeiculo(btn, tipo) {
+  const box = document.getElementById("vTipo");
+  if (!box) return;
+  box.dataset.valor = tipo;
+  box.querySelectorAll(".veic-tipo-opt").forEach((b) => b.classList.toggle("ativo", b === btn));
+}
