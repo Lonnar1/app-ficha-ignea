@@ -7814,7 +7814,14 @@ window.abrirDarItemMestre = async function (itemId) {
   let item = (campanha.itensMaster || []).find(i => String(i.id) === String(itemId));
   if (!item) item = (itensPadrao || []).find(i => String(i.id) === String(itemId));
   if (!item) item = (campanha.mapasMaster || []).find(i => String(i.id) === String(itemId));
-  if (!item) return;
+  // itens e mapas criados pelo mestre ficam no compêndio (monstrosMestre)
+  if (!item) item = (typeof monstrosMestre !== "undefined" ? monstrosMestre : []).find(i => String(i.id) === String(itemId));
+  // último recurso: o item que está aberto agora na ficha do compêndio
+  if (!item && window._entradaSessaoAtual && String(window._entradaSessaoAtual.id) === String(itemId)) item = window._entradaSessaoAtual;
+  if (!item) {
+    alertBonito("Não encontrei esse item. Feche e abra ele de novo no compêndio.");
+    return;
+  }
 
   window._darItemMestreContexto = item;
 
