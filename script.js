@@ -1188,13 +1188,21 @@ function editarItem(index) {
       </div>
 
       <div class="toggle-cargas" style="margin-top:10px;">
-        <span class="toggle-cargas-texto">É um recipiente (mochila, bolsa...)</span>
+        <span class="toggle-cargas-texto">É uma bolsa de dinheiro</span>
+        <label class="switch-cargas">
+          <input type="checkbox" id="editItemBolsa" ${item.bolsa ? "checked" : ""} onchange="alternarBolsaForm('editItem')">
+          <span class="slider-cargas"></span>
+        </label>
+      </div>
+
+      <div class="toggle-cargas" style="margin-top:10px;">
+        <span class="toggle-cargas-texto">É um recipiente (mochila...)</span>
         <label class="switch-cargas">
           <input
             type="checkbox"
             id="editItemRecipiente"
             ${item.recipiente ? "checked" : ""}
-            onchange="document.getElementById('boxEditItemGuardarEm').style.display = this.checked ? 'none' : 'block'"
+            onchange="if (this.checked) { const b = document.getElementById('editItemBolsa'); if (b) b.checked = false; } document.getElementById('boxEditItemGuardarEm').style.display = this.checked ? 'none' : 'block'"
           >
           <span class="slider-cargas"></span>
         </label>
@@ -1243,7 +1251,8 @@ async function salvarEdicaoItem(index) {
   }
 
   const anterior = inventario[index] || {};
-  const recipiente = !!document.getElementById("editItemRecipiente")?.checked;
+  const bolsa = !!document.getElementById("editItemBolsa")?.checked;
+  const recipiente = !bolsa && !!document.getElementById("editItemRecipiente")?.checked;
   const dentroDe = recipiente ? "" : (document.getElementById("editItemDentroDe")?.value || "");
 
   // deixou de ser mochila: o que estava dentro fica solto
@@ -1263,6 +1272,8 @@ async function salvarEdicaoItem(index) {
     imagemDeleteUrl,
     recipiente,
     dentroDe,
+    bolsa,
+    moedas: bolsa ? normalizarMoedas(anterior.moedas) : anterior.moedas,
     modificacoes: [...(window._modsTemp.editItem || [])],
   };
 
@@ -3200,7 +3211,10 @@ function carregarPersonagem(index) {
   saves = p.saves || {};
   exaustao = p.exaustao ?? 0;
   concentracaoAtiva = p.concentracao || "";
+  abasOcultas = Array.isArray(p.abasOcultas) ? p.abasOcultas : [];
+  if (typeof aplicarAbasVisiveis === "function") setTimeout(aplicarAbasVisiveis, 0);
   moedas = normalizarMoedas(p.moedas);
+  migrarMoedasParaBolsa();
   if (typeof pararEscutasVeiculos === "function") pararEscutasVeiculos();
   if (typeof escutarRolagensGrupo === "function") escutarRolagensGrupo(p.grupoAtivo || null);
   morte = p.morte || {
@@ -3288,6 +3302,7 @@ p.nivel = document.getElementById("nivel")?.value || "";
   p.exaustao = exaustao;
   p.morte = morte;
   p.concentracao = concentracaoAtiva || "";
+  p.abasOcultas = abasOcultas;
   p.moedas = normalizarMoedas(moedas);
   p.dominio = dominio;
 
@@ -4341,10 +4356,13 @@ async function addItem() {
     }
   }
 
-  const recipiente = !!document.getElementById("itemRecipiente")?.checked;
+  const bolsa = !!document.getElementById("itemBolsa")?.checked;
+  const recipiente = !bolsa && !!document.getElementById("itemRecipiente")?.checked;
   const dentroDe = recipiente ? "" : (document.getElementById("itemDentroDe")?.value || "");
 
   const novoItem = {
+    bolsa,
+    moedas: bolsa ? normalizarMoedas(editandoItem >= 0 ? inventario[editandoItem]?.moedas : {}) : undefined,
     modificacoes: consumirModsTemp("item"),
     id: editandoItem >= 0 ? (inventario[editandoItem]?.id || gerarIdItem()) : gerarIdItem(),
     nome,
@@ -4375,6 +4393,8 @@ async function addItem() {
   document.getElementById("boxItemSintonizado").style.display = "none";
   const recipienteEl = document.getElementById("itemRecipiente");
   if (recipienteEl) recipienteEl.checked = false;
+  const bolsaEl = document.getElementById("itemBolsa");
+  if (bolsaEl) bolsaEl.checked = false;
 
   renderInv();
   salvarTudo();
@@ -4557,6 +4577,7 @@ function atualizarCampoGuardarEm() {
 }
 
 function cardItemInvHTML(item, index, guardado) {
+  if (item.bolsa) return cardBolsaHTML(item, index);
   const filhos = item.recipiente ? filhosDoRecipiente(item.id) : [];
   const fechada = window._mochilasFechadas.has(item.id);
   const temMochila = recipientesInventario().length > 0;
@@ -4662,7 +4683,7 @@ function renderInv() {
     if (!item || item.recipiente || estaGuardado(item)) return;
 
     const li = document.createElement("li");
-    li.className = "item-card";
+    li.className = "item-card" + (item.bolsa ? " bolsa-card" : "");
     li.dataset.index = index;
     li.innerHTML = cardItemInvHTML(item, index, false);
     ul.appendChild(li);
@@ -4963,6 +4984,7 @@ function verItem(index) {
   const item = inventario[index];
   if (!item) return;
   if (item.recipiente) { abrirMochila(index); return; }
+  if (item.bolsa) { abrirBolsa(index); return; }
 
   const mochila = estaGuardado(item) ? inventario.find((i) => i.id === item.dentroDe) : null;
 
@@ -13608,7 +13630,7 @@ function detectarMoedasNoInventario() {
   const mapa = { ouro: "po", prata: "pp", cobre: "pc", electrum: "pe", platina: "pl" };
   const achados = [];
   inventario.forEach((item, i) => {
-    if (!item || item.recipiente) return;
+    if (!item || item.recipiente || item.bolsa) return;
     const n = normalizarTipo(item.nome || "").trim();
     let tipo = null;
     const m1 = n.match(/^(pecas?|moedas?)\s+de\s+(ouro|prata|cobre|electrum|platina)$/);
@@ -13619,53 +13641,11 @@ function detectarMoedasNoInventario() {
   return achados;
 }
 
-function renderBolsaMoedas() {
-  const box = document.getElementById("bolsaMoedas");
-  if (!box) return;
-  moedas = normalizarMoedas(moedas);
 
-  const achados = detectarMoedasNoInventario();
-  const aviso = achados.length
-    ? `<div class="bolsa-aviso">
-        <span>Encontrei ${achados.map((a) => `<b>${esc(a.nome)} x${a.qtd}</b>`).join(", ")} no inventário.</span>
-        <button type="button" onclick="moverMoedasDoInventario()">Mover pra bolsa</button>
-      </div>`
-    : "";
 
-  box.innerHTML = `
-    <div class="bolsa-topo">
-      <span class="bolsa-titulo"><i class="ti ti-coins"></i> Bolsa</span>
-      <span class="bolsa-total">≈ <b>${formatarPO(totalEmPC(moedas))}</b> PO</span>
-    </div>
-    <div class="bolsa-grade">
-      ${MOEDAS.map(
-        (k) => `
-        <label class="moeda moeda-${k}" title="${MOEDA_NOME[k]}">
-          <span class="moeda-sigla">${k.toUpperCase()}</span>
-          <input type="number" min="0" inputmode="numeric" value="${moedas[k]}" onchange="alterarMoeda('${k}', this.value)">
-        </label>`,
-      ).join("")}
-    </div>
-    <div class="bolsa-acoes">
-      <button type="button" onclick="abrirMovimentoMoedas('pagar')"><i class="ti ti-minus"></i> Pagar</button>
-      <button type="button" onclick="abrirMovimentoMoedas('receber')"><i class="ti ti-plus"></i> Receber</button>
-      <button type="button" onclick="organizarMinhaBolsa()" title="Junta moedas pequenas em maiores"><i class="ti ti-arrows-sort"></i> Organizar</button>
-    </div>
-    ${aviso}`;
-}
 
-function alterarMoeda(tipo, valor) {
-  moedas[tipo] = Math.max(0, parseInt(valor) || 0);
-  renderBolsaMoedas();
-  salvarTudo();
-}
 
-function organizarMinhaBolsa() {
-  moedas = organizarBolsa(moedas);
-  renderBolsaMoedas();
-  salvarTudo();
-  mostrarToastMundo("Moedas organizadas");
-}
+
 
 function seletorMoedaHTML(id, padrao) {
   return `<div class="moeda-seletor" id="${id}">${MOEDAS.map(
@@ -13677,52 +13657,11 @@ function lerSeletorMoeda(id) {
   return document.querySelector(`#${id} .moeda-opt.ativo`)?.dataset.moeda || "po";
 }
 
-function abrirMovimentoMoedas(modo) {
-  const html = `
-    <div class="popup-form">
-      <label class="popup-label">Quantidade</label>
-      <input id="movQtd" type="number" min="1" inputmode="numeric" placeholder="Ex: 25">
-      <label class="popup-label">Moeda</label>
-      ${seletorMoedaHTML("movMoeda", "po")}
-      ${modo === "pagar" ? `<p class="pm-dica">Se faltar dessa moeda, o app quebra uma maior e devolve o troco.</p>` : ""}
-      <button class="popup-salvar-btn" onclick="confirmarMovimentoMoedas('${modo}')">${modo === "pagar" ? "Pagar" : "Receber"}</button>
-    </div>`;
-  abrirPopup(modo === "pagar" ? "Pagar" : "Receber", html, true, null);
-  setTimeout(() => document.getElementById("movQtd")?.focus(), 50);
-}
 
-function confirmarMovimentoMoedas(modo) {
-  const qtd = parseInt(document.getElementById("movQtd")?.value) || 0;
-  const tipo = lerSeletorMoeda("movMoeda");
-  if (qtd <= 0) return;
 
-  if (modo === "pagar") {
-    const nova = pagarDaBolsa(moedas, qtd, tipo);
-    if (!nova) {
-      alertBonito(`Você não tem o suficiente. Total na bolsa: ${formatarPO(totalEmPC(moedas))} PO.`);
-      return;
-    }
-    moedas = nova;
-  } else {
-    moedas[tipo] = (moedas[tipo] || 0) + qtd;
-  }
-  fecharPopup();
-  renderBolsaMoedas();
-  salvarTudo();
-  mostrarToastMundo(`${modo === "pagar" ? "Pagou" : "Recebeu"} ${qtd} ${tipo.toUpperCase()}`);
-}
 
-function moverMoedasDoInventario() {
-  const achados = detectarMoedasNoInventario();
-  if (!achados.length) return;
-  achados.forEach((a) => (moedas[a.tipo] = (moedas[a.tipo] || 0) + a.qtd));
-  const indices = new Set(achados.map((a) => a.index));
-  inventario = inventario.filter((_, i) => !indices.has(i));
-  renderInv();
-  renderBolsaMoedas();
-  salvarTudo();
-  mostrarToastMundo("Moedas movidas pra bolsa");
-}
+
+
 
 /* =====================================================================
    DADOS
@@ -14450,68 +14389,15 @@ async function alterarPVVeiculoValor(vid) {
 }
 
 /* ---------- cofre ---------- */
-function abrirMovimentoCofre(vid, modo) {
-  const html = `
-    <div class="popup-form">
-      <p class="pm-dica">${modo === "depositar" ? `Sai da sua bolsa (você tem ≈ ${formatarPO(totalEmPC(moedas))} PO) e vai pro cofre.` : "Sai do cofre e vai pra sua bolsa."}</p>
-      <label class="popup-label">Quantidade</label>
-      <input id="cofreQtd" type="number" min="1" inputmode="numeric" placeholder="Ex: 50">
-      <label class="popup-label">Moeda</label>
-      ${seletorMoedaHTML("cofreMoeda", "po")}
-      <button class="popup-salvar-btn" id="cofreOk" onclick="confirmarMovimentoCofre('${vid}', '${modo}')">${modo === "depositar" ? "Guardar no cofre" : "Pegar do cofre"}</button>
-    </div>`;
-  abrirPopup(modo === "depositar" ? "Guardar no cofre" : "Pegar do cofre", html, true, null);
-  setTimeout(() => document.getElementById("cofreQtd")?.focus(), 50);
-}
 
-async function confirmarMovimentoCofre(vid, modo) {
-  const qtd = parseInt(document.getElementById("cofreQtd")?.value) || 0;
-  const tipo = lerSeletorMoeda("cofreMoeda");
-  if (qtd <= 0) return;
-  const btn = document.getElementById("cofreOk");
-  if (btn) btn.disabled = true;
 
-  try {
-    if (modo === "depositar") {
-      const nova = pagarDaBolsa(moedas, qtd, tipo);
-      if (!nova) {
-        alertBonito("Você não tem tudo isso na bolsa.");
-        if (btn) btn.disabled = false;
-        return;
-      }
-      await runTransaction(db, async (t) => {
-        const s = await t.get(veicRef(vid));
-        if (!s.exists()) throw new Error("sumiu");
-        const m = normalizarMoedas(s.data().moedas);
-        m[tipo] += qtd;
-        t.update(veicRef(vid), { moedas: m });
-      });
-      moedas = nova;
-    } else {
-      await runTransaction(db, async (t) => {
-        const s = await t.get(veicRef(vid));
-        if (!s.exists()) throw new Error("sumiu");
-        const m = pagarDaBolsa(s.data().moedas, qtd, tipo);
-        if (!m) throw new Error("sem-saldo");
-        t.update(veicRef(vid), { moedas: m });
-      });
-      moedas[tipo] = (moedas[tipo] || 0) + qtd;
-    }
-    renderBolsaMoedas();
-    salvarTudo();
-    registrarHistorico(vid, `${modo === "depositar" ? "guardou" : "pegou"} ${qtd} ${tipo.toUpperCase()} ${modo === "depositar" ? "no" : "do"} cofre`);
-    fecharPopup();
-  } catch (e) {
-    if (btn) btn.disabled = false;
-    alertBonito(e.message === "sem-saldo" ? "O cofre não tem tudo isso." : "Não consegui mexer no cofre agora. Tenta de novo.");
-  }
-}
+
 
 /* ---------- itens ---------- */
 function chaveMesclagem(tipoItem, item) {
   // itens "simples" e iguais se juntam numa pilha só (ex: 3 cordas + 2 cordas)
   if (tipoItem !== "inventario") return null;
-  if (item.imagemUrl || (item.modificacoes && item.modificacoes.length) || item.requerSintonia) return null;
+  if (item.bolsa || item.imagemUrl || (item.modificacoes && item.modificacoes.length) || item.requerSintonia) return null;
   const base = `${normalizarTipo(item.nome || "")}|${normalizarTipo(item.desc || "")}`;
   let h = 5381;
   for (let i = 0; i < base.length; i++) h = ((h << 5) + h + base.charCodeAt(i)) >>> 0;
@@ -14964,4 +14850,336 @@ function escolherTipoVeiculo(btn, tipo) {
   if (!box) return;
   box.dataset.valor = tipo;
   box.querySelectorAll(".veic-tipo-opt").forEach((b) => b.classList.toggle("ativo", b === btn));
+}
+
+
+/* =====================================================================
+   BOLSA DE DINHEIRO COMO ITEM DO INVENTÁRIO
+   Um item com "bolsa: true" guarda moedas (item.moedas).
+   ===================================================================== */
+function bolsasInventario() {
+  const r = [];
+  inventario.forEach((it, i) => {
+    if (it && it.bolsa) r.push({ item: it, index: i });
+  });
+  return r;
+}
+
+function garantirBolsaPadrao() {
+  const b = bolsasInventario();
+  if (b.length) return b[0].index;
+  inventario.push({ id: gerarIdItem(), nome: "Bolsa de moedas", desc: "", qtd: 1, bolsa: true, moedas: normalizarMoedas({}), dentroDe: "" });
+  return inventario.length - 1;
+}
+
+// fichas que já tinham moedas na "bolsa antiga" ganham um item de bolsa com elas
+function migrarMoedasParaBolsa() {
+  if (totalEmPC(normalizarMoedas(moedas)) > 0) {
+    const i = garantirBolsaPadrao();
+    const b = normalizarMoedas(inventario[i].moedas);
+    MOEDAS.forEach((k) => (b[k] += moedas[k] || 0));
+    inventario[i].moedas = b;
+  }
+  moedas = normalizarMoedas({});
+}
+
+function renderBolsaMoedas() {
+  /* a bolsa agora é um item do inventário; nada pra desenhar aqui */
+}
+
+function resumoMoedasHTML(m) {
+  const tem = MOEDAS.filter((k) => m[k] > 0);
+  if (!tem.length) return `<span class="recipiente-vazio">Vazia</span>`;
+  return tem.map((k) => `<span class="moeda-chip moeda-${k}"><span class="moeda-ponto"></span>${m[k]} <small>${k.toUpperCase()}</small></span>`).join("");
+}
+
+function cardBolsaHTML(item, index) {
+  const m = normalizarMoedas(item.moedas);
+  const temMochila = recipientesInventario().length > 0;
+  return `
+      <button type="button" class="drag-handle" aria-label="Arrastar para reordenar">⠿</button>
+      <div class="item-info bolsa-info" onclick="abrirBolsa(${index})">
+        <div class="item-topo-linha">
+          <strong class="item-nome"><i class="ti ti-coins bolsa-icone"></i>${esc(item.nome || "Bolsa")}</strong>
+          <span class="item-qtd-badge bolsa-total-badge">≈ ${formatarPO(totalEmPC(m))} PO</span>
+        </div>
+        <div class="moeda-chips">${resumoMoedasHTML(m)}</div>
+      </div>
+      <div class="card-acoes-ico">
+        ${temMochila ? `<button type="button" class="card-ico" title="Guardar em uma mochila" onclick="event.stopPropagation(); abrirGuardarItem(${index})"><i class="ti ti-backpack"></i></button>` : ""}
+        <button type="button" class="card-ico" title="Dar para outro jogador" onclick="event.stopPropagation(); window.abrirDarItem('inventario', ${index})"><i class="ti ti-gift"></i></button>
+      </div>`;
+}
+
+function abrirBolsa(index) {
+  const item = inventario[index];
+  if (!item || !item.bolsa) return;
+  item.moedas = normalizarMoedas(item.moedas);
+  const m = item.moedas;
+  const achados = detectarMoedasNoInventario();
+
+  const html = `
+    <div class="pv bolsa-painel">
+      <div class="bolsa-total-grande"><span>Total aproximado</span><b>${formatarPO(totalEmPC(m))} <small>PO</small></b></div>
+      <div class="bolsa-grade">
+        ${MOEDAS.map(
+          (k) => `
+          <label class="moeda moeda-${k}" title="${MOEDA_NOME[k]}">
+            <span class="moeda-sigla">${k.toUpperCase()}</span>
+            <input type="number" min="0" inputmode="numeric" value="${m[k]}" onchange="alterarMoedaBolsa(${index}, '${k}', this.value)">
+            <small>${MOEDA_NOME[k]}</small>
+          </label>`,
+        ).join("")}
+      </div>
+      <div class="bolsa-acoes">
+        <button type="button" onclick="abrirMovimentoMoedas('pagar', ${index})"><i class="ti ti-minus"></i> Pagar</button>
+        <button type="button" onclick="abrirMovimentoMoedas('receber', ${index})"><i class="ti ti-plus"></i> Receber</button>
+        <button type="button" onclick="organizarBolsaItem(${index})" title="Junta moedas pequenas em maiores"><i class="ti ti-arrows-sort"></i> Organizar</button>
+      </div>
+      ${
+        achados.length
+          ? `<div class="bolsa-aviso">
+              <span>Encontrei ${achados.map((a) => `<b>${esc(a.nome)} x${a.qtd}</b>`).join(", ")} no inventário.</span>
+              <button type="button" onclick="moverMoedasDoInventario(${index})">Pôr nesta bolsa</button>
+            </div>`
+          : ""
+      }
+      ${item.desc ? `<div class="pv-secao"><span class="pv-rotulo"><i class="ti ti-file-text"></i> Descrição</span><div class="pv-desc">${esc(item.desc)}</div></div>` : ""}
+      <div class="pv-acoes">
+        <button type="button" onclick="fecharPopup(); window.abrirDarItem('inventario', ${index})"><i class="ti ti-gift"></i><span>Dar</span></button>
+        <button type="button" class="pv-editar" onclick="editarItem(${index})"><i class="ti ti-pencil"></i><span>Editar</span></button>
+        <button type="button" class="perigo" onclick="fecharPopup(); removerItem(${index})"><i class="ti ti-trash"></i><span>Remover</span></button>
+      </div>
+    </div>`;
+  abrirPopup(item.nome || "Bolsa", html, true, null);
+}
+
+function alterarMoedaBolsa(index, tipo, valor) {
+  const item = inventario[index];
+  if (!item) return;
+  item.moedas = normalizarMoedas(item.moedas);
+  item.moedas[tipo] = Math.max(0, parseInt(valor) || 0);
+  renderInv();
+  salvarTudo();
+  abrirBolsa(index);
+}
+
+function organizarBolsaItem(index) {
+  const item = inventario[index];
+  if (!item) return;
+  item.moedas = organizarBolsa(item.moedas);
+  renderInv();
+  salvarTudo();
+  abrirBolsa(index);
+  mostrarToastMundo("Moedas organizadas");
+}
+
+function abrirMovimentoMoedas(modo, index) {
+  const item = inventario[index];
+  if (!item) return;
+  const html = `
+    <div class="popup-form">
+      <label class="popup-label">Quantidade</label>
+      <input id="movQtd" type="number" min="1" inputmode="numeric" placeholder="Ex: 25">
+      <label class="popup-label">Moeda</label>
+      ${seletorMoedaHTML("movMoeda", "po")}
+      ${modo === "pagar" ? `<p class="pm-dica">Se faltar dessa moeda, o app quebra uma maior e devolve o troco.</p>` : ""}
+      <button class="popup-salvar-btn" onclick="confirmarMovimentoMoedas('${modo}', ${index})">${modo === "pagar" ? "Pagar" : "Receber"}</button>
+      <button type="button" class="veic-btn-sec" onclick="abrirBolsa(${index})"><i class="ti ti-arrow-left"></i> Voltar pra bolsa</button>
+    </div>`;
+  abrirPopup(`${modo === "pagar" ? "Pagar" : "Receber"} · ${item.nome || "Bolsa"}`, html, true, null);
+  setTimeout(() => document.getElementById("movQtd")?.focus(), 50);
+}
+
+function confirmarMovimentoMoedas(modo, index) {
+  const item = inventario[index];
+  if (!item) return;
+  const qtd = parseInt(document.getElementById("movQtd")?.value) || 0;
+  const tipo = lerSeletorMoeda("movMoeda");
+  if (qtd <= 0) return;
+  item.moedas = normalizarMoedas(item.moedas);
+
+  if (modo === "pagar") {
+    const nova = pagarDaBolsa(item.moedas, qtd, tipo);
+    if (!nova) {
+      alertBonito(`Não tem o suficiente nessa bolsa (≈ ${formatarPO(totalEmPC(item.moedas))} PO).`);
+      return;
+    }
+    item.moedas = nova;
+  } else {
+    item.moedas[tipo] += qtd;
+  }
+  renderInv();
+  salvarTudo();
+  abrirBolsa(index);
+  mostrarToastMundo(`${modo === "pagar" ? "Pagou" : "Recebeu"} ${qtd} ${tipo.toUpperCase()}`);
+}
+
+function moverMoedasDoInventario(index) {
+  const bolsa = inventario[index];
+  const achados = detectarMoedasNoInventario();
+  if (!bolsa || !achados.length) return;
+  bolsa.moedas = normalizarMoedas(bolsa.moedas);
+  achados.forEach((a) => (bolsa.moedas[a.tipo] += a.qtd));
+  const remover = new Set(achados.map((a) => a.index));
+  const idBolsa = bolsa.id;
+  inventario = inventario.filter((_, i) => !remover.has(i));
+  renderInv();
+  salvarTudo();
+  const novoIndex = inventario.findIndex((x) => x.id === idBolsa);
+  if (novoIndex >= 0) abrirBolsa(novoIndex);
+  mostrarToastMundo("Moedas guardadas na bolsa");
+}
+
+/* ---------- cofre do veículo usando as bolsas ---------- */
+function opcoesBolsasHTML() {
+  return bolsasInventario()
+    .map(({ item, index }) => `<option value="${index}">${esc(item.nome || "Bolsa")} (≈ ${formatarPO(totalEmPC(normalizarMoedas(item.moedas)))} PO)</option>`)
+    .join("");
+}
+
+function abrirMovimentoCofre(vid, modo) {
+  const bolsas = bolsasInventario();
+  if (modo === "depositar" && !bolsas.length) {
+    alertBonito("Você não tem nenhuma bolsa de dinheiro. Crie um item no inventário e marque \"É uma bolsa de dinheiro\".");
+    return;
+  }
+  const html = `
+    <div class="popup-form">
+      <label class="popup-label">${modo === "depositar" ? "Tirar da bolsa" : "Colocar na bolsa"}</label>
+      ${
+        bolsas.length
+          ? `<div class="select-wrapper"><select id="cofreBolsa">${opcoesBolsasHTML()}</select></div>`
+          : `<p class="pm-dica">Você ainda não tem bolsa: vou criar uma "Bolsa de moedas" no seu inventário.</p>`
+      }
+      <label class="popup-label">Quantidade</label>
+      <input id="cofreQtd" type="number" min="1" inputmode="numeric" placeholder="Ex: 50">
+      <label class="popup-label">Moeda</label>
+      ${seletorMoedaHTML("cofreMoeda", "po")}
+      <button class="popup-salvar-btn" id="cofreOk" onclick="confirmarMovimentoCofre('${vid}', '${modo}')">${modo === "depositar" ? "Guardar no cofre" : "Pegar do cofre"}</button>
+    </div>`;
+  abrirPopup(modo === "depositar" ? "Guardar no cofre" : "Pegar do cofre", html, true, null);
+}
+
+async function confirmarMovimentoCofre(vid, modo) {
+  const qtd = parseInt(document.getElementById("cofreQtd")?.value) || 0;
+  const tipo = lerSeletorMoeda("cofreMoeda");
+  if (qtd <= 0) return;
+  const sel = document.getElementById("cofreBolsa");
+  let idx = sel ? parseInt(sel.value) : -1;
+  const btn = document.getElementById("cofreOk");
+  if (btn) btn.disabled = true;
+
+  try {
+    if (modo === "depositar") {
+      const bolsa = inventario[idx];
+      const nova = bolsa ? pagarDaBolsa(bolsa.moedas, qtd, tipo) : null;
+      if (!nova) {
+        alertBonito("Essa bolsa não tem tudo isso.");
+        if (btn) btn.disabled = false;
+        return;
+      }
+      await runTransaction(db, async (t) => {
+        const s = await t.get(veicRef(vid));
+        if (!s.exists()) throw new Error("sumiu");
+        const m = normalizarMoedas(s.data().moedas);
+        m[tipo] += qtd;
+        t.update(veicRef(vid), { moedas: m });
+      });
+      bolsa.moedas = nova;
+    } else {
+      await runTransaction(db, async (t) => {
+        const s = await t.get(veicRef(vid));
+        if (!s.exists()) throw new Error("sumiu");
+        const m = pagarDaBolsa(s.data().moedas, qtd, tipo);
+        if (!m) throw new Error("sem-saldo");
+        t.update(veicRef(vid), { moedas: m });
+      });
+      if (!(idx >= 0 && inventario[idx]?.bolsa)) idx = garantirBolsaPadrao();
+      inventario[idx].moedas = normalizarMoedas(inventario[idx].moedas);
+      inventario[idx].moedas[tipo] += qtd;
+    }
+    renderInv();
+    salvarTudo();
+    registrarHistorico(vid, `${modo === "depositar" ? "guardou" : "pegou"} ${qtd} ${tipo.toUpperCase()} ${modo === "depositar" ? "no" : "do"} cofre`);
+    fecharPopup();
+  } catch (e) {
+    if (btn) btn.disabled = false;
+    alertBonito(e.message === "sem-saldo" ? "O cofre não tem tudo isso." : "Não consegui mexer no cofre agora. Tenta de novo.");
+  }
+}
+
+function alternarBolsaForm(prefixo) {
+  // bolsa de dinheiro e mochila não combinam: marcar um desmarca o outro
+  const bolsa = document.getElementById(prefixo + "Bolsa");
+  const rec = document.getElementById(prefixo + "Recipiente");
+  if (bolsa?.checked && rec?.checked) {
+    rec.checked = false;
+    rec.dispatchEvent(new Event("change"));
+  }
+}
+
+/* =====================================================================
+   ESCOLHER ABAS (engrenagem na aba Personagem)
+   Cada ficha guarda quais abas ficam escondidas (p.abasOcultas).
+   ===================================================================== */
+var NOMES_ABAS = {
+  personagem: ["👤", "Personagem"],
+  atributos: ["📊", "Atributos"],
+  combate: ["⚔️", "Combate"],
+  inventario: ["🎒", "Inventário"],
+  poderes: ["🔥", "Poderes e Magias"],
+  estilo: ["💀", "Estilo (Devil Trigger)"],
+  veiculos: ["🐴", "Veículos"],
+};
+var abasOcultas = [];
+
+function idAbaDoBotao(btn) {
+  const m = (btn.getAttribute("onclick") || "").match(/trocarAba\('(\w+)'/);
+  return m ? m[1] : null;
+}
+
+function aplicarAbasVisiveis() {
+  const ocultas = new Set(abasOcultas);
+  document.querySelectorAll("#ficha .tabs .tab-btn").forEach((btn) => {
+    const id = idAbaDoBotao(btn);
+    if (!id || id === "personagem") return;
+    btn.style.display = ocultas.has(id) ? "none" : "";
+  });
+  const atual = document.querySelector("#ficha .aba.active");
+  if (atual && ocultas.has(atual.id)) trocarAba("personagem");
+}
+
+function abrirConfigAbas() {
+  const ids = [...document.querySelectorAll("#ficha .tabs .tab-btn")].map(idAbaDoBotao).filter(Boolean);
+  const ocultas = new Set(abasOcultas);
+  const linhas = ids
+    .map((id) => {
+      const [ic, nome] = NOMES_ABAS[id] || ["•", id];
+      const fixa = id === "personagem";
+      return `
+      <div class="toggle-cargas cfg-aba ${fixa ? "fixa" : ""}">
+        <span class="toggle-cargas-texto"><span class="cfg-aba-ic">${ic}</span> ${nome}${fixa ? ` <small>(sempre aparece)</small>` : ""}</span>
+        <label class="switch-cargas">
+          <input type="checkbox" ${ocultas.has(id) ? "" : "checked"} ${fixa ? "disabled" : ""} onchange="alternarAbaVisivel('${id}', this.checked)">
+          <span class="slider-cargas"></span>
+        </label>
+      </div>`;
+    })
+    .join("");
+  abrirPopup(
+    "Abas da ficha",
+    `<div class="popup-form"><p class="pm-dica">Escolha quais abas aparecem na barra de baixo. Dá pra mudar quando quiser.</p>${linhas}</div>`,
+    true,
+    null,
+  );
+}
+
+function alternarAbaVisivel(id, visivel) {
+  const s = new Set(abasOcultas);
+  if (visivel) s.delete(id);
+  else s.add(id);
+  abasOcultas = [...s];
+  aplicarAbasVisiveis();
+  salvarTudo();
 }
