@@ -2419,6 +2419,7 @@
 
   import {
   getFirestore,
+  initializeFirestore,
   doc,
   setDoc,
   getDoc,
@@ -2457,7 +2458,8 @@ import {
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
-  const db = getFirestore(app);
+  // ignora campos "undefined" em vez de dar erro ao salvar na nuvem
+  const db = initializeFirestore(app, { ignoreUndefinedProperties: true });
 
   window.db = db;
   const storage = getStorage(app);
@@ -2561,9 +2563,11 @@ import {
       ficha.id = Date.now() + Math.floor(Math.random() * 99999);
     }
     try {
+      // limpa valores "undefined" (o Firestore não aceita) antes de enviar
+      const fichaLimpa = JSON.parse(JSON.stringify(ficha));
       await setDoc(
         doc(db, "usuarios", uid, "fichas", String(ficha.id)),
-        ficha
+        fichaLimpa
       );
     } catch (erro) {
       console.error(`Falha ao salvar ficha "${ficha.nome || ficha.id}":`, erro);
