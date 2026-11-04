@@ -11464,3 +11464,27 @@ body:has(#tela-modo:not([style*="display: none"])) #btnSalvarFlutuante { display
   40% { filter: brightness(1.6) saturate(1.3); }
   100% { filter: brightness(1.12); }
 }
+
+/* =====================================================================
+   ATRIBUTOS: rolagem leve no celular
+   O desfoque (backdrop-filter) dos cards e da caixa de perícias era
+   refeito a cada quadro da rolagem, porque o fundo da ficha fica parado
+   atrás. Troquei por um fundo um pouco mais opaco, que fica igual de
+   longe e não pesa. A sombra por filter dos cards só fica no PC.
+   ===================================================================== */
+#atributos .attr-card-inner,
+#atributos .pericias {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+#atributos .attr-card-inner {
+  background: linear-gradient(180deg, rgba(49, 38, 33, 0.8) 0%, rgba(34, 26, 21, 0.88) 100%) !important;
+}
+#atributos .pericias {
+  background: linear-gradient(180deg, rgba(49, 38, 33, 0.82) 0%, rgba(38, 29, 24, 0.88) 100%) !important;
+}
+@media (hover: none), (max-width: 760px) {
+  #atributos .attr-card { filter: none !important; }
+}
+/* cada card é desenhado separado: mexer em um não redesenha os outros */
+#atributos .attr-card { contain: layout paint; }
