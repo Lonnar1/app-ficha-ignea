@@ -16264,7 +16264,7 @@ async function mandarItemProComp(cid, index) {
   if (typeof mostrarToastMundo === "function") mostrarToastMundo(`${quantos > 1 ? quantos + "x " : ""}${item.nome} foi pro ${c.nome || "companheiro"}`);
 }
 
-var VERSAO_FICHA = "2026-11-04g";
+var VERSAO_FICHA = "2026-11-04h";
 console.log("%cFicha Ígnea " + VERSAO_FICHA, "color:#d8b56a;font-weight:bold");
 
 /* ---------- tela de login ---------- */
