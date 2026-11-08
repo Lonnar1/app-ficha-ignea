@@ -6499,29 +6499,9 @@ function abrirTelaModo() {
   const tela = document.getElementById("tela-modo");
   tela.style.display = "flex";
 
-  // reset estado da tela (o visual de selecionado fica no data-sel; sem limpar ele, o botão aparecia mas não funcionava)
-  delete tela.dataset.sel;
+  // volta a tela pro estado inicial (Jornada na frente)
   window._tmEntrando = false;
-  const btnE = document.getElementById('tmBtnEntrar');
-  if (btnE) btnE.classList.remove('apertado');
-  if (typeof tmSelected !== 'undefined') {
-    window.tmSelected = null;
-    const cj = document.getElementById('tmCardJornada');
-    const cg = document.getElementById('tmCardGrimorio');
-    if (cj) { cj.style.borderColor = ''; cj.style.transform = ''; cj.style.opacity = ''; }
-    if (cg) { cg.style.borderColor = ''; cg.style.transform = ''; cg.style.opacity = ''; }
-    const ckj = document.getElementById('tmCheckJornada');
-    const ckg = document.getElementById('tmCheckGrimorio');
-    if (ckj) { ckj.style.opacity = '0'; ckj.style.transform = 'scale(0.5)'; }
-    if (ckg) { ckg.style.opacity = '0'; ckg.style.transform = 'scale(0.5)'; }
-    const btn = document.getElementById('tmBtnEntrar');
-    if (btn) { btn.disabled = true; btn.style.cssText = 'width:90%;max-width:380px;padding:18px 32px;border-radius:9999px;border:1px solid rgba(78, 78, 78, 0.4);background:transparent;color:rgba(100, 100, 100, 0.5);font-family:Cinzel,serif;font-size:18px;font-weight:700;letter-spacing:0.18em;cursor:not-allowed;transition:all 0.4s ease;margin:0 auto 28px auto;display:block;text-align:center;overflow:hidden;'; }
-    const desc = document.getElementById('tmDesc');
-    if (desc) desc.innerHTML = '<p class="tm-dica">✦ Toque em um caminho para escolher ✦</p>';
-    ['tmDivJornada','tmDivGrimorio'].forEach(function (id) { const d = document.getElementById(id); if (d) { d.style.width = ''; d.style.background = ''; } });
-    document.getElementById('tmBgJornada').style.opacity = '0';
-    document.getElementById('tmBgGrimorio').style.opacity = '0';
-  }
+  if (typeof tmReset === 'function') tmReset();
 
   tela.style.opacity = "0";
   tela.style.transform = "scale(1.06)";
@@ -16024,7 +16004,7 @@ function abrirFormAtaqueComp(id, i) {
       <input id="caDano" value="${esc(a.dano || "")}" placeholder="Ex: 2d4 perfurante" oninput="previewAtaqueComp('${sid}')">
       <div class="arma-atk-box">
         <div class="arma-atk-topo"><span class="mods-titulo"><i class="ti ti-sword"></i> Ataque e dano</span><span class="arma-atk-preview" id="caPreview"></span></div>
-        <label class="arma-atk-campo"><span>Atributo do companheiro</span><select id="caAtrib" onchange="previewAtaqueComp('${sid}')">${opts}</select></label>
+        <label class="arma-atk-campo"><span>Atributo</span><select id="caAtrib" onchange="previewAtaqueComp('${sid}')">${opts}</select></label>
         <div class="arma-atk-linha">
           <label class="arma-atk-campo"><span>Bônus no ataque</span><input id="caBonusAtk" type="number" placeholder="0" value="${a.bonusAtaque || ""}" oninput="previewAtaqueComp('${sid}')"></label>
           <label class="arma-atk-campo"><span>Bônus no dano</span><input id="caBonusDano" type="number" placeholder="0" value="${a.bonusDano || ""}" oninput="previewAtaqueComp('${sid}')"></label>
@@ -16264,7 +16244,7 @@ async function mandarItemProComp(cid, index) {
   if (typeof mostrarToastMundo === "function") mostrarToastMundo(`${quantos > 1 ? quantos + "x " : ""}${item.nome} foi pro ${c.nome || "companheiro"}`);
 }
 
-var VERSAO_FICHA = "2026-11-04h";
+var VERSAO_FICHA = "2026-11-07m";
 console.log("%cFicha Ígnea " + VERSAO_FICHA, "color:#d8b56a;font-weight:bold");
 
 /* ---------- tela de login ---------- */
@@ -19614,6 +19594,7 @@ window._renderFichaFlutuanteConteudo = function (m, f) {
   }).join("");
 
   /* ---- estado ---- */
+  const concNome = f.concentracao ? ((f.poderes || []).find((p) => String(p.id) === String(f.concentracao))?.nome || "") : "";
   const exaust = parseInt(f.exaustao) || 0;
   const efeitos = ["Sem exaustão", "Desvantagem em testes de atributo", "Deslocamento pela metade", "Desvantagem em ataques e salvaguardas", "PV máximos pela metade", "Deslocamento 0", "Morte"];
   const morte = f.morte || { sucessos: [false, false, false], falhas: [false, false, false] };
@@ -19634,7 +19615,7 @@ window._renderFichaFlutuanteConteudo = function (m, f) {
         </div>
       </div>
       ${dominio.length ? `<div class="ff-estado-item"><small>Pontos de domínio</small><div>${_ffBolinhas(dominio)}</div><span>${dominio.filter(Boolean).length}/${dominio.length}</span></div>` : ""}
-      ${f.concentracao ? `<div class="ff-estado-item ativo"><small>Concentrando</small><span>🔮 ${escapeHtml(f.concentracao)}</span></div>` : ""}
+      ${f.concentracao ? `<div class="ff-estado-item ativo"><small>Concentrando</small><span>🔮 ${escapeHtml(concNome || "um poder")}</span></div>` : ""}
     </div>`;
   const alertas = (exaust ? 1 : 0) + (caido ? 1 : 0) + (f.concentracao ? 1 : 0);
 
@@ -19691,7 +19672,7 @@ window._renderFichaFlutuanteConteudo = function (m, f) {
         ${f.deslocamento ? `<span>👣 ${escapeHtml(String(f.deslocamento))}</span>` : ""}
         ${f.bonusProf ? `<span>⭐ Prof. +${escapeHtml(String(f.bonusProf))}</span>` : ""}
         ${parseInt(f.inspiracao) > 0 ? `<span class="ouro">✨ Inspiração ${escapeHtml(String(f.inspiracao))}</span>` : ""}
-        ${f.concentracao ? `<span class="roxo">🔮 ${escapeHtml(f.concentracao)}</span>` : ""}
+        ${f.concentracao ? `<span class="roxo">🔮 ${escapeHtml(concNome || "um poder")}</span>` : ""}
         ${exaust ? `<span class="vinho">😩 Exaustão ${exaust}</span>` : ""}
       </div>
 
