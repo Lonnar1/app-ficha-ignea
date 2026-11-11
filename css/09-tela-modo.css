@@ -1,0 +1,119 @@
+/* =====================================================================
+   ESCOLHA SEU CAMINHO
+   card da frente à esquerda e o outro atrás, à direita; ao trocar,
+   o de trás passa pela frente e o da frente recua
+   Jornada: dourado e vermelho · Grimório: branco e vermelho
+   ===================================================================== */
+#tela-modo { --tm-b: #e8c27a; background: #0c0805 !important; }
+#tela-modo[data-modo="grimorio"] { --tm-b: #ffffff; }
+
+.tm-bg-base { position: fixed; inset: 0; z-index: 0; background: linear-gradient(180deg, #0e0a06 0%, #0c0805 55%, #080504 100%); pointer-events: none; }
+.tm-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0; transition: opacity 1s ease;
+  background: radial-gradient(ellipse 95% 62% at 50% 28%, rgba(214, 150, 50, .40) 0%, transparent 66%), radial-gradient(ellipse 100% 60% at 50% 92%, rgba(190, 50, 25, .46) 0%, transparent 70%); }
+.tm-bg.grim { background: radial-gradient(ellipse 90% 58% at 50% 24%, rgba(200, 30, 42, .50) 0%, transparent 66%), radial-gradient(ellipse 100% 58% at 50% 96%, rgba(255, 246, 246, .20) 0%, transparent 68%); }
+#tela-modo:not([data-modo="grimorio"]) .tm-bg.jorn,
+#tela-modo[data-modo="grimorio"] .tm-bg.grim { opacity: 1; }
+
+#tela-modo .tm-amigos {
+  position: absolute; top: 18px; left: 18px; z-index: 20; width: 38px; height: 38px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 17px; cursor: pointer;
+  background: rgba(255, 255, 255, .05); border: 1px solid rgba(232, 194, 122, .4); color: #f3e2bd;
+  transition: border-color .8s ease, color .8s ease;
+}
+#tela-modo[data-modo="grimorio"] .tm-amigos { border-color: rgba(255, 255, 255, .4); color: #fff; }
+
+.tm-wrap { position: relative; z-index: 2; width: 100%; max-width: 420px; display: flex; flex-direction: column; align-items: center; }
+.tm-head { text-align: center; margin-bottom: 8px; }
+.tm-kicker { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; opacity: .7; }
+.tm-kicker i { display: block; height: 1px; width: 28px; background: linear-gradient(90deg, transparent, rgba(232, 194, 122, .75)); transition: background .8s ease; }
+.tm-kicker i:last-child { transform: scaleX(-1); }
+.tm-kicker span { font-family: 'MedievalSharp', cursive; font-size: 12px; letter-spacing: .3em; color: #f3e6cc; text-transform: uppercase; }
+#tela-modo[data-modo="grimorio"] .tm-kicker i { background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .7)); }
+#tela-modo[data-modo="grimorio"] .tm-kicker span { color: #f6eaea; }
+
+/* ---------- palco ---------- */
+.tm-palco { position: relative; width: 100%; margin: 0; aspect-ratio: 1 / 1.02; perspective: 1000px; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+.tm-card {
+  position: absolute; left: 4%; top: 2%; width: 66%; aspect-ratio: 3 / 4.2; border-radius: 22px; overflow: hidden; cursor: pointer;
+  display: flex; flex-direction: column; justify-content: flex-end; box-sizing: border-box; padding: 0; margin: 0;
+  font: inherit; color: inherit; text-align: center;
+  background: linear-gradient(160deg, #22170b 0%, #150d06 55%, #0b0704 100%); border: 1px solid rgba(232, 190, 110, .42);
+  transform-origin: 50% 60%;
+  transition: transform .75s cubic-bezier(.2, .9, .2, 1), filter .75s ease, box-shadow .75s ease, border-color .75s ease, z-index 0s linear .26s;
+  -webkit-tap-highlight-color: transparent;
+}
+#tmCartaGrimorio { background: linear-gradient(160deg, #2a1015 0%, #190a0e 55%, #0d0608 100%); border-color: rgba(255, 255, 255, .45); }
+.tm-card.front { z-index: 3; transform: translate3d(0, 0, 0) scale(1) rotate(0deg); filter: none; box-shadow: 0 26px 60px rgba(0, 0, 0, .7), 0 0 60px rgba(230, 150, 50, .36); }
+#tmCartaGrimorio.front { box-shadow: 0 26px 60px rgba(0, 0, 0, .7), 0 0 60px rgba(220, 45, 55, .42), 0 0 0 1px rgba(255, 255, 255, .12); }
+.tm-card.back { z-index: 1; transform: translate3d(44%, 6%, -60px) scale(.84) rotate(5deg); filter: brightness(.5) saturate(.8); box-shadow: 0 10px 30px rgba(0, 0, 0, .6); }
+@media (hover: hover) { .tm-card.back:hover { filter: brightness(.7) saturate(.9); } }
+.tm-palco.trocando .tm-card.front { animation: tmChega .75s cubic-bezier(.2, .9, .2, 1); }
+.tm-palco.trocando .tm-card.back { animation: tmRecua .75s cubic-bezier(.2, .9, .2, 1); }
+@keyframes tmChega {
+  0% { transform: translate3d(44%, 6%, -60px) scale(.84) rotate(5deg); }
+  45% { transform: translate3d(18%, -1.5%, 40px) scale(1.03) rotate(-3deg); }
+  100% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+}
+@keyframes tmRecua {
+  0% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+  45% { transform: translate3d(-8%, 3%, 0) scale(.96) rotate(-2deg); }
+  100% { transform: translate3d(44%, 6%, -60px) scale(.84) rotate(5deg); }
+}
+
+.tm-c { position: absolute; width: 14px; height: 14px; opacity: .55; pointer-events: none; border: 0 solid rgba(232, 194, 122, .7); }
+#tmCartaGrimorio .tm-c { border-color: rgba(255, 255, 255, .7); }
+.tm-c.a { top: 9px; left: 9px; border-top-width: 1px; border-left-width: 1px; }
+.tm-c.b { top: 9px; right: 9px; border-top-width: 1px; border-right-width: 1px; }
+.tm-c.c { bottom: 9px; left: 9px; border-bottom-width: 1px; border-left-width: 1px; }
+.tm-c.d { bottom: 9px; right: 9px; border-bottom-width: 1px; border-right-width: 1px; }
+
+.tm-arte { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding-bottom: 64px; pointer-events: none; }
+.tm-img { width: 66%; height: auto; object-fit: contain; pointer-events: none; }
+.tm-img.j { transform: rotate(90deg); opacity: .95; filter: drop-shadow(0 0 20px rgba(230, 130, 40, .5)); }
+.tm-img.g { opacity: .95; filter: drop-shadow(0 0 22px rgba(190, 30, 40, .55)); }
+.tm-card.front .tm-img { animation: tmFlutua 5s ease-in-out infinite; }
+.tm-card.front .tm-img.j { animation-name: tmFlutuaJ; }
+@keyframes tmFlutua { 0%, 100% { translate: 0 0; } 50% { translate: 0 -7px; } }
+@keyframes tmFlutuaJ { 0%, 100% { translate: 0 0; } 50% { translate: -7px 0; } }
+
+.tm-rotulo { position: relative; z-index: 2; display: block; padding: 26px 12px 16px; text-align: center; background: linear-gradient(0deg, rgba(0, 0, 0, .85) 0%, transparent 100%); pointer-events: none; }
+.tm-rotulo b { display: block; font-family: 'Cinzel Decorative', 'Cinzel', serif; font-size: 19px; letter-spacing: .12em; text-transform: uppercase;
+  background: linear-gradient(135deg, #fff3d6, #f0c56a 55%, #e0843a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+#tmCartaGrimorio .tm-rotulo b { background: none; color: #fff; text-shadow: 0 0 16px rgba(220, 50, 60, .55); }
+.tm-rotulo small { display: block; margin-top: 4px; font-family: 'MedievalSharp', cursive; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #c9b38a; }
+#tmCartaGrimorio .tm-rotulo small { color: #e8cfcf; }
+
+/* ---------- pontinhos, botão e rodapé ---------- */
+.tm-pontos { display: flex; gap: 8px; margin: 10px 0 34px; }
+.tm-pontos button { width: 7px; height: 7px; padding: 0; margin: 0; border-radius: 50%; border: 0; background: rgba(255, 255, 255, .22); cursor: pointer; transition: width .4s ease, background .4s ease; }
+.tm-pontos button.on { width: 22px; border-radius: 4px; background: var(--tm-b); }
+
+#tela-modo .tm-entrar {
+  position: relative; overflow: hidden; width: auto; min-width: 180px; max-width: 240px; margin: 0; padding: 11px 30px; border-radius: 999px; cursor: pointer;
+  font-family: 'Cinzel', serif; font-size: 13.5px; font-weight: 700; letter-spacing: .24em; text-transform: uppercase;
+  color: #f3dfae; border: 1px solid rgba(232, 194, 122, .55);
+  background: rgba(232, 194, 122, .08); box-shadow: none;
+  transition: background .8s ease, border-color .8s ease, color .8s ease;
+}
+#tela-modo .tm-entrar:active { background: rgba(232, 194, 122, .18); }
+#tela-modo[data-modo="grimorio"] .tm-entrar { color: #fff; border-color: rgba(255, 255, 255, .55); background: rgba(200, 35, 45, .16); box-shadow: none; }
+#tela-modo .tm-entrar.apertado { animation: tmApertar .42s cubic-bezier(.3, 1.4, .5, 1); }
+@keyframes tmApertar { 0% { transform: scale(1); } 30% { transform: scale(.93); filter: brightness(1.25); } 100% { transform: scale(1.03); filter: brightness(1.1); } }
+#tela-modo .tm-onda { position: absolute; width: 20px; height: 20px; margin: -10px 0 0 -10px; border-radius: 50%; pointer-events: none; background: radial-gradient(circle, rgba(255, 250, 235, .9), rgba(255, 200, 120, .35) 45%, transparent 70%); animation: tmOnda .5s ease-out forwards; }
+#tela-modo[data-modo="grimorio"] .tm-onda { background: radial-gradient(circle, rgba(255, 255, 255, .95), rgba(255, 150, 150, .4) 45%, transparent 70%); }
+@keyframes tmOnda { from { transform: scale(0); opacity: 1; } to { transform: scale(22); opacity: 0; } }
+.tm-card.tm-pulso { animation: tmPulsoCard .42s ease-out; }
+@keyframes tmPulsoCard { 0% { filter: brightness(1); } 40% { filter: brightness(1.55) saturate(1.3); } 100% { filter: brightness(1); } }
+
+.tm-rodape { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 26px; }
+.tm-rodape span { width: 3px; height: 3px; border-radius: 50%; background: rgba(255, 255, 255, .3); }
+#tela-modo .tm-rodape button { background: none; border: 0; padding: 4px 6px; margin: 0; font-family: 'Cinzel', serif; font-size: 10.5px; letter-spacing: .1em; color: rgba(222, 208, 186, .65); cursor: pointer; box-shadow: none; }
+#tela-modo .tm-rodape button:hover { color: #fff; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-palco.trocando .tm-card.front, .tm-palco.trocando .tm-card.back, .tm-card.front .tm-img { animation: none; }
+}
+
+/* tudo um pouco mais pra cima */
+.tm-wrap { margin-top: -14px; }
+@media (max-height: 680px) { .tm-wrap { margin-top: -10px; } }
