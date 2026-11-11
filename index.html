@@ -15,16 +15,22 @@
 
     <title>Ficha Ígnea</title>
     <link rel="stylesheet" href="css/00-base.css" />
-    <link rel="stylesheet" href="css/01-player-ficha.css?v=20261107m" />
+    <link rel="stylesheet" href="css/01-player-ficha.css?v=20261109d" />
     <link rel="stylesheet" href="css/02-login.css" />
     <link rel="stylesheet" href="css/03-master-grimorio.css" />
     <link rel="stylesheet" href="css/04-jornada-modo.css" />
     <link rel="stylesheet" href="css/05-grimorio-componentes.css" />
     <link rel="stylesheet" href="css/06-final-overrides.css" />
-    <link rel="stylesheet" href="css/07-paleta-master.css?v=20261107m" />
+    <link rel="stylesheet" href="css/07-paleta-master.css?v=20261109d" />
     <link rel="stylesheet" href="css/08-campanhas-master.css" />
-    <link rel="stylesheet" href="css/09-tela-modo.css?v=20261107m" />
-    <link rel="stylesheet" href="css/10-combate.css?v=20261107m" />
+    <link rel="stylesheet" href="css/09-tela-modo.css?v=20261109d" />
+    <link rel="stylesheet" href="css/10-combate.css?v=20261111w" />
+    <link rel="stylesheet" href="css/11-catalogo.css?v=20261111j" />
+    <link rel="stylesheet" href="css/12-regras.css?v=20261109f" />
+    <link rel="stylesheet" href="css/13-sobre.css?v=20261111z" />
+    <link rel="stylesheet" href="css/14-progressao.css?v=20261111y" />
+    <link rel="stylesheet" href="css/15-atributos.css?v=20261110r" />
+    <link rel="stylesheet" href="css/16-estilo.css?v=20261111r" />
    <link
   href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Cinzel+Decorative:wght@700&family=MedievalSharp&display=swap"
   rel="stylesheet"
@@ -1172,7 +1178,7 @@
         <div class="ficha-barra-topo" style="display:flex;justify-content:space-between;align-items:center;">
           <button class="voltar" onclick="voltarInicio()">← Voltar</button>
           <div style="flex-shrink:0;display:flex;justify-content:center;align-items:center;gap:8px;">
-<button type="button" class="btn-config-abas" onclick="abrirConfigAbas()" title="Escolher abas" aria-label="Escolher abas"><i class="ti ti-settings"></i></button>
+<button type="button" class="btn-config-abas" onclick="abrirConfigAbas()" title="Configurações" aria-label="Configurações"><i class="ti ti-settings"></i></button>
 
 <button id="btnInboxItens" onclick="abrirInboxItens()" style="position:relative;background:#4a3b31;border:none;color:#f1e6cf;border-radius:10px;padding:8px 12px;cursor:pointer;font-size:13px;white-space:nowrap;">              Itens recebidos
               <span id="badgeInboxItens" style="display:none;position:absolute;top:-6px;right:-6px;background:#b83a2f;color:#fff;border-radius:50%;width:18px;height:18px;font-size:10px;align-items:center;justify-content:center;">0</span>
@@ -1190,7 +1196,7 @@
             <div class="select-wrapper">
               <select id="racaSelect" onchange="aoMudarRaca()">
                 <option value="" selected>Selecionar raça</option>
-                <option value="custom">Raças personalizadas</option>
+                <option value="custom">✍️ Raças personalizadas</option>
               </select>
             </div>
 
@@ -2146,8 +2152,27 @@
       </div>
     </div>
 
-    <script src="script.js?v=20261107m"></script>
-    <script src="combate-v2.js?v=20261107m"></script>
+    <script src="javascript/script.js?v=20261111v"></script>
+    <script src="javascript/combate-v2.js?v=20261110d"></script>
+    <script src="javascript/catalogo-dados.js?v=20261110d"></script>
+    <script src="javascript/catalogo-magias.js?v=20261110d"></script>
+    <script src="javascript/catalogo-magicos.js?v=20261110d"></script>
+    <script src="javascript/catalogo-monstros.js?v=20261110d"></script>
+    <script src="javascript/catalogo.js?v=20261111m"></script>
+    <script src="javascript/regras-dados.js?v=20261110d"></script>
+    <script src="javascript/regras.js?v=20261110d"></script>
+    <script src="javascript/sobre.js?v=20261111z"></script>
+    <script src="javascript/classes-dados.js?v=20261110t"></script>
+    <script src="javascript/regras-mesa.js?v=20261111u"></script>
+    <script src="javascript/leitor-texto.js?v=20261111y"></script>
+    <script src="javascript/leitor-monstro.js?v=20261111f"></script>
+    <script src="javascript/leitor-poder.js?v=20261111m"></script>
+    <script src="javascript/leitor-item.js?v=20261111i"></script>
+    <script src="javascript/leitor-origem.js?v=20261111m"></script>
+    <script src="javascript/dominios.js?v=20261111x"></script>
+    <script src="javascript/progressao.js?v=20261111x"></script>
+    <script src="javascript/atributos.js?v=20261111g"></script>
+    <script src="javascript/devil-trigger.js?v=20261111x"></script>
     <script>
       if ("serviceWorker" in navigator) {
         navigator.serviceWorker
