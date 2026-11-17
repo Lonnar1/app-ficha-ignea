@@ -1,10 +1,18 @@
-# Gera um APK de teste do app (sem Play Store).
+# Gera o APK do app (sem Play Store) e publica pra download.
 # Como usar: aba "Actions" do GitHub → "Gerar APK de teste" → "Run workflow".
-# Quando terminar (uns 5–8 min), o APK fica em "Artifacts" no fim da página da execução.
+# Quando terminar, o APK fica:
+#   - em "Artifacts" no fim da página da execução; e
+#   - publicado em Releases (tag "android"), que é o link do botão "Baixar app" do site:
+#     https://github.com/<usuario>/<repo>/releases/download/android/ficha-ignea.apk
+# Com os segredos KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS e KEY_PASSWORD configurados,
+# o APK sai assinado sempre com a mesma chave (dá pra instalar uma versão por cima da outra).
 name: Gerar APK de teste
 
 on:
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   apk:
@@ -118,14 +126,50 @@ jobs:
           print(s)
           PY
 
+      - name: Número da versão
+        working-directory: build/android/app
+        run: |
+          sed -i -E "s/versionCode [0-9]+/versionCode ${{ github.run_number }}/; s/versionName \"[^\"]*\"/versionName \"1.0.${{ github.run_number }}\"/" build.gradle
+          grep -E "versionCode|versionName" build.gradle
+
       - name: Compilar o APK
         working-directory: build/android
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          mkdir -p ../saida
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/ignea.jks"
+            ./gradlew assembleRelease --no-daemon \
+              -Pandroid.injected.signing.store.file="$RUNNER_TEMP/ignea.jks" \
+              -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
+              -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
+              -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
+            cp app/build/outputs/apk/release/app-release.apk ../saida/ficha-ignea.apk
+          else
+            echo "Sem chave configurada: gerando APK de teste (debug)"
+            ./gradlew assembleDebug --no-daemon
+            cp app/build/outputs/apk/debug/app-debug.apk ../saida/ficha-ignea.apk
+          fi
 
       - name: Guardar o APK
         uses: actions/upload-artifact@v4
         with:
           name: ficha-ignea-apk
-          path: build/android/app/build/outputs/apk/debug/app-debug.apk
+          path: build/saida/ficha-ignea.apk
+
+      - name: Publicar pra download (Releases)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTAS="Versão 1.0.${{ github.run_number }} do app Ficha Ígnea pra Android."
+          if gh release view android > /dev/null 2>&1; then
+            gh release upload android build/saida/ficha-ignea.apk --clobber
+            gh release edit android --title "Ficha Ígnea para Android (1.0.${{ github.run_number }})" --notes "$NOTAS"
+          else
+            gh release create android build/saida/ficha-ignea.apk --title "Ficha Ígnea para Android (1.0.${{ github.run_number }})" --notes "$NOTAS" --latest
+          fi
