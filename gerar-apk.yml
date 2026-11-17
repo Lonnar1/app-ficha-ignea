@@ -1,0 +1,62 @@
+# Gera um APK de teste do app (sem Play Store).
+# Como usar: aba "Actions" do GitHub → "Gerar APK de teste" → "Run workflow".
+# Quando terminar (uns 5–8 min), o APK fica em "Artifacts" no fim da página da execução.
+name: Gerar APK de teste
+
+on:
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Montar a pasta do app (www)
+        run: |
+          mkdir -p /tmp/www
+          rsync -a --exclude .git --exclude .github --exclude assets --exclude README.md --exclude LICENSE ./ /tmp/www/
+          mkdir -p build && mv /tmp/www build/www
+
+      - name: Preparar o Capacitor
+        working-directory: build
+        run: |
+          npm init -y > /dev/null
+          npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/app
+          cat > capacitor.config.json <<'EOF'
+          { "appId": "com.fichaignea.app", "appName": "Ficha Ígnea", "webDir": "www" }
+          EOF
+          npx cap add android
+          npx cap sync android
+
+      - name: Ícone do app
+        working-directory: build
+        continue-on-error: true
+        run: |
+          mkdir -p recursos
+          convert www/img/icon-192.png -resize 1024x1024 recursos/icon-only.png
+          npx --yes @capacitor/assets generate --android --assetPath recursos --iconBackgroundColor '#120d09' --iconBackgroundColorDark '#120d09'
+
+      - name: Compilar o APK
+        working-directory: build/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Guardar o APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ficha-ignea-apk
+          path: build/android/app/build/outputs/apk/debug/app-debug.apk
