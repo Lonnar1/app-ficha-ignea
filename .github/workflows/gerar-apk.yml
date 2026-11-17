@@ -42,14 +42,50 @@ jobs:
           npx cap sync android
 
       - name: Ícone e tela de abertura
-        working-directory: build
-        continue-on-error: true
+        working-directory: build/android/app/src/main/res
         run: |
-          # usa os arquivos da pasta "recursos" do repositório (logo da espada no fundo preto)
-          cp -r ../recursos ./recursos
-          npx --yes @capacitor/assets generate --android --assetPath recursos \
-            --iconBackgroundColor '#0a0705' --iconBackgroundColorDark '#0a0705' \
-            --splashBackgroundColor '#0a0705' --splashBackgroundColorDark '#0a0705'
+          pip install --quiet pillow
+          python3 - <<'PY'
+          # monta o ícone a partir da logo da espada (img/icon-192.png), no fundo preto
+          import glob, os
+          from PIL import Image, ImageDraw
+          FUNDO = (10, 7, 5, 255)
+          logo = Image.open("../../../../../www/img/icon-192.png").convert("RGBA")
+          logo = logo.crop(logo.getbbox())
+
+          def quadro(lado, frac, fundo):
+              c = Image.new("RGBA", (lado, lado), fundo)
+              h = int(lado * frac); w = int(logo.width * h / logo.height)
+              c.alpha_composite(logo.resize((w, h), Image.LANCZOS), ((lado - w) // 2, (lado - h) // 2))
+              return c
+
+          def redondo(img):
+              m = Image.new("L", img.size, 0)
+              ImageDraw.Draw(m).ellipse((0, 0, img.width - 1, img.height - 1), fill=255)
+              o = Image.new("RGBA", img.size, (0, 0, 0, 0)); o.paste(img, (0, 0), m); return o
+
+          tamanhos = {"mdpi": 48, "hdpi": 72, "xhdpi": 96, "xxhdpi": 144, "xxxhdpi": 192}
+          for dens, t in tamanhos.items():
+              pasta = f"mipmap-{dens}"
+              os.makedirs(pasta, exist_ok=True)
+              quadro(t, .70, FUNDO).save(f"{pasta}/ic_launcher.png")
+              redondo(quadro(t, .62, FUNDO)).save(f"{pasta}/ic_launcher_round.png")
+              # ícone adaptativo (Android 8+): logo no meio, fundo vem da cor abaixo
+              quadro(int(t * 108 / 48), .42, (0, 0, 0, 0)).save(f"{pasta}/ic_launcher_foreground.png")
+
+          os.makedirs("values", exist_ok=True)
+          open("values/ic_launcher_background.xml", "w").write(
+              '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">#0a0705</color>\n</resources>\n')
+
+          # tela de abertura: troca todas as splash.png pelo logo no fundo preto
+          for f in glob.glob("drawable*/splash.png"):
+              w, h = Image.open(f).size
+              c = Image.new("RGBA", (w, h), FUNDO)
+              lh = int(min(w, h) * .32); lw = int(logo.width * lh / logo.height)
+              c.alpha_composite(logo.resize((lw, lh), Image.LANCZOS), ((w - lw) // 2, (h - lh) // 2))
+              c.convert("RGB").save(f)
+          print("ícones prontos:", sorted(glob.glob("mipmap-*/*.png")))
+          PY
 
       - name: Barras do celular na cor do app
         working-directory: build/android/app/src/main/res
