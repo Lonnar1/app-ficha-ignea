@@ -27,7 +27,7 @@ jobs:
       - name: Montar a pasta do app (www)
         run: |
           mkdir -p /tmp/www
-          rsync -a --exclude .git --exclude .github --exclude assets --exclude README.md --exclude LICENSE ./ /tmp/www/
+          rsync -a --exclude .git --exclude .github --exclude assets --exclude recursos --exclude README.md --exclude LICENSE ./ /tmp/www/
           mkdir -p build && mv /tmp/www build/www
 
       - name: Preparar o Capacitor
@@ -36,18 +36,51 @@ jobs:
           npm init -y > /dev/null
           npm install @capacitor/core @capacitor/cli @capacitor/android @capacitor/app
           cat > capacitor.config.json <<'EOF'
-          { "appId": "com.fichaignea.app", "appName": "Ficha Ígnea", "webDir": "www" }
+          { "appId": "com.fichaignea.app", "appName": "Ficha Ígnea", "webDir": "www", "backgroundColor": "#0a0705" }
           EOF
           npx cap add android
           npx cap sync android
 
-      - name: Ícone do app
+      - name: Ícone e tela de abertura
         working-directory: build
         continue-on-error: true
         run: |
-          mkdir -p recursos
-          convert www/img/icon-192.png -resize 1024x1024 recursos/icon-only.png
-          npx --yes @capacitor/assets generate --android --assetPath recursos --iconBackgroundColor '#120d09' --iconBackgroundColorDark '#120d09'
+          # usa os arquivos da pasta "recursos" do repositório (logo da espada no fundo preto)
+          cp -r ../recursos ./recursos
+          npx --yes @capacitor/assets generate --android --assetPath recursos \
+            --iconBackgroundColor '#0a0705' --iconBackgroundColorDark '#0a0705' \
+            --splashBackgroundColor '#0a0705' --splashBackgroundColorDark '#0a0705'
+
+      - name: Barras do celular na cor do app
+        working-directory: build/android/app/src/main/res
+        run: |
+          mkdir -p values
+          cat > values/ignea_cores.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <color name="ignea_fundo">#0a0705</color>
+          </resources>
+          EOF
+          python3 - <<'PY'
+          import re
+          p = "values/styles.xml"
+          s = open(p, encoding="utf-8").read()
+          itens = [
+              '<item name="android:statusBarColor">@color/ignea_fundo</item>',
+              '<item name="android:navigationBarColor">@color/ignea_fundo</item>',
+              '<item name="android:windowBackground">@color/ignea_fundo</item>',
+              '<item name="android:windowLightStatusBar">false</item>',
+          ]
+          # coloca as cores em cada tema do app, sem repetir o que o tema já define
+          # (o tema da tela de abertura já tem o próprio fundo)
+          def colocar(m):
+              bloco = m.group(0)
+              novos = "".join(i for i in itens if i.split('"')[1] not in bloco)
+              return bloco.replace(">", ">" + novos, 1)
+          s = re.sub(r'<style name="AppTheme[^"]*"[^>]*>.*?</style>', colocar, s, flags=re.S)
+          open(p, "w", encoding="utf-8").write(s)
+          print(s)
+          PY
 
       - name: Compilar o APK
         working-directory: build/android
