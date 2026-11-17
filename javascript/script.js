@@ -9147,6 +9147,9 @@ function renderAtaques(texto) {
     let arrastando = false;
     let moveu = false;
     let offsetX = 0, offsetY = 0;
+    // durante o arrasto o botão anda por transform (não refaz o layout da página a cada toque)
+    let baseL = 0, baseT = 0, alvoX = 0, alvoY = 0, quadro = 0;
+    btn.style.willChange = "transform";
 
     const posSalva = JSON.parse(localStorage.getItem("posDisqueteFlutuante") || "null");
     if (posSalva) {
@@ -9164,6 +9167,7 @@ function renderAtaques(texto) {
       const rect = btn.getBoundingClientRect();
       offsetX = p.clientX - rect.left;
       offsetY = p.clientY - rect.top;
+      baseL = rect.left; baseT = rect.top; alvoX = 0; alvoY = 0;
       arrastando = true;
       moveu = false;
       btn.style.cursor = "grabbing";
@@ -9179,9 +9183,14 @@ function renderAtaques(texto) {
       novoX = Math.max(4, Math.min(window.innerWidth - 52, novoX));
       novoY = Math.max(4, Math.min(window.innerHeight - 52, novoY));
 
-      btn.style.left = novoX + "px";
-      btn.style.top = novoY + "px";
-      btn.style.right = "auto";
+      alvoX = novoX - baseL;
+      alvoY = novoY - baseT;
+      if (!quadro) {
+        quadro = requestAnimationFrame(() => {
+          quadro = 0;
+          btn.style.transform = `translate3d(${alvoX}px, ${alvoY}px, 0)`;
+        });
+      }
     }
 
     function aoSoltar() {
@@ -9190,6 +9199,11 @@ function renderAtaques(texto) {
       btn.style.cursor = "grab";
 
       if (moveu) {
+        if (quadro) { cancelAnimationFrame(quadro); quadro = 0; }
+        btn.style.left = (baseL + alvoX) + "px";
+        btn.style.top = (baseT + alvoY) + "px";
+        btn.style.right = "auto";
+        btn.style.transform = "translate3d(0, 0, 0)";
         localStorage.setItem("posDisqueteFlutuante", JSON.stringify({
           top: btn.style.top,
           left: btn.style.left
