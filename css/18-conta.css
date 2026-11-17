@@ -1,0 +1,56 @@
+/* ---------- Minha conta (sair / excluir) ---------- */
+/* botão no fim do próprio perfil */
+#modalPerfil .pf-conta-excluir {
+  display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin: 4px 0 6px; padding: 11px; min-height: 0; border-radius: 12px; cursor: pointer; box-shadow: none;
+  border: 1px solid rgba(192, 68, 47, 0.45); background: rgba(192, 68, 47, 0.08); color: #e8907a; font: 600 13.5px Arial, sans-serif; letter-spacing: 0; text-transform: none;
+}
+#modalPerfil .pf-conta-excluir:hover { background: rgba(192, 68, 47, 0.16); }
+#modalPerfil .pf-conta-excluir i { font-size: 16px; }
+
+#contaApp {
+  display: none; position: fixed; inset: 0; z-index: 6820; align-items: center; justify-content: center; padding: 18px;
+  background: rgba(0, 0, 0, 0.7); opacity: 0; transition: opacity 0.2s ease;
+}
+#contaApp.aberto { opacity: 1; }
+#contaApp .ct-card {
+  position: relative; width: min(92vw, 380px); max-height: 92vh; overflow-y: auto; box-sizing: border-box; padding: 24px 20px 18px; border-radius: 18px;
+  border: 1px solid rgba(196, 169, 91, 0.3); color: #f8f4e3; font-family: "EB Garamond", serif; text-align: left;
+  background: radial-gradient(120% 35% at 50% 0%, rgba(196, 80, 30, 0.12), transparent 70%), linear-gradient(180deg, #1a130d, #0e0a07);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.75); transform: translateY(10px) scale(0.97); transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+#contaApp.aberto .ct-card { transform: none; }
+#contaApp .ct-x {
+  position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; margin: 0; padding: 0; min-height: 0; border-radius: 50%;
+  border: 0; background: rgba(0, 0, 0, 0.4); color: #9a8a70; font-size: 16px; cursor: pointer; box-shadow: none;
+}
+#contaApp .ct-ic {
+  width: 46px; height: 46px; margin: 0 auto; display: grid; place-items: center; border-radius: 14px;
+  background: rgba(196, 169, 91, 0.1); border: 1px solid rgba(196, 169, 91, 0.35); color: #e8cc80; font-size: 24px;
+}
+#contaApp .ct-ic.perigo { background: rgba(192, 68, 47, 0.12); border-color: rgba(192, 68, 47, 0.45); color: #e8907a; }
+#contaApp .ct-ic.girando i { display: inline-block; animation: ctGira 1s linear infinite; }
+@keyframes ctGira { to { transform: rotate(360deg); } }
+#contaApp h4 { margin: 10px 0 0; text-align: center; font-family: "Cinzel", serif; font-size: 18px; font-weight: 600; letter-spacing: 0.04em; color: #e8cc80; }
+#contaApp .ct-sub { margin: 8px 0 0; text-align: center; font-size: 15.5px; line-height: 1.45; color: #b9a988; }
+#contaApp .ct-sub b { color: #f0e4d0; font-weight: 600; word-break: break-all; }
+#contaApp .ct-peq { font-size: 13.5px; color: #7a6a50; }
+#contaApp .ct-lista { margin: 8px 0 4px; padding: 10px 12px 10px 28px; border-radius: 12px; background: rgba(192, 68, 47, 0.07); border: 1px solid rgba(192, 68, 47, 0.25); font-size: 15px; line-height: 1.5; color: #e2cfc0; }
+#contaApp .ct-rot { display: block; margin: 14px 0 6px; font-family: "Cinzel", serif; font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: #c4a95b; }
+#contaApp input[type="password"] {
+  display: block; width: 100%; box-sizing: border-box; margin: 0; padding: 11px 12px; border-radius: 12px;
+  border: 1px solid rgba(196, 169, 91, 0.22); background: rgba(0, 0, 0, 0.35); color: #f0e4d0; font: 16px "EB Garamond", serif;
+}
+#contaApp input[type="password"]:focus { outline: none; border-color: #c4a95b; box-shadow: 0 0 0 3px rgba(196, 169, 91, 0.12); }
+#contaApp .ct-erro { min-height: 18px; margin: 8px 0 0; font-size: 14px; color: #f0a090; text-align: center; }
+#contaApp .ct-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin: 16px 0 0; padding: 13px; min-height: 0; border-radius: 12px; cursor: pointer; box-shadow: none;
+  border: 1px solid rgba(196, 169, 91, 0.35); background: rgba(196, 169, 91, 0.08); color: #f0dca8; font: 700 14px Arial, sans-serif; letter-spacing: 0; text-transform: none;
+}
+#contaApp .ct-btn i { font-size: 17px; }
+#contaApp .ct-btn.ct-vermelho { border-color: rgba(192, 68, 47, 0.6); background: linear-gradient(135deg, #8e2a1f, #5e1912); color: #fbe3dc; }
+#contaApp .ct-btn:disabled { opacity: 0.4; cursor: default; }
+#contaApp .ct-perigo { margin-top: 20px; padding: 14px; border-radius: 14px; border: 1px dashed rgba(192, 68, 47, 0.4); }
+#contaApp .ct-perigo .ct-rot { margin-top: 0; color: #e8907a; }
+#contaApp .ct-perigo p { margin: 0; font-size: 15px; line-height: 1.4; color: #b9a988; }
+#contaApp .ct-perigo .ct-btn { margin-top: 12px; }
+#contaApp .ct-link { display: block; margin: 12px auto 0; padding: 4px 10px; min-height: 0; border: 0; background: none; box-shadow: none; color: #9a8a70; font: 15px "EB Garamond", serif; text-decoration: underline; text-transform: none; letter-spacing: 0; cursor: pointer; }
