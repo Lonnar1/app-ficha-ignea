@@ -3911,7 +3911,7 @@ function previewImagem() {
       return;
     }
 
-    imagensPersonagem.push({ url: resultado.url, deleteUrl: resultado.deleteUrl || "" });
+    imagensPersonagem.push({ url: resultado.url, deleteUrl: resultado.deleteUrl || "", original: resultado.url, originalDeleteUrl: resultado.deleteUrl || "" });
     indiceCarrossel = imagensPersonagem.length - 1;
     imagemOriginalBase64 = resultado.url;
     imagemPosX = 50;
@@ -3958,7 +3958,9 @@ function abrirEditorImagem() {
   editorImg.onerror = function () {
     alertBonito("Não foi possível carregar a imagem para edição. Tente escolher a imagem novamente.");
   };
-  editorImg.src = imagemOriginalBase64 || imagemBase64;
+  // cada foto tem o seu original (antes era um só pra todas, e abria sempre a última enviada)
+  const fotoAtual = imagensPersonagem[indiceCarrossel];
+  editorImg.src = (fotoAtual && (fotoAtual.original || fotoAtual.url)) || imagemBase64;
 
   editorWrap.classList.remove("fechado");
 }
@@ -4089,8 +4091,16 @@ async function salvarEditorImagem() {
   imagemDeleteUrl = resultado.deleteUrl || "";
   // não sobrescreve imagemOriginalBase64 — mantém original para reedição
 
-  if (imagensPersonagem[indiceCarrossel]) {
-    imagensPersonagem[indiceCarrossel] = { url: resultado.url, deleteUrl: resultado.deleteUrl || "" };
+  const antiga = imagensPersonagem[indiceCarrossel];
+  if (antiga) {
+    // fotos antigas não tinham "original": a própria url era o original
+    const original = antiga.original || antiga.url;
+    const originalDeleteUrl = antiga.original ? antiga.originalDeleteUrl || "" : antiga.deleteUrl || "";
+    // o recorte anterior (se não for o original) não serve mais: apaga do ImgBB
+    if (antiga.url !== original && antiga.deleteUrl && antiga.deleteUrl !== originalDeleteUrl && antiga.deleteUrl.startsWith("https://")) {
+      fetch("https://ficha-ignea-upload.fichaignea.workers.dev/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ deleteUrl: antiga.deleteUrl }) }).catch(() => {});
+    }
+    imagensPersonagem[indiceCarrossel] = { url: resultado.url, deleteUrl: resultado.deleteUrl || "", original, originalDeleteUrl };
   }
 
   salvarTudo();
@@ -4189,6 +4199,7 @@ function _htmlPopupFotoPersonagem() {
       ${atual ? `
       <div style="position:relative;display:inline-block;max-width:100%;">
         <img src="${atual.url}" style="max-width:100%;max-height:55vh;border-radius:10px;object-fit:contain;" />
+        ${total > 1 && indiceCarrossel === 0 ? `<span style="position:absolute;top:8px;left:8px;padding:3px 9px;border-radius:999px;background:rgba(0,0,0,0.65);border:1px solid rgba(196,169,91,0.5);color:#E8CC80;font-size:11.5px;font-weight:600;">★ No card</span>` : ""}
 
         ${total > 1 ? `
         <button type="button" onclick="trocarFotoCarrosselPopup(-1)" style="position:absolute;left:6px;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;border:none;background:rgba(0,0,0,0.6);color:#fff;font-size:18px;cursor:pointer;">‹</button>
@@ -4201,6 +4212,7 @@ function _htmlPopupFotoPersonagem() {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px;">
         <button class="popup-salvar-btn" style="margin:0;" onclick="fecharPopup(); abrirEditorImagem();" ${total === 0 ? "disabled" : ""}>Ajustar imagem</button>
         <button class="popup-salvar-btn" style="margin:0;" onclick="document.getElementById('imagem').click()">+ Adicionar foto</button>
+        ${total > 1 ? `<button class="popup-salvar-btn" style="grid-column:1 / -1;margin:0;${indiceCarrossel === 0 ? "opacity:.55;cursor:default;" : ""}" onclick="definirFotoDoCard()" ${indiceCarrossel === 0 ? "disabled" : ""}>${indiceCarrossel === 0 ? "★ Esta é a foto do card" : "★ Deixar no card"}</button>` : ""}
         <button class="popup-salvar-btn" style="grid-column:1 / -1;margin:0;background:rgba(139,26,26,0.75);" onclick="removerFotoCarrosselPopup()" ${total === 0 ? "disabled" : ""}>🗑 Remover esta foto</button>
       </div>
     </div>
@@ -4217,6 +4229,19 @@ function trocarFotoCarrosselPopup(delta) {
   _atualizarConteudoPopupFoto();
 }
 
+// a foto do card (na seleção de personagens) é sempre a primeira: leva a escolhida pro começo
+function definirFotoDoCard() {
+  if (indiceCarrossel <= 0 || !imagensPersonagem[indiceCarrossel]) return;
+  const [foto] = imagensPersonagem.splice(indiceCarrossel, 1);
+  imagensPersonagem.unshift(foto);
+  indiceCarrossel = 0;
+  atualizarPreviewCarrossel();
+  salvarTudo();
+  renderPersonagens();
+  _atualizarConteudoPopupFoto();
+  if (typeof mostrarToastMundo === "function") mostrarToastMundo("Foto do card trocada");
+}
+
 function irParaFotoPopup(i) {
   indiceCarrossel = i;
   atualizarPreviewCarrossel();
@@ -4230,13 +4255,14 @@ async function removerFotoCarrosselPopup() {
   const confirmar = await confirmBonito("Remover esta foto?");
   if (!confirmar) return;
 
-    const foto = imagensPersonagem[indiceCarrossel];
-  if (foto?.deleteUrl?.startsWith("https://")) {
+  const foto = imagensPersonagem[indiceCarrossel];
+  const apagar = [...new Set([foto?.deleteUrl, foto?.originalDeleteUrl].filter((u) => u && u.startsWith("https://")))];
+  for (const deleteUrl of apagar) {
     try {
       await fetch("https://ficha-ignea-upload.fichaignea.workers.dev/delete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ deleteUrl: foto.deleteUrl }),
+        body: JSON.stringify({ deleteUrl }),
       });
     } catch (e) { console.warn("Erro ao deletar imagem do ImgBB:", e); }
   }
@@ -4311,7 +4337,30 @@ function aoDigitarDiario() {
   salvarTudo();
 }
 
-function novaSessaoDiario() {
+// sessão "de verdade" precisa ter pelo menos 30 letras; no máximo 5 sessões curtas/vazias
+// e 100 sessões no total (evita encher a ficha até travar)
+const MAX_SESSOES_VAZIAS = 5;
+const MIN_LETRAS_SESSAO = 30;
+const MAX_SESSOES = 100;
+async function novaSessaoDiario() {
+  const curta = (x) => String(x.texto || "").trim().length < MIN_LETRAS_SESSAO;
+  if (diarioSessoes.length >= MAX_SESSOES) {
+    alertBonito(`O diário já tem ${MAX_SESSOES} sessões, que é o limite. Apague alguma antiga pra criar outra.`);
+    return;
+  }
+  const vazias = diarioSessoes.filter(curta);
+  if (vazias.length >= MAX_SESSOES_VAZIAS) {
+    const limpar = await confirmBonito(
+      `Você já tem ${vazias.length} sessões vazias ou com menos de ${MIN_LETRAS_SESSAO} letras. Escreva mais em alguma delas antes de criar outra. Quer apagar essas sessões?`
+    );
+    if (!limpar) return;
+    diarioSessoes = diarioSessoes.filter((x) => !curta(x));
+    window._diarioAba = "geral";
+    renderDiario();
+    salvarTudo();
+    if (typeof mostrarToastMundo === "function") mostrarToastMundo(`${vazias.length} sessões apagadas`);
+    return;
+  }
   const nova = {
     id: "ses_" + Date.now().toString(36),
     titulo: "Sessão " + (diarioSessoes.length + 1),
