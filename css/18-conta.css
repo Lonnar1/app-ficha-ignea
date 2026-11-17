@@ -54,3 +54,7 @@
 #contaApp .ct-perigo p { margin: 0; font-size: 15px; line-height: 1.4; color: #b9a988; }
 #contaApp .ct-perigo .ct-btn { margin-top: 12px; }
 #contaApp .ct-link { display: block; margin: 12px auto 0; padding: 4px 10px; min-height: 0; border: 0; background: none; box-shadow: none; color: #9a8a70; font: 15px "EB Garamond", serif; text-decoration: underline; text-transform: none; letter-spacing: 0; cursor: pointer; }
+
+/* "Baixar o app (Android)" no rodapé do painel de amigos */
+#painelAmigos a.am-sobre.am-baixar { margin-top: 8px; text-decoration: none; box-sizing: border-box; }
+#painelAmigos a.am-sobre.am-baixar i:first-child { color: #9fd18b; }
