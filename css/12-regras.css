@@ -45,3 +45,16 @@
 
 .rg-vazio { text-align: center; color: #9A8A70; font: 14px Arial, sans-serif; margin: 20px 0; }
 .rg-credito { margin: 18px 0 6px; text-align: center; font: 11px/1.4 Arial, sans-serif; color: #9A8A70; }
+
+/* abas de Lore (História · Sessões · Eventos · Regras) e Mundo no celular:
+   dividem a largura por igual em vez de vazar pros lados */
+@media (max-width: 1099px) {
+  #masterIgnea .mundo-tabs { display: grid !important; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; justify-content: stretch; overflow: visible; }
+  #masterIgnea .mundo-tabs .mundo-tab-btn {
+    min-width: 0; width: auto; margin: 0 !important; padding: 9px 2px !important; font-size: 10.5px !important; letter-spacing: 0.06em !important;
+    text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+}
+@media (max-width: 340px) {
+  #masterIgnea .mundo-tabs .mundo-tab-btn { font-size: 9.5px !important; letter-spacing: 0.02em !important; }
+}
