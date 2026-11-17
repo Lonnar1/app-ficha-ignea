@@ -435,7 +435,20 @@
     bb.innerHTML = `<i class="ti ti-bug"></i><span>Relatar bug</span><i class="ti ti-chevron-right"></i>`;
     bb.onclick = abrirRelatarBug;
     painel.append(b, bb);
+    // "Baixar o app": só no navegador (no app instalado não faz sentido) e não no iPhone (APK é só Android)
+    const noApp = !!(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.isNative));
+    const iPhone = /iPhone|iPad|iPod/i.test(navigator.platform || "") || /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (!noApp && !iPhone && LINK_APK) {
+      const ba = document.createElement("a");
+      ba.className = "am-sobre am-baixar";
+      ba.href = LINK_APK;
+      ba.rel = "noopener";
+      ba.innerHTML = `<i class="ti ti-brand-android"></i><span>Baixar o app (Android)</span><i class="ti ti-download"></i>`;
+      painel.append(ba);
+    }
   }
+  // APK publicado pelo GitHub (Actions → "Gerar APK de teste" publica sempre neste mesmo link)
+  const LINK_APK = "https://github.com/Lonnar1/app-ficha-ignea/releases/download/android/ficha-ignea.apk";
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ligarBotao);
   else ligarBotao();
   window.addEventListener("load", ligarBotao);
