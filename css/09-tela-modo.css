@@ -117,3 +117,25 @@
 /* tudo um pouco mais pra cima */
 .tm-wrap { margin-top: -14px; }
 @media (max-height: 680px) { .tm-wrap { margin-top: -10px; } }
+/* ---------- desempenho no celular ----------
+   Animar filter e box-shadow obriga o celular a redesenhar o card inteiro a cada quadro
+   (era isso que travava a troca). Agora só o transform anda; o "escurecer" do card de
+   trás é uma camada por cima que só muda a opacidade. */
+.tm-card {
+  transition: transform .75s cubic-bezier(.2, .9, .2, 1), border-color .75s ease, z-index 0s linear .26s !important;
+  will-change: transform; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+}
+.tm-card.back { filter: none !important; }
+.tm-card::after {
+  content: ""; position: absolute; inset: 0; z-index: 6; border-radius: inherit; pointer-events: none;
+  background: rgba(8, 5, 3, .55); opacity: 0; transition: opacity .75s ease; will-change: opacity;
+}
+.tm-card.back::after { opacity: 1; }
+@media (hover: hover) {
+  .tm-card.back:hover { filter: none !important; }
+  .tm-card.back:hover::after { opacity: .65; }
+}
+.tm-card.back .tm-img { animation: none !important; }
+.tm-card .tm-img { will-change: transform; }
+.tm-bg { will-change: opacity; }
+.tm-card.tm-pulso { animation: none; }
